@@ -5,8 +5,8 @@ import (
 
 	"github.com/spf13/cobra"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/cli"
+	"gitlab.ozon.dev/yuweebix/homework-1/internal/cli/flags"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/models"
-	"gitlab.ozon.dev/yuweebix/homework-1/pkg/flags"
 )
 
 type initCommand func(*cobra.Command, *cli.CLI)
