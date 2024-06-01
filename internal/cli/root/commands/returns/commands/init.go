@@ -2,6 +2,7 @@ package commands
 
 import (
 	"fmt"
+	"math"
 
 	"github.com/spf13/cobra"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/cli"
@@ -11,31 +12,39 @@ import (
 
 type initCommand func(*cobra.Command, *cli.CLI)
 
-var InitCommands = []initCommand{InitacceptCmd, InitlistCmd}
+var InitCommands = []initCommand{InitAcceptCmd, InitListCmd}
 
-// InitacceptCmd принимает данные о закази на принятие
-func InitacceptCmd(parentCmd *cobra.Command, c *cli.CLI) {
-	acceptCmd.Flags().IntP("order_id", "o", -1, "ID заказа(*)")
-	acceptCmd.Flags().IntP("user_id", "u", -1, "ID получателя(*)")
+// InitAcceptCmd принимает данные о заказе на принятие
+func InitAcceptCmd(parentCmd *cobra.Command, c *cli.CLI) {
+	var orderID, userID int
+	var err error
+
+	// инициализируем флаги
+	acceptCmd.Flags().IntP("order_id", "o", flags.DefaultIntValue, "ID заказа(*)")
+	acceptCmd.Flags().IntP("user_id", "u", flags.DefaultIntValue, "ID получателя(*)")
+
+	// помечаем флаги как обязательные
+	acceptCmd.MarkFlagRequired("order_id")
+	acceptCmd.MarkFlagRequired("user_id")
 
 	acceptCmd.RunE = func(cmd *cobra.Command, args []string) error {
 		defer flags.ResetFlags(cmd)
-		orderID, err := cmd.Flags().GetInt("order_id")
+
+		orderID, err = cmd.Flags().GetInt("order_id")
 		if err != nil {
 			return err
 		}
-		userID, err := cmd.Flags().GetInt("user_id")
+		userID, err = cmd.Flags().GetInt("user_id")
 		if err != nil {
 			return err
 		}
 
-		errAcceptReturn := c.Module.AcceptReturn(&models.Order{
+		err := c.Service.AcceptReturn(&models.Order{
 			ID:   orderID,
 			User: &models.User{ID: userID},
 		})
-
-		if errAcceptReturn != nil {
-			return errAcceptReturn
+		if err != nil {
+			return err
 		}
 
 		fmt.Println("Заказ возвращен.")
@@ -45,26 +54,39 @@ func InitacceptCmd(parentCmd *cobra.Command, c *cli.CLI) {
 	parentCmd.AddCommand(acceptCmd)
 }
 
-// InitlistCmd принимает данные о закази на принятие
-func InitlistCmd(parentCmd *cobra.Command, c *cli.CLI) {
-	listCmd.Flags().IntP("start", "s", -1, "нижняя граница по количеству заказов в списке")
-	listCmd.Flags().IntP("finish", "f", -1, "верхняя граница по количеству заказов в списке")
+// InitListCmd принимает данные о заказе на принятие
+func InitListCmd(parentCmd *cobra.Command, c *cli.CLI) {
+	var start, finish int
+	var list []*models.Order
+	var err error
+
+	// инициализируем флаги
+	listCmd.Flags().IntP("start", "s", flags.DefaultIntValue, "нижняя граница по количеству заказов в списке")   // опциональный флаг
+	listCmd.Flags().IntP("finish", "f", flags.DefaultIntValue, "верхняя граница по количеству заказов в списке") // опциональный флаг
 
 	listCmd.RunE = func(cmd *cobra.Command, args []string) error {
 		defer flags.ResetFlags(cmd)
 
-		start, err := cmd.Flags().GetInt("start")
+		start, err = cmd.Flags().GetInt("start")
 		if err != nil {
 			return err
 		}
-		finish, err := cmd.Flags().GetInt("finish")
+		finish, err = cmd.Flags().GetInt("finish")
 		if err != nil {
 			return err
 		}
 
-		list, errListReturns := c.Module.ListReturns(start, finish)
-		if errListReturns != nil {
-			return errListReturns
+		// стандартное значение
+		if start < 0 {
+			start = 1
+		}
+		if finish < 0 {
+			finish = math.MaxInt
+		}
+
+		list, err = c.Service.ListReturns(start, finish)
+		if err != nil {
+			return err
 		}
 
 		for _, v := range list {

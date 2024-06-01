@@ -9,11 +9,14 @@ import (
 // returnsCmd represents the Returns command
 var returnsCmd = &cobra.Command{
 	Use:   "returns",
-	Short: "",
-	Long:  ``,
+	Short: "Совершить операцию с возвратом",
+	Long: `Команда "returns" содержит перечень команд для обработки возврата.
+
+Для большей информации вызовите команду:
+  returns [command] --help`,
 }
 
-func InitreturnCmd(parentCmd *cobra.Command, c *cli.CLI) {
+func InitReturnCmd(parentCmd *cobra.Command, c *cli.CLI) {
 	for _, init := range commands.InitCommands {
 		init(returnsCmd, c)
 	}

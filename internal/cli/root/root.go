@@ -7,9 +7,19 @@ import (
 )
 
 var rootCmd = &cobra.Command{
-	Use:   "*",
-	Short: "",
-	Long:  ``,
+	Use:   "",
+	Short: "Утилита для управления ПВЗ",
+	Long: `Утилита содержит перечень команд, что можно производить над заказами и возвратами.
+
+Заказы:
+  - "orders accept  [flags]": Принять заказ от курьера
+  - "orders return  [flags]": Вернуть заказ курьеру
+  - "orders deliver [flags]": Выдать заказ клиенту
+  - "orders list    [flags]": Получить список заказов
+	
+Возвраты:
+  - "returns accept [flags]": Принять возврат от клиента
+  - "returns list   [flags]": Получить список возвратов`,
 }
 
 func Execute(c *cli.CLI, args []string) error {

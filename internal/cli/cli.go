@@ -2,22 +2,26 @@ package cli
 
 import "gitlab.ozon.dev/yuweebix/homework-1/internal/models"
 
-type Module interface {
+// service интерфейс необходимых CLI функций для реализации сервисом
+type service interface {
 	// заказы
 	AcceptOrder(o *models.Order) error             // логика принятия заказа от курьера
 	ReturnOrder(o *models.Order) error             // логика возврата просроченного заказа курьеру
 	ListOrders(limit int) ([]*models.Order, error) // логика вывода списка заказов
-	DeliverOrders(oIDSlice []int) error            // логика выдачи заказов клиенту
+	DeliverOrders(orderIDs []int) error            // логика выдачи заказов клиенту
 
 	// возвраты
 	AcceptReturn(o *models.Order) error                     // логика принятия возврата от клиента
 	ListReturns(start, finish int) ([]*models.Order, error) // логика вывода возвратов
 }
 
+// Deps содержит интерфейсы зависимостей
 type Deps struct {
-	Module Module
+	Service service
+	// inject dependency here
 }
 
+// CLI представляет слой командной строки приложения
 type CLI struct {
 	Deps
 }

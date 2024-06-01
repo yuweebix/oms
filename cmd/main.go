@@ -8,7 +8,7 @@ import (
 
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/cli"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/cli/root"
-	"gitlab.ozon.dev/yuweebix/homework-1/internal/module"
+	"gitlab.ozon.dev/yuweebix/homework-1/internal/service"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/storage"
 )
 
@@ -23,15 +23,15 @@ func main() {
 		fmt.Println(err.Error())
 		os.Exit(1)
 	}
-	// ининциализируем модуль
-	service := module.NewModule(module.Deps{
+	// инициализируем модуль
+	service := service.NewService(service.Deps{
 		Storage: storageJSON,
 	})
-	// иницилизирум CLI
+	// инициализируем CLI
 	c := cli.NewCLI(cli.Deps{
-		Module: service,
+		Service: service,
 	})
-	// ининцилизируем главную команду
+	// инициализируем главную команду
 	root.InitRootCmd(c)
 
 	// считываем команды
@@ -45,6 +45,7 @@ func main() {
 			os.Exit(1)
 		}
 
+		text = strings.TrimSuffix(text, "\r") // Для Windows
 		text = strings.TrimSuffix(text, "\n")
 		args := strings.Split(text, " ")
 

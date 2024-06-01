@@ -1,39 +1,28 @@
 package storage
 
 import (
-	"encoding/json"
 	"errors"
-	"os"
 	"sort"
 	"time"
 
+	e "gitlab.ozon.dev/yuweebix/homework-1/internal/errors"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/models"
 	"gitlab.ozon.dev/yuweebix/homework-1/pkg/hash"
 )
 
 // AddOrder добавляет заказ в хранилище
 func (s *Storage) AddOrder(o *models.Order) error {
-	b, errReadFile := os.ReadFile(s.fileName)
-	if errReadFile != nil {
-		return errReadFile
-	}
-
-	// срок хранения превышен
-	if o.Expiry.Before(time.Now()) {
-		return errors.New("expired")
-	}
-
 	var database map[int]*models.Order
-	if len(b) == 0 {
-		database = make(map[int]*models.Order) // если файл пуст, инициализируем пустую мапу
-	} else {
-		if errUnmarshal := json.Unmarshal(b, &database); errUnmarshal != nil {
-			return errUnmarshal
-		}
+	var err error
+
+	// запишем данные из файла в database
+	if database, err = s.loadOrders(); err != nil {
+		return err
 	}
 
+	// не можем создать заказ с таким же id
 	if _, ok := database[o.ID]; ok {
-		return errors.New("order already exists")
+		return e.ErrOrderAlreadyExists
 	}
 
 	// помечаем заказ как принятый
@@ -41,65 +30,38 @@ func (s *Storage) AddOrder(o *models.Order) error {
 	o.Hash = hash.GenerateHash() // HASH
 	database[o.ID] = o
 
-	bWrite, errMarshal := json.MarshalIndent(database, "  ", "  ")
-	if errMarshal != nil {
-		return errMarshal
-	}
-
-	return os.WriteFile(s.fileName, bWrite, 0666)
+	return s.saveOrders(database)
 }
 
-// DeleteOrder удаляет заказ из хранилище
+// DeleteOrder удаляет заказ из хранилища
 func (s *Storage) DeleteOrder(o *models.Order) error {
-	b, errReadFile := os.ReadFile(s.fileName)
-	if errReadFile != nil {
-		return errReadFile
-	}
-
 	var database map[int]*models.Order
-	if len(b) == 0 {
-		return errors.New("order doesn't exist")
-	} else {
-		if errUnmarshal := json.Unmarshal(b, &database); errUnmarshal != nil {
-			return errUnmarshal
-		}
+	var err error
+
+	// запишем данные из файла в database
+	if database, err = s.loadOrders(); err != nil {
+		return err
 	}
 
 	if _, ok := database[o.ID]; !ok {
-		return errors.New("order doesn't exist")
-	}
-
-	// срок хранения не превышен
-	if database[o.ID].Expiry.After(time.Now()) {
-		return errors.New("not expired")
+		return e.ErrOrderNotFound
 	}
 
 	// o.Hash = hash.GenerateHash() // HASH
 
 	delete(database, o.ID)
 
-	bWrite, errMarshal := json.MarshalIndent(database, "  ", "  ")
-	if errMarshal != nil {
-		return errMarshal
-	}
-
-	return os.WriteFile(s.fileName, bWrite, 0666)
+	return s.saveOrders(database)
 }
 
-// ListOrders передает список заказов с указанным максимум
+// ListOrders передает список заказов с указанным максимумом
 func (s *Storage) ListOrders(limit int) ([]*models.Order, error) {
-	b, errReadFile := os.ReadFile(s.fileName)
-	if errReadFile != nil {
-		return nil, errReadFile
-	}
-
 	var database map[int]*models.Order
-	if len(b) == 0 {
-		return nil, errors.New("empty")
-	} else {
-		if errUnmarshal := json.Unmarshal(b, &database); errUnmarshal != nil {
-			return nil, errUnmarshal
-		}
+	var err error
+
+	// запишем данные из файла в database
+	if database, err = s.loadOrders(); err != nil {
+		return nil, err
 	}
 
 	// записываем в список
@@ -121,35 +83,29 @@ func (s *Storage) ListOrders(limit int) ([]*models.Order, error) {
 // DeliverOrder помечает заказ, как переданный клиенту
 // Его можно будет вернуть в течение двух дней
 // на вход даются IDs заказов в форме сета
-func (s *Storage) CheckOrdersForDelivery(oSet map[int]struct{}) error {
-	if len(oSet) == 0 {
+func (s *Storage) CheckOrdersForDelivery(orderIDs map[int]struct{}) error {
+	if len(orderIDs) == 0 {
 		return errors.New("empty")
-	}
-
-	b, errReadFile := os.ReadFile(s.fileName)
-	if errReadFile != nil {
-		return errReadFile
 	}
 
 	var database map[int]*models.Order
-	if len(b) == 0 {
-		return errors.New("empty")
-	} else {
-		if errUnmarshal := json.Unmarshal(b, &database); errUnmarshal != nil {
-			return errUnmarshal
-		}
+	var err error
+
+	// запишем данные из файла в database
+	if database, err = s.loadOrders(); err != nil {
+		return err
 	}
 
 	// создаем список всех заказов, что нам передали
-	var list = make([]*models.Order, 0, len(oSet))
+	var list = make([]*models.Order, 0, len(orderIDs))
 	for _, v := range database {
-		if _, ok := oSet[v.ID]; ok {
+		if _, ok := orderIDs[v.ID]; ok {
 			list = append(list, v)
 		}
 	}
 
 	// когда передаются ID заказов, которых нет в базе данных
-	if len(list) != len(oSet) {
+	if len(list) != len(orderIDs) {
 		return errors.New("invalid order IDs")
 	}
 
@@ -175,10 +131,22 @@ func (s *Storage) CheckOrdersForDelivery(oSet map[int]struct{}) error {
 		list[i].Hash = hash.GenerateHash() // HASH
 	}
 
-	bWrite, errMarshal := json.MarshalIndent(database, "  ", "  ")
-	if errMarshal != nil {
-		return errMarshal
+	return s.saveOrders(database)
+}
+
+// GetOrder пересылает полный объект заказа
+func (s *Storage) GetOrder(o *models.Order) (*models.Order, error) {
+	var database map[int]*models.Order
+	var err error
+	var ok bool
+
+	if database, err = readJSONFileToMap[int, *models.Order](s); err != nil {
+		return nil, err
 	}
 
-	return os.WriteFile(s.fileName, bWrite, 0666)
+	if o, ok = database[o.ID]; !ok {
+		return nil, e.ErrOrderNotFound
+	}
+
+	return o, nil
 }

@@ -9,8 +9,12 @@ import (
 // ordersCmd represents the Orders command
 var ordersCmd = &cobra.Command{
 	Use:   "orders",
-	Short: "",
-	Long:  ``,
+	Short: "Совершить операцию с заказом",
+	Long: `Команда "orders" содержит перечень команд для обработки заказа.
+
+Для большей информации вызовите команду:
+  orders [command] --help
+`,
 }
 
 func InitordersCmd(parentCmd *cobra.Command, c *cli.CLI) {

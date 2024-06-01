@@ -1,9 +1,7 @@
 package storage
 
 import (
-	"encoding/json"
 	"errors"
-	"os"
 	"sort"
 	"time"
 
@@ -13,18 +11,12 @@ import (
 
 // AddReturn добавляет заказ в хранилище
 func (s *Storage) AddReturn(o *models.Order) error {
-	b, errReadFile := os.ReadFile(s.fileName)
-	if errReadFile != nil {
-		return errReadFile
-	}
-
 	var database map[int]*models.Order
-	if len(b) == 0 {
-		database = make(map[int]*models.Order) // если файл пуст, инициализируем пустую мапу
-	} else {
-		if errUnmarshal := json.Unmarshal(b, &database); errUnmarshal != nil {
-			return errUnmarshal
-		}
+	var err error
+
+	// запишем данные из файла в database
+	if database, err = s.loadOrders(); err != nil {
+		return err
 	}
 
 	if _, ok := database[o.ID]; !ok {
@@ -45,35 +37,24 @@ func (s *Storage) AddReturn(o *models.Order) error {
 		return errors.New("invalid status")
 	}
 
-	// помечаем заказ как принятый
+	// помечаем заказ как возвращенный
 	o.Status = models.StatusReturned
 	o.Hash = hash.GenerateHash() // HASH
 	database[o.ID] = o
 
-	bWrite, errMarshal := json.MarshalIndent(database, "  ", "  ")
-	if errMarshal != nil {
-		return errMarshal
-	}
-
-	return os.WriteFile(s.fileName, bWrite, 0666)
+	return s.saveOrders(database)
 }
 
 // ListReturns передает список возвратов от start-ого возврата до finish-ого возврата
 // почти ничем не отличается от ListOrders
 // добавляется условие в цикле и немного меняется срез
 func (s *Storage) ListReturns(start, finish int) ([]*models.Order, error) {
-	b, errReadFile := os.ReadFile(s.fileName)
-	if errReadFile != nil {
-		return nil, errReadFile
-	}
-
 	var database map[int]*models.Order
-	if len(b) == 0 {
-		return nil, errors.New("empty")
-	} else {
-		if errUnmarshal := json.Unmarshal(b, &database); errUnmarshal != nil {
-			return nil, errUnmarshal
-		}
+	var err error
+
+	// запишем данные из файла в database
+	if database, err = s.loadOrders(); err != nil {
+		return nil, err
 	}
 
 	// записываем в список

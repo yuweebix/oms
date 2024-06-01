@@ -9,4 +9,4 @@ import (
 
 type initCommand func(*cobra.Command, *cli.CLI)
 
-var InitCommands = []initCommand{orders.InitordersCmd, returns.InitreturnCmd}
+var InitCommands = []initCommand{orders.InitordersCmd, returns.InitReturnCmd}
