@@ -3,7 +3,7 @@ package models
 type Status int
 
 const (
-	StatusPending = iota + 1
+	StatusPending = iota
 	StatusAccepted
 	StatusDelivered
 	StatusReturned

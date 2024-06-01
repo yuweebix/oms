@@ -18,4 +18,7 @@ var (
 
 	// other
 	ErrEmpty = errors.New("empty")
+
+	// cli
+	ErrDateFormatInvalid = errors.New("invalid date format")
 )

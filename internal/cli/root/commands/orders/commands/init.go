@@ -7,6 +7,7 @@ import (
 	"github.com/spf13/cobra"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/cli"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/cli/flags"
+	e "gitlab.ozon.dev/yuweebix/homework-1/internal/errors"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/models"
 )
 
@@ -14,15 +15,16 @@ type initCommand func(*cobra.Command, *cli.CLI)
 
 var InitCommands = []initCommand{InitAcceptCmd, InitDeliverCmd, InitListCmd, InitReturnCmd}
 
-// InitAcceptCmd принимает данные о закази на принятие
+// InitAcceptCmd принимает данные о заказе на принятие
 func InitAcceptCmd(parentCmd *cobra.Command, c *cli.CLI) {
-	var orderID, userID, expiry int
+	var orderID, userID int
+	var expiry string
 	var err error
 
 	// инициализируем флаги
-	acceptCmd.Flags().IntP("order_id", "o", flags.DefaultIntValue, "ID заказа(*)")
-	acceptCmd.Flags().IntP("user_id", "u", flags.DefaultIntValue, "ID получателя(*)")
-	acceptCmd.Flags().IntP("expiry", "e", flags.DefaultIntValue, "Срок хранения в днях(*)")
+	acceptCmd.Flags().IntP("order_id", "o", 0, "ID заказа(*)")
+	acceptCmd.Flags().IntP("user_id", "u", 0, "ID получателя(*)")
+	acceptCmd.Flags().StringP("expiry", "e", "", "Срок хранения в формате YYYY-MM-DD(*)")
 
 	// помечаем флаги как обязательные
 	acceptCmd.MarkFlagRequired("order_id")
@@ -41,15 +43,20 @@ func InitAcceptCmd(parentCmd *cobra.Command, c *cli.CLI) {
 		if err != nil {
 			return err
 		}
-		expiry, err = cmd.Flags().GetInt("expiry")
+		expiry, err = cmd.Flags().GetString("expiry")
 		if err != nil {
 			return err
+		}
+
+		expiryDate, err := time.Parse("2006-01-02", expiry)
+		if err != nil {
+			return e.ErrDateFormatInvalid
 		}
 
 		err = c.Service.AcceptOrder(&models.Order{
 			ID:     orderID,
 			User:   &models.User{ID: userID},
-			Expiry: time.Now().UTC().AddDate(0, 0, expiry),
+			Expiry: expiryDate,
 		})
 		if err != nil {
 			return err
@@ -62,7 +69,7 @@ func InitAcceptCmd(parentCmd *cobra.Command, c *cli.CLI) {
 	parentCmd.AddCommand(acceptCmd)
 }
 
-// InitDeliverCmd принимает данные о закази на принятие
+// InitDeliverCmd принимает данные о заказе на принятие
 func InitDeliverCmd(parentCmd *cobra.Command, c *cli.CLI) {
 	var orderIDs []int
 	var err error
@@ -93,7 +100,7 @@ func InitDeliverCmd(parentCmd *cobra.Command, c *cli.CLI) {
 	parentCmd.AddCommand(deliverCmd)
 }
 
-// InitListCmd принимает данные о закази на принятие
+// InitListCmd принимает данные о заказе на принятие
 func InitListCmd(parentCmd *cobra.Command, c *cli.CLI) {
 	var userID int
 	var limit int
@@ -147,7 +154,7 @@ func InitListCmd(parentCmd *cobra.Command, c *cli.CLI) {
 	parentCmd.AddCommand(listCmd)
 }
 
-// InitReturnCmd принимает данные о закази на принятие
+// InitReturnCmd принимает данные о заказе на принятие
 func InitReturnCmd(parentCmd *cobra.Command, c *cli.CLI) {
 	var orderID int
 	var err error
