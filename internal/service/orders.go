@@ -30,8 +30,8 @@ func (m *Service) ReturnOrder(o *models.Order) error {
 }
 
 // ListOrders выводит список заказов
-func (m *Service) ListOrders(limit int) ([]*models.Order, error) {
-	return m.Storage.ListOrders(limit)
+func (m *Service) ListOrders(userID int, limit int) ([]*models.Order, error) {
+	return m.Storage.ListOrders(userID, limit)
 }
 
 // DeliverOrders принимает список заказов, переводит их в форму для обработки в хранилище

@@ -3,11 +3,12 @@ package models
 import "time"
 
 type Order struct {
-	ID     int       `json:"order_id"`
-	User   *User     `json:"user_id"`
-	Expiry time.Time `json:"stored_until"`
-	Status Status    `json:"status"`
-	Hash   string    `json:"hash"`
+	ID        int       `json:"order_id"`
+	User      *User     `json:"user_id"`
+	Expiry    time.Time `json:"stored_until"`
+	Status    Status    `json:"status"`
+	Hash      string    `json:"hash"`
+	CreatedAt time.Time `json:"created_at"`
 }
 
 type User struct {

@@ -8,6 +8,7 @@ import (
 	e "gitlab.ozon.dev/yuweebix/homework-1/internal/errors"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/models"
 	"gitlab.ozon.dev/yuweebix/homework-1/pkg/hash"
+	"golang.org/x/exp/maps"
 )
 
 // AddOrder добавляет заказ в хранилище
@@ -27,6 +28,7 @@ func (s *Storage) AddOrder(o *models.Order) error {
 
 	// помечаем заказ как принятый
 	o.Status = models.StatusAccepted
+	o.CreatedAt = time.Now().UTC()
 	o.Hash = hash.GenerateHash() // HASH
 	database[o.ID] = o
 
@@ -54,8 +56,8 @@ func (s *Storage) DeleteOrder(o *models.Order) error {
 	return s.saveOrders(database)
 }
 
-// ListOrders передает список заказов с указанным максимумом
-func (s *Storage) ListOrders(limit int) ([]*models.Order, error) {
+// ListOrders передает список заказов клиента с указанным максимумом
+func (s *Storage) ListOrders(userID int, limit int) ([]*models.Order, error) {
 	var database map[int]*models.Order
 	var err error
 
@@ -65,15 +67,17 @@ func (s *Storage) ListOrders(limit int) ([]*models.Order, error) {
 	}
 
 	// записываем в список
-	var list = make([]*models.Order, 0, len(database))
+	var list []*models.Order
 	for _, v := range database {
-		list = append(list, v)
-		// v.Hash = hash.GenerateHash() // HASH
+		// совпадает ID клиента и заказы находятся в пвз
+		if v.User.ID == userID && v.Status == models.StatusAccepted || v.Status == models.StatusReturned {
+			list = append(list, v)
+		}
 	}
 
-	// сортим по order_id, чтобы список был постоянным
+	// сортим по времени получения
 	sort.Slice(list, func(i, j int) bool {
-		return list[i].ID < list[j].ID
+		return list[i].CreatedAt.After(list[j].CreatedAt)
 	})
 
 	// чтобы не выходить за границы, берем минимум из длины листа и лимита
@@ -98,9 +102,9 @@ func (s *Storage) CheckOrdersForDelivery(orderIDs map[int]struct{}) error {
 
 	// создаем список всех заказов, что нам передали
 	var list = make([]*models.Order, 0, len(orderIDs))
-	for _, v := range database {
-		if _, ok := orderIDs[v.ID]; ok {
-			list = append(list, v)
+	for _, id := range maps.Keys(orderIDs) {
+		if order, ok := database[id]; ok {
+			list = append(list, order)
 		}
 	}
 

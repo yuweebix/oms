@@ -33,13 +33,16 @@ func InitAcceptCmd(parentCmd *cobra.Command, c *cli.CLI) {
 	acceptCmd.RunE = func(cmd *cobra.Command, args []string) error {
 		defer flags.ResetFlags(cmd)
 
-		if orderID, err = cmd.Flags().GetInt("order_id"); err != nil {
+		orderID, err = cmd.Flags().GetInt("order_id")
+		if err != nil {
 			return err
 		}
-		if userID, err = cmd.Flags().GetInt("user_id"); err != nil {
+		userID, err = cmd.Flags().GetInt("user_id")
+		if err != nil {
 			return err
 		}
-		if expiry, err = cmd.Flags().GetInt("expiry"); err != nil {
+		expiry, err = cmd.Flags().GetInt("expiry")
+		if err != nil {
 			return err
 		}
 
@@ -92,17 +95,26 @@ func InitDeliverCmd(parentCmd *cobra.Command, c *cli.CLI) {
 
 // InitListCmd принимает данные о закази на принятие
 func InitListCmd(parentCmd *cobra.Command, c *cli.CLI) {
+	var userID int
 	var limit int
 	var list []*models.Order
 	var err error
 
 	// инициализируем флаги
+	listCmd.Flags().IntP("user_id", "u", flags.DefaultIntValue, "ID клиента(*)")
 	listCmd.Flags().IntP("limit", "l", flags.DefaultIntValue, "ограничение по количеству заказов в списке") // опциональный флаг
+
+	// помечаем флаги как обязательные
+	listCmd.MarkFlagRequired("user_id")
 
 	// функционал команды
 	listCmd.RunE = func(cmd *cobra.Command, args []string) error {
 		defer flags.ResetFlags(cmd)
 
+		userID, err = cmd.Flags().GetInt("user_id")
+		if err != nil {
+			return err
+		}
 		limit, err = cmd.Flags().GetInt("limit")
 		if err != nil {
 			return err
@@ -113,7 +125,7 @@ func InitListCmd(parentCmd *cobra.Command, c *cli.CLI) {
 			limit = 10
 		}
 
-		list, err = c.Service.ListOrders(limit)
+		list, err = c.Service.ListOrders(userID, limit)
 		if err != nil {
 			return err
 		}
@@ -149,6 +161,7 @@ func InitReturnCmd(parentCmd *cobra.Command, c *cli.CLI) {
 	// функционал команды
 	returnCmd.RunE = func(cmd *cobra.Command, args []string) error {
 		defer flags.ResetFlags(cmd)
+
 		orderID, err = cmd.Flags().GetInt("order_id")
 		if err != nil {
 			return err

@@ -5,11 +5,11 @@ import "gitlab.ozon.dev/yuweebix/homework-1/internal/models"
 // storage интерфейс необходимых сервису функций для реализации хранилищем
 type storage interface {
 	// заказы
-	AddOrder(o *models.Order) error                         // добавить заказ в хранилище
-	DeleteOrder(o *models.Order) error                      // удалить заказ из хранилища
-	ListOrders(limit int) ([]*models.Order, error)          // выдать список заказов
-	CheckOrdersForDelivery(orderIDs map[int]struct{}) error // отметить заказы при выдачи
-	GetOrder(o *models.Order) (*models.Order, error)        // получить заказ
+	AddOrder(o *models.Order) error                            // добавить заказ в хранилище
+	DeleteOrder(o *models.Order) error                         // удалить заказ из хранилища
+	ListOrders(userID int, limit int) ([]*models.Order, error) // выдать список заказов клиента
+	CheckOrdersForDelivery(orderIDs map[int]struct{}) error    // отметить заказы при выдачи
+	GetOrder(o *models.Order) (*models.Order, error)           // получить заказ
 
 	// возвраты
 	AddReturn(o *models.Order) error                        // отметить доставленный заказ как вернутый
