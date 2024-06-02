@@ -6,8 +6,8 @@ import (
 
 	"github.com/spf13/cobra"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/cli"
-	"gitlab.ozon.dev/yuweebix/homework-1/internal/cli/flags"
-	e "gitlab.ozon.dev/yuweebix/homework-1/internal/errors"
+	e "gitlab.ozon.dev/yuweebix/homework-1/internal/cli/errors"
+	f "gitlab.ozon.dev/yuweebix/homework-1/internal/cli/flags"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/models"
 )
 
@@ -22,38 +22,36 @@ func InitAcceptCmd(parentCmd *cobra.Command, c *cli.CLI) {
 	var err error
 
 	// инициализируем флаги
-	acceptCmd.Flags().IntP("order_id", "o", 0, "ID заказа(*)")
-	acceptCmd.Flags().IntP("user_id", "u", 0, "ID получателя(*)")
-	acceptCmd.Flags().StringP("expiry", "e", "", "Срок хранения в формате YYYY-MM-DD(*)")
+	acceptCmd.Flags().IntP(f.OrderIDL, f.OrderIDS, f.DefaultIntValue, f.OrderIDU)
+	acceptCmd.Flags().IntP(f.UserIDL, f.UserIDS, f.DefaultIntValue, f.UserIDU)
+	acceptCmd.Flags().StringP(f.ExpiryL, f.ExpiryS, f.DefaultStringValue, f.ExpiryU)
 
 	// помечаем флаги как обязательные
-	acceptCmd.MarkFlagRequired("order_id")
-	acceptCmd.MarkFlagRequired("user_id")
-	acceptCmd.MarkFlagRequired("expiry")
+	acceptCmd.MarkFlagRequired(f.OrderIDL)
+	acceptCmd.MarkFlagRequired(f.UserIDL)
+	acceptCmd.MarkFlagRequired(f.ExpiryL)
 
 	// функционал команды
 	acceptCmd.RunE = func(cmd *cobra.Command, args []string) error {
-		defer flags.ResetFlags(cmd)
-
-		orderID, err = cmd.Flags().GetInt("order_id")
+		orderID, err = cmd.Flags().GetInt(f.OrderIDL)
 		if err != nil {
 			return err
 		}
-		userID, err = cmd.Flags().GetInt("user_id")
+		userID, err = cmd.Flags().GetInt(f.UserIDL)
 		if err != nil {
 			return err
 		}
-		expiry, err = cmd.Flags().GetString("expiry")
+		expiry, err = cmd.Flags().GetString(f.ExpiryL)
 		if err != nil {
 			return err
 		}
 
-		expiryDate, err := time.Parse("2006-01-02", expiry)
+		expiryDate, err := time.Parse(time.DateOnly, expiry)
 		if err != nil {
 			return e.ErrDateFormatInvalid
 		}
 
-		err = c.Service.AcceptOrder(&models.Order{
+		err = c.Service().AcceptOrder(&models.Order{
 			ID:     orderID,
 			User:   &models.User{ID: userID},
 			Expiry: expiryDate,
@@ -75,21 +73,19 @@ func InitDeliverCmd(parentCmd *cobra.Command, c *cli.CLI) {
 	var err error
 
 	// инициализируем флаги
-	deliverCmd.Flags().IntSliceP("order_ids", "o", flags.DefaultIntSliceValue(), "Список ID заказов")
+	deliverCmd.Flags().IntSliceP(f.OrderIDsL, f.OrderIDsS, f.DefaultIntSliceValue(), f.OrderIDsU)
 
 	// помечаем флаги как обязательные
-	deliverCmd.MarkFlagRequired("orders_id")
+	deliverCmd.MarkFlagRequired(f.OrderIDsL)
 
 	// функционал команды
 	deliverCmd.RunE = func(cmd *cobra.Command, args []string) error {
-		defer flags.ResetFlags(cmd)
-
-		orderIDs, err = cmd.Flags().GetIntSlice("order_ids")
+		orderIDs, err = cmd.Flags().GetIntSlice(f.OrderIDsL)
 		if err != nil {
 			return err
 		}
 
-		err = c.Service.DeliverOrders(orderIDs)
+		err = c.Service().DeliverOrders(orderIDs)
 		if err != nil {
 			return err
 		}
@@ -104,25 +100,29 @@ func InitDeliverCmd(parentCmd *cobra.Command, c *cli.CLI) {
 func InitListCmd(parentCmd *cobra.Command, c *cli.CLI) {
 	var userID int
 	var limit int
+	var isStored bool
 	var list []*models.Order
 	var err error
 
 	// инициализируем флаги
-	listCmd.Flags().IntP("user_id", "u", flags.DefaultIntValue, "ID клиента(*)")
-	listCmd.Flags().IntP("limit", "l", flags.DefaultIntValue, "ограничение по количеству заказов в списке") // опциональный флаг
+	listCmd.Flags().IntP(f.UserIDL, f.UserIDS, f.DefaultIntValue, f.UserIDU)
+	listCmd.Flags().IntP(f.LimitL, f.LimitS, f.DefaultIntValue, f.LimitU)            // опциональный флаг
+	listCmd.Flags().BoolP(f.IsStoredL, f.IsStoredS, f.DefaultBoolValue, f.IsStoredU) // опциональный флаг
 
 	// помечаем флаги как обязательные
-	listCmd.MarkFlagRequired("user_id")
+	listCmd.MarkFlagRequired(f.UserIDL)
 
 	// функционал команды
 	listCmd.RunE = func(cmd *cobra.Command, args []string) error {
-		defer flags.ResetFlags(cmd)
-
-		userID, err = cmd.Flags().GetInt("user_id")
+		userID, err = cmd.Flags().GetInt(f.UserIDL)
 		if err != nil {
 			return err
 		}
-		limit, err = cmd.Flags().GetInt("limit")
+		limit, err = cmd.Flags().GetInt(f.LimitL)
+		if err != nil {
+			return err
+		}
+		isStored, err = cmd.Flags().GetBool(f.IsStoredL)
 		if err != nil {
 			return err
 		}
@@ -132,7 +132,7 @@ func InitListCmd(parentCmd *cobra.Command, c *cli.CLI) {
 			limit = 10
 		}
 
-		list, err = c.Service.ListOrders(userID, limit)
+		list, err = c.Service().ListOrders(userID, limit, isStored)
 		if err != nil {
 			return err
 		}
@@ -160,21 +160,19 @@ func InitReturnCmd(parentCmd *cobra.Command, c *cli.CLI) {
 	var err error
 
 	// инициализируем флаги
-	returnCmd.Flags().IntP("order_id", "o", flags.DefaultIntValue, "ID заказа(*)")
+	returnCmd.Flags().IntP(f.OrderIDL, f.OrderIDS, f.DefaultIntValue, f.OrderIDU)
 
 	// помечаем флаги как обязательные
-	returnCmd.MarkFlagRequired("orders_id")
+	returnCmd.MarkFlagRequired(f.OrderIDL)
 
 	// функционал команды
 	returnCmd.RunE = func(cmd *cobra.Command, args []string) error {
-		defer flags.ResetFlags(cmd)
-
-		orderID, err = cmd.Flags().GetInt("order_id")
+		orderID, err = cmd.Flags().GetInt(f.OrderIDL)
 		if err != nil {
 			return err
 		}
 
-		err := c.Service.ReturnOrder(&models.Order{
+		err := c.Service().ReturnOrder(&models.Order{
 			ID: orderID,
 		})
 

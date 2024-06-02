@@ -17,7 +17,7 @@ var ordersCmd = &cobra.Command{
 `,
 }
 
-func InitordersCmd(parentCmd *cobra.Command, c *cli.CLI) {
+func InitOrdersCmd(parentCmd *cobra.Command, c *cli.CLI) {
 	for _, init := range commands.InitCommands {
 		init(ordersCmd, c)
 	}

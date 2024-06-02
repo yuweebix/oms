@@ -1,46 +1,142 @@
 package service
 
 import (
+	"sort"
 	"time"
 
-	e "gitlab.ozon.dev/yuweebix/homework-1/internal/errors"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/models"
+	e "gitlab.ozon.dev/yuweebix/homework-1/internal/service/errors"
+	"gitlab.ozon.dev/yuweebix/homework-1/pkg/hash"
 )
 
 // AcceptOrder принимает заказ от курьера
-func (m *Service) AcceptOrder(o *models.Order) error {
+func (s *Service) AcceptOrder(o *models.Order) error {
 	// срок хранения превышен
 	if o.Expiry.Before(time.Now()) {
 		return e.ErrOrderExpired
 	}
 
-	return m.Storage.AddOrder(o)
+	// помечаем заказ как принятый
+	o.Status = models.StatusAccepted
+	o.CreatedAt = time.Now().UTC()
+	o.Hash = hash.GenerateHash() // HASH
+
+	return s.storage.AddOrder(o)
 }
 
 // ReturnOrder возвращает заказ курьеру
-func (m *Service) ReturnOrder(o *models.Order) error {
+func (s *Service) ReturnOrder(o *models.Order) error {
 	var err error
-	if o, err = m.Storage.GetOrder(o); err != nil {
+
+	if o, err = s.storage.GetOrder(o); err != nil {
 		return err
 	}
+
 	if o.Expiry.After(time.Now()) {
 		return e.ErrOrderNotExpired
 	}
-	return m.Storage.DeleteOrder(o)
+
+	o.Hash = hash.GenerateHash() // HASH
+
+	return s.storage.DeleteOrder(o)
 }
 
 // ListOrders выводит список заказов
-func (m *Service) ListOrders(userID int, limit int) ([]*models.Order, error) {
-	return m.Storage.ListOrders(userID, limit)
+func (s *Service) ListOrders(userID int, limit int, isStored bool) ([]*models.Order, error) {
+	var list []*models.Order
+	var err error
+
+	list, err = s.storage.ListOrders(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	if isStored {
+		list = filterByStoredOrders(list)
+	}
+
+	// сортим по времени получения
+	sort.Slice(list, func(i, j int) bool {
+		return list[i].CreatedAt.After(list[j].CreatedAt)
+	})
+
+	// 0 <= limit <= len(list)
+	if limit > len(list) {
+		limit = len(list)
+	} else if limit < 0 {
+		limit = 0
+	}
+
+	return list[:limit], nil
 }
 
 // DeliverOrders принимает список заказов, переводит их в форму для обработки в хранилище
-func (m *Service) DeliverOrders(orderIDs []int) error {
+func (s *Service) DeliverOrders(orderIDs []int) error {
+	var list []*models.Order
+	var err error
+
 	// создаем сет для быстрого поиска
 	set := make(map[int]struct{}, len(orderIDs))
 	for _, v := range orderIDs {
 		set[v] = struct{}{}
 	}
 
-	return m.Storage.CheckOrdersForDelivery(set)
+	if len(orderIDs) == 0 {
+		return e.ErrEmpty
+	}
+
+	list, err = s.storage.GetOrdersForDelivery(set)
+	if err != nil {
+		return err
+	}
+
+	// когда передаются ID заказов, которых нет в базе данных
+	if len(list) != len(orderIDs) {
+		return e.ErrOrderNotFound
+	}
+
+	// Можно выдавать только те заказы, которые были приняты от курьера и чей срок хранения меньше текущей даты.
+	// Все ID заказов должны принадлежать только одному клиенту.
+	user_id := list[0].User.ID
+	for _, v := range list {
+		if v.Status != models.StatusAccepted {
+			return e.ErrStatusInvalid
+		}
+		if v.User.ID != user_id {
+			return e.ErrUserInvalid
+		}
+		if v.Expiry.Before(time.Now()) {
+			return e.ErrOrderExpired
+		}
+	}
+
+	// помечаем как переданные клиенту и оставляем два дня на возврат
+	for i := range list {
+		list[i].Status = models.StatusDelivered
+		list[i].ReturnBy = time.Now().UTC().AddDate(0, 0, 2)
+		list[i].Hash = hash.GenerateHash() // HASH
+
+		err = s.storage.DeleteOrder(list[i])
+		if err != nil {
+			return err
+		}
+
+		err = s.storage.AddOrder(list[i])
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// filterByStoredOrders фильтрует заказы, оставляя только те, что находятся в ПВЗ
+func filterByStoredOrders(list []*models.Order) []*models.Order {
+	var newList []*models.Order
+	for _, o := range list {
+		if o.Status == models.StatusAccepted || o.Status == models.StatusReturned {
+			newList = append(newList, o)
+		}
+	}
+	return newList
 }

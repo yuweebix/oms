@@ -24,16 +24,11 @@ func main() {
 		os.Exit(1)
 	}
 	// инициализируем модуль
-	service := service.NewService(service.Deps{
-		Storage: storageJSON,
-	})
+	service := service.NewService(storageJSON)
 	// инициализируем CLI
-	c := cli.NewCLI(cli.Deps{
-		Service: service,
-	})
+	c := cli.NewCLI(service)
 	// инициализируем главную команду
 	root.InitRootCmd(c)
-
 	// считываем команды
 	in := bufio.NewReader(os.Stdin)
 	for {
@@ -45,12 +40,11 @@ func main() {
 			os.Exit(1)
 		}
 
-		text = strings.TrimSuffix(text, "\r") // Для Windows
-		text = strings.TrimSuffix(text, "\n")
-		args := strings.Split(text, " ")
+		text = strings.TrimSpace(text)
+		args := strings.Fields(text)
 
 		// выходим
-		if args[0] == "exit" {
+		if len(args) > 0 && args[0] == "exit" {
 			break
 		}
 

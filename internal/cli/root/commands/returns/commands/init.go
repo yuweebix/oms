@@ -6,7 +6,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/cli"
-	"gitlab.ozon.dev/yuweebix/homework-1/internal/cli/flags"
+	f "gitlab.ozon.dev/yuweebix/homework-1/internal/cli/flags"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/models"
 )
 
@@ -20,26 +20,24 @@ func InitAcceptCmd(parentCmd *cobra.Command, c *cli.CLI) {
 	var err error
 
 	// инициализируем флаги
-	acceptCmd.Flags().IntP("order_id", "o", flags.DefaultIntValue, "ID заказа(*)")
-	acceptCmd.Flags().IntP("user_id", "u", flags.DefaultIntValue, "ID получателя(*)")
+	acceptCmd.Flags().IntP(f.OrderIDL, f.OrderIDS, f.DefaultIntValue, f.OrderIDU)
+	acceptCmd.Flags().IntP(f.UserIDL, f.UserIDS, f.DefaultIntValue, f.UserIDU)
 
 	// помечаем флаги как обязательные
-	acceptCmd.MarkFlagRequired("order_id")
-	acceptCmd.MarkFlagRequired("user_id")
+	acceptCmd.MarkFlagRequired(f.OrderIDL)
+	acceptCmd.MarkFlagRequired(f.UserIDL)
 
 	acceptCmd.RunE = func(cmd *cobra.Command, args []string) error {
-		defer flags.ResetFlags(cmd)
-
-		orderID, err = cmd.Flags().GetInt("order_id")
+		orderID, err = cmd.Flags().GetInt(f.OrderIDL)
 		if err != nil {
 			return err
 		}
-		userID, err = cmd.Flags().GetInt("user_id")
+		userID, err = cmd.Flags().GetInt(f.UserIDL)
 		if err != nil {
 			return err
 		}
 
-		err := c.Service.AcceptReturn(&models.Order{
+		err := c.Service().AcceptReturn(&models.Order{
 			ID:   orderID,
 			User: &models.User{ID: userID},
 		})
@@ -61,17 +59,15 @@ func InitListCmd(parentCmd *cobra.Command, c *cli.CLI) {
 	var err error
 
 	// инициализируем флаги
-	listCmd.Flags().IntP("start", "s", flags.DefaultIntValue, "нижняя граница по количеству заказов в списке")   // опциональный флаг
-	listCmd.Flags().IntP("finish", "f", flags.DefaultIntValue, "верхняя граница по количеству заказов в списке") // опциональный флаг
+	listCmd.Flags().IntP(f.StartL, f.StartS, f.DefaultIntValue, f.StartU)    // опциональный флаг
+	listCmd.Flags().IntP(f.FinishL, f.FinishS, f.DefaultIntValue, f.FinishU) // опциональный флаг
 
 	listCmd.RunE = func(cmd *cobra.Command, args []string) error {
-		defer flags.ResetFlags(cmd)
-
-		start, err = cmd.Flags().GetInt("start")
+		start, err = cmd.Flags().GetInt(f.StartL)
 		if err != nil {
 			return err
 		}
-		finish, err = cmd.Flags().GetInt("finish")
+		finish, err = cmd.Flags().GetInt(f.FinishL)
 		if err != nil {
 			return err
 		}
@@ -84,7 +80,7 @@ func InitListCmd(parentCmd *cobra.Command, c *cli.CLI) {
 			finish = math.MaxInt
 		}
 
-		list, err = c.Service.ListReturns(start, finish)
+		list, err = c.Service().ListReturns(start, finish)
 		if err != nil {
 			return err
 		}

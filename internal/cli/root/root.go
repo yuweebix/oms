@@ -3,6 +3,7 @@ package root
 import (
 	"github.com/spf13/cobra"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/cli"
+	"gitlab.ozon.dev/yuweebix/homework-1/internal/cli/flags"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/cli/root/commands"
 )
 
@@ -24,6 +25,7 @@ var rootCmd = &cobra.Command{
 
 func Execute(c *cli.CLI, args []string) error {
 	rootCmd.SetArgs(args)
+	defer flags.ResetAllFlags(rootCmd)
 	err := rootCmd.Execute()
 	if err != nil {
 		return err

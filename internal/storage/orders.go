@@ -1,14 +1,8 @@
 package storage
 
 import (
-	"errors"
-	"sort"
-	"time"
-
-	e "gitlab.ozon.dev/yuweebix/homework-1/internal/errors"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/models"
-	"gitlab.ozon.dev/yuweebix/homework-1/pkg/hash"
-	"golang.org/x/exp/maps"
+	e "gitlab.ozon.dev/yuweebix/homework-1/internal/storage/errors"
 )
 
 // AddOrder добавляет заказ в хранилище
@@ -26,10 +20,6 @@ func (s *Storage) AddOrder(o *models.Order) error {
 		return e.ErrOrderAlreadyExists
 	}
 
-	// помечаем заказ как принятый
-	o.Status = models.StatusAccepted
-	o.CreatedAt = time.Now().UTC()
-	o.Hash = hash.GenerateHash() // HASH
 	database[o.ID] = o
 
 	return s.saveOrders(database)
@@ -49,15 +39,13 @@ func (s *Storage) DeleteOrder(o *models.Order) error {
 		return e.ErrOrderNotFound
 	}
 
-	// o.Hash = hash.GenerateHash() // HASH
-
 	delete(database, o.ID)
 
 	return s.saveOrders(database)
 }
 
-// ListOrders передает список заказов клиента с указанным максимумом
-func (s *Storage) ListOrders(userID int, limit int) ([]*models.Order, error) {
+// ListOrders возвращает список заказов клиента
+func (s *Storage) ListOrders(userID int) ([]*models.Order, error) {
 	var database map[int]*models.Order
 	var err error
 
@@ -69,73 +57,36 @@ func (s *Storage) ListOrders(userID int, limit int) ([]*models.Order, error) {
 	// записываем в список
 	var list []*models.Order
 	for _, v := range database {
-		// совпадает ID клиента и заказы находятся в пвз
-		if v.User.ID == userID && v.Status == models.StatusAccepted || v.Status == models.StatusReturned {
+		// совпадает ID клиента
+		if v.User.ID == userID {
 			list = append(list, v)
 		}
 	}
 
-	// сортим по времени получения
-	sort.Slice(list, func(i, j int) bool {
-		return list[i].CreatedAt.After(list[j].CreatedAt)
-	})
-
-	// чтобы не выходить за границы, берем минимум из длины листа и лимита
-	return list[:min(len(list), limit)], nil
+	return list, nil
 }
 
 // DeliverOrder помечает заказ, как переданный клиенту
 // Его можно будет вернуть в течение двух дней
 // на вход даются IDs заказов в форме сета
-func (s *Storage) CheckOrdersForDelivery(orderIDs map[int]struct{}) error {
-	if len(orderIDs) == 0 {
-		return errors.New("empty")
-	}
-
+func (s *Storage) GetOrdersForDelivery(orderIDs map[int]struct{}) ([]*models.Order, error) {
 	var database map[int]*models.Order
 	var err error
 
 	// запишем данные из файла в database
 	if database, err = s.loadOrders(); err != nil {
-		return err
+		return nil, err
 	}
 
 	// создаем список всех заказов, что нам передали
 	var list = make([]*models.Order, 0, len(orderIDs))
-	for _, id := range maps.Keys(orderIDs) {
+	for id := range orderIDs {
 		if order, ok := database[id]; ok {
 			list = append(list, order)
 		}
 	}
 
-	// когда передаются ID заказов, которых нет в базе данных
-	if len(list) != len(orderIDs) {
-		return errors.New("invalid order IDs")
-	}
-
-	// Можно выдавать только те заказы, которые были приняты от курьера и чей срок хранения меньше текущей даты.
-	// Все ID заказов должны принадлежать только одному клиенту.
-	user_id := list[0].User.ID
-	for _, v := range list {
-		if v.Status != models.StatusAccepted {
-			return errors.New("invalid status")
-		}
-		if v.User.ID != user_id {
-			return errors.New("invalid user ID")
-		}
-		if v.Expiry.Before(time.Now()) {
-			return errors.New("expired")
-		}
-	}
-
-	// помечаем как переданные клиенту и оставляем два дня на возврат
-	for i := range list {
-		list[i].Status = models.StatusDelivered
-		list[i].Expiry = time.Now().UTC().AddDate(0, 0, 2)
-		list[i].Hash = hash.GenerateHash() // HASH
-	}
-
-	return s.saveOrders(database)
+	return list, nil
 }
 
 // GetOrder пересылает полный объект заказа

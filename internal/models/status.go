@@ -1,10 +1,10 @@
 package models
 
-type Status int
+type Status string
 
 const (
-	StatusPending = iota
-	StatusAccepted
-	StatusDelivered
-	StatusReturned
+	StatusPending   = Status("pending")
+	StatusAccepted  = Status("accepted")
+	StatusDelivered = Status("delivered")
+	StatusReturned  = Status("returned")
 )

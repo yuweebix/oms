@@ -9,7 +9,7 @@ var acceptCmd = &cobra.Command{
 	Long: `Команда "accept" используется для принятия заказа от курьера. 
 
 Пример использования:
-  orders accept --order_id=420 --user_id=69 --expiry=7
+  orders accept --order_id=420 --user_id=69 --expiry=2025-05-05
 
 Условия:
   - Заказ не может быть принят дважды.
@@ -41,7 +41,7 @@ var listCmd = &cobra.Command{
 	Long: `Команда "list" используется для получения списка заказов.
 
 Пример использования:
-  orders list -user_id=123 --limit=10
+  orders list -user_id=123 --limit=10 -is_stored=true
 
 Команда возвращает заказы клиента, которые находятся в ПВЗ, с возможностью ограничить количество возвращаемых заказов.`,
 	SilenceUsage:  true,
