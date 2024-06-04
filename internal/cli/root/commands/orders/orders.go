@@ -22,11 +22,5 @@ func InitOrdersCmd(parentCmd *cobra.Command, c *cli.CLI) {
 		init(ordersCmd, c)
 	}
 
-	ordersCmd.Run = func(cmd *cobra.Command, args []string) {
-		if len(args) == 0 {
-			cmd.Help()
-		}
-	}
-
 	parentCmd.AddCommand(ordersCmd)
 }

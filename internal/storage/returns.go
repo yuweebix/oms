@@ -5,17 +5,14 @@ import (
 )
 
 // ListReturns передает список возвратов от start-ого возврата до finish-ого возврата
-func (s *Storage) ListReturns() ([]*models.Order, error) {
-	var database map[int]*models.Order
-	var err error
-
+func (s *Storage) ListReturns() (list []*models.Order, err error) {
 	// запишем данные из файла в database
-	if database, err = s.loadOrders(); err != nil {
+	database, err := s.loadOrders()
+	if err != nil {
 		return nil, err
 	}
 
 	// записываем в список
-	var list = make([]*models.Order, 0, len(database))
 	for _, v := range database {
 		if v.Status == models.StatusReturned {
 			list = append(list, v)

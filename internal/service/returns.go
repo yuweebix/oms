@@ -9,11 +9,8 @@ import (
 )
 
 // AcceptReturn принимает возврат от клиента
-func (s Service) AcceptReturn(o *models.Order) error {
-	var ro *models.Order // ro - return order
-	var err error
-
-	ro, err = s.storage.GetOrder(o)
+func (s Service) AcceptReturn(o *models.Order) (err error) {
+	ro, err := s.storage.GetOrder(o) // ro - return order
 	if err != nil {
 		return err
 	}
@@ -45,10 +42,7 @@ func (s Service) AcceptReturn(o *models.Order) error {
 }
 
 // ListReturns выводит список заказов
-func (s Service) ListReturns(start, finish int) ([]*models.Order, error) {
-	var list []*models.Order
-	var err error
-
+func (s Service) ListReturns(start, finish int) (list []*models.Order, err error) {
 	list, err = s.storage.ListReturns()
 	if err != nil {
 		return nil, err
@@ -61,11 +55,9 @@ func (s Service) ListReturns(start, finish int) ([]*models.Order, error) {
 		start = 1
 	}
 
-	// 0 <= finish <= len(list)
-	if finish > len(list) {
+	// 1 <= finish <= len(list)
+	if finish < 1 || finish > len(list) {
 		finish = len(list)
-	} else if finish < 0 {
-		finish = 0
 	}
 
 	// start <= finish

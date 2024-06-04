@@ -6,12 +6,10 @@ import (
 )
 
 // AddOrder добавляет заказ в хранилище
-func (s *Storage) AddOrder(o *models.Order) error {
-	var database map[int]*models.Order
-	var err error
-
+func (s *Storage) AddOrder(o *models.Order) (err error) {
 	// запишем данные из файла в database
-	if database, err = s.loadOrders(); err != nil {
+	database, err := s.loadOrders()
+	if err != nil {
 		return err
 	}
 
@@ -26,12 +24,10 @@ func (s *Storage) AddOrder(o *models.Order) error {
 }
 
 // DeleteOrder удаляет заказ из хранилища
-func (s *Storage) DeleteOrder(o *models.Order) error {
-	var database map[int]*models.Order
-	var err error
-
+func (s *Storage) DeleteOrder(o *models.Order) (err error) {
 	// запишем данные из файла в database
-	if database, err = s.loadOrders(); err != nil {
+	database, err := s.loadOrders()
+	if err != nil {
 		return err
 	}
 
@@ -45,17 +41,14 @@ func (s *Storage) DeleteOrder(o *models.Order) error {
 }
 
 // ListOrders возвращает список заказов клиента
-func (s *Storage) ListOrders(userID int) ([]*models.Order, error) {
-	var database map[int]*models.Order
-	var err error
-
+func (s *Storage) ListOrders(userID int) (list []*models.Order, err error) {
 	// запишем данные из файла в database
-	if database, err = s.loadOrders(); err != nil {
+	database, err := s.loadOrders()
+	if err != nil {
 		return nil, err
 	}
 
 	// записываем в список
-	var list []*models.Order
 	for _, v := range database {
 		// совпадает ID клиента
 		if v.User.ID == userID {
@@ -67,19 +60,15 @@ func (s *Storage) ListOrders(userID int) ([]*models.Order, error) {
 }
 
 // DeliverOrder помечает заказ, как переданный клиенту
-// Его можно будет вернуть в течение двух дней
 // на вход даются IDs заказов в форме сета
-func (s *Storage) GetOrdersForDelivery(orderIDs map[int]struct{}) ([]*models.Order, error) {
-	var database map[int]*models.Order
-	var err error
-
+func (s *Storage) GetOrdersForDelivery(orderIDs map[int]struct{}) (list []*models.Order, err error) {
 	// запишем данные из файла в database
-	if database, err = s.loadOrders(); err != nil {
+	database, err := s.loadOrders()
+	if err != nil {
 		return nil, err
 	}
 
 	// создаем список всех заказов, что нам передали
-	var list = make([]*models.Order, 0, len(orderIDs))
 	for id := range orderIDs {
 		if order, ok := database[id]; ok {
 			list = append(list, order)
@@ -90,18 +79,17 @@ func (s *Storage) GetOrdersForDelivery(orderIDs map[int]struct{}) ([]*models.Ord
 }
 
 // GetOrder пересылает полный объект заказа
-func (s *Storage) GetOrder(o *models.Order) (*models.Order, error) {
-	var database map[int]*models.Order
-	var err error
-	var ok bool
-
-	if database, err = readJSONFileToMap[int, *models.Order](s); err != nil {
+func (s *Storage) GetOrder(o *models.Order) (result *models.Order, err error) {
+	// запишем данные из файла в database
+	database, err := s.loadOrders()
+	if err != nil {
 		return nil, err
 	}
 
-	if o, ok = database[o.ID]; !ok {
+	result, ok := database[o.ID]
+	if !ok {
 		return nil, e.ErrOrderNotFound
 	}
 
-	return o, nil
+	return result, nil
 }

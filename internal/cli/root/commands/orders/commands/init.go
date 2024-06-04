@@ -7,7 +7,6 @@ import (
 	"github.com/spf13/cobra"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/cli"
 	e "gitlab.ozon.dev/yuweebix/homework-1/internal/cli/errors"
-	f "gitlab.ozon.dev/yuweebix/homework-1/internal/cli/flags"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/models"
 )
 
@@ -17,36 +16,32 @@ var InitCommands = []initCommand{InitAcceptCmd, InitDeliverCmd, InitListCmd, Ini
 
 // InitAcceptCmd принимает данные о заказе на принятие
 func InitAcceptCmd(parentCmd *cobra.Command, c *cli.CLI) {
-	var orderID, userID int
-	var expiry string
-	var err error
-
 	// инициализируем флаги
-	acceptCmd.Flags().IntP(f.OrderIDL, f.OrderIDS, f.DefaultIntValue, f.OrderIDU)
-	acceptCmd.Flags().IntP(f.UserIDL, f.UserIDS, f.DefaultIntValue, f.UserIDU)
-	acceptCmd.Flags().StringP(f.ExpiryL, f.ExpiryS, f.DefaultStringValue, f.ExpiryU)
+	acceptCmd.Flags().IntP(flagOrderID.Unzip())
+	acceptCmd.Flags().IntP(flagUserID.Unzip())
+	acceptCmd.Flags().StringP(flagExpiry.Unzip())
 
 	// помечаем флаги как обязательные
-	acceptCmd.MarkFlagRequired(f.OrderIDL)
-	acceptCmd.MarkFlagRequired(f.UserIDL)
-	acceptCmd.MarkFlagRequired(f.ExpiryL)
+	acceptCmd.MarkFlagRequired(flagOrderID.Name)
+	acceptCmd.MarkFlagRequired(flagUserID.Name)
+	acceptCmd.MarkFlagRequired(flagExpiry.Name)
 
 	// функционал команды
-	acceptCmd.RunE = func(cmd *cobra.Command, args []string) error {
-		orderID, err = cmd.Flags().GetInt(f.OrderIDL)
+	acceptCmd.RunE = func(cmd *cobra.Command, args []string) (err error) {
+		orderID, err := cmd.Flags().GetInt(flagOrderID.Name)
 		if err != nil {
 			return err
 		}
-		userID, err = cmd.Flags().GetInt(f.UserIDL)
+		userID, err := cmd.Flags().GetInt(flagUserID.Name)
 		if err != nil {
 			return err
 		}
-		expiry, err = cmd.Flags().GetString(f.ExpiryL)
+		expiry, err := cmd.Flags().GetString(flagExpiry.Name)
 		if err != nil {
 			return err
 		}
 
-		expiryDate, err := time.Parse(time.DateOnly, expiry)
+		flagExpiryDate, err := time.Parse(time.DateOnly, expiry)
 		if err != nil {
 			return e.ErrDateFormatInvalid
 		}
@@ -54,7 +49,7 @@ func InitAcceptCmd(parentCmd *cobra.Command, c *cli.CLI) {
 		err = c.Service().AcceptOrder(&models.Order{
 			ID:     orderID,
 			User:   &models.User{ID: userID},
-			Expiry: expiryDate,
+			Expiry: flagExpiryDate,
 		})
 		if err != nil {
 			return err
@@ -69,26 +64,24 @@ func InitAcceptCmd(parentCmd *cobra.Command, c *cli.CLI) {
 
 // InitDeliverCmd принимает данные о заказе на принятие
 func InitDeliverCmd(parentCmd *cobra.Command, c *cli.CLI) {
-	var orderIDs []int
-	var err error
-
 	// инициализируем флаги
-	deliverCmd.Flags().IntSliceP(f.OrderIDsL, f.OrderIDsS, f.DefaultIntSliceValue(), f.OrderIDsU)
+	deliverCmd.Flags().IntSliceP(flagOrderIDs.Unzip())
 
 	// помечаем флаги как обязательные
-	deliverCmd.MarkFlagRequired(f.OrderIDsL)
+	deliverCmd.MarkFlagRequired(flagOrderIDs.Name)
 
 	// функционал команды
-	deliverCmd.RunE = func(cmd *cobra.Command, args []string) error {
-		orderIDs, err = cmd.Flags().GetIntSlice(f.OrderIDsL)
+	deliverCmd.RunE = func(cmd *cobra.Command, args []string) (err error) {
+		orderIDs, err := cmd.Flags().GetIntSlice(flagOrderIDs.Name)
 		if err != nil {
-			return err
+			return
 		}
 
 		err = c.Service().DeliverOrders(orderIDs)
 		if err != nil {
 			return err
 		}
+
 		fmt.Println("Заказы выданы.")
 		return nil
 	}
@@ -98,55 +91,36 @@ func InitDeliverCmd(parentCmd *cobra.Command, c *cli.CLI) {
 
 // InitListCmd принимает данные о заказе на принятие
 func InitListCmd(parentCmd *cobra.Command, c *cli.CLI) {
-	var userID int
-	var limit int
-	var isStored bool
-	var list []*models.Order
-	var err error
-
 	// инициализируем флаги
-	listCmd.Flags().IntP(f.UserIDL, f.UserIDS, f.DefaultIntValue, f.UserIDU)
-	listCmd.Flags().IntP(f.LimitL, f.LimitS, f.DefaultIntValue, f.LimitU)            // опциональный флаг
-	listCmd.Flags().BoolP(f.IsStoredL, f.IsStoredS, f.DefaultBoolValue, f.IsStoredU) // опциональный флаг
+	listCmd.Flags().IntP(flagUserID.Unzip())
+	listCmd.Flags().IntP(flagLimit.Unzip())     // опциональный флаг
+	listCmd.Flags().BoolP(flagIsStored.Unzip()) // опциональный флаг
 
 	// помечаем флаги как обязательные
-	listCmd.MarkFlagRequired(f.UserIDL)
+	listCmd.MarkFlagRequired(flagUserID.Name)
 
 	// функционал команды
-	listCmd.RunE = func(cmd *cobra.Command, args []string) error {
-		userID, err = cmd.Flags().GetInt(f.UserIDL)
+	listCmd.RunE = func(cmd *cobra.Command, args []string) (err error) {
+		userID, err := cmd.Flags().GetInt(flagUserID.Name)
 		if err != nil {
 			return err
 		}
-		limit, err = cmd.Flags().GetInt(f.LimitL)
+		limit, err := cmd.Flags().GetInt(flagLimit.Name)
 		if err != nil {
 			return err
 		}
-		isStored, err = cmd.Flags().GetBool(f.IsStoredL)
+		isStored, err := cmd.Flags().GetBool(flagIsStored.Name)
 		if err != nil {
 			return err
 		}
 
-		// стандартное значение
-		if limit < 1 {
-			limit = 10
-		}
-
-		list, err = c.Service().ListOrders(userID, limit, isStored)
+		list, err := c.Service().ListOrders(userID, limit, isStored)
 		if err != nil {
 			return err
 		}
 
 		for _, v := range list {
-			var status string
-			if v.Status == models.StatusAccepted {
-				status = "Принят"
-			} else if v.Status == models.StatusDelivered {
-				status = "Забран"
-			} else if v.Status == models.StatusReturned {
-				status = "Возвращен"
-			}
-			fmt.Printf("Заказ: %v. Получатель: %v. Хранится до %v. Статус: %v\n", v.ID, v.User.ID, v.Expiry, status)
+			fmt.Printf("Заказ: %v. Получатель: %v. Хранится до %v. Статус: %v\n", v.ID, v.User.ID, v.Expiry, getStatusMessage(v))
 		}
 		return nil
 	}
@@ -156,23 +130,20 @@ func InitListCmd(parentCmd *cobra.Command, c *cli.CLI) {
 
 // InitReturnCmd принимает данные о заказе на принятие
 func InitReturnCmd(parentCmd *cobra.Command, c *cli.CLI) {
-	var orderID int
-	var err error
-
 	// инициализируем флаги
-	returnCmd.Flags().IntP(f.OrderIDL, f.OrderIDS, f.DefaultIntValue, f.OrderIDU)
+	returnCmd.Flags().IntP(flagOrderID.Unzip())
 
 	// помечаем флаги как обязательные
-	returnCmd.MarkFlagRequired(f.OrderIDL)
+	returnCmd.MarkFlagRequired(flagOrderID.Name)
 
 	// функционал команды
-	returnCmd.RunE = func(cmd *cobra.Command, args []string) error {
-		orderID, err = cmd.Flags().GetInt(f.OrderIDL)
+	returnCmd.RunE = func(cmd *cobra.Command, args []string) (err error) {
+		orderID, err := cmd.Flags().GetInt(flagOrderID.Name)
 		if err != nil {
 			return err
 		}
 
-		err := c.Service().ReturnOrder(&models.Order{
+		err = c.Service().ReturnOrder(&models.Order{
 			ID: orderID,
 		})
 
@@ -185,4 +156,15 @@ func InitReturnCmd(parentCmd *cobra.Command, c *cli.CLI) {
 	}
 
 	parentCmd.AddCommand(returnCmd)
+}
+
+func getStatusMessage(o *models.Order) (status string) {
+	if o.Status == models.StatusAccepted {
+		status = "Принят"
+	} else if o.Status == models.StatusDelivered {
+		status = "Забран"
+	} else if o.Status == models.StatusReturned {
+		status = "Возвращен"
+	}
+	return status
 }

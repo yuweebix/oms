@@ -5,52 +5,17 @@ import (
 	"github.com/spf13/pflag"
 )
 
-// наименования флагов (long)
-const (
-	OrderIDL  = "order_id"
-	OrderIDsL = "order_ids"
-	UserIDL   = "user_id"
-	ExpiryL   = "expiry"
-	LimitL    = "limit"
-	IsStoredL = "is_stored"
-	StartL    = "start"
-	FinishL   = "finish"
-)
+// Flag структура параметров, необходимых для объявления флага в кобре
+type Flag[T any] struct {
+	Name      string
+	Shorthand string
+	Usage     string
+	Value     T
+}
 
-// shorthands
-const (
-	OrderIDS  = "o"
-	OrderIDsS = "o"
-	UserIDS   = "u"
-	ExpiryS   = "e"
-	LimitS    = "l"
-	IsStoredS = "i"
-	StartS    = "s"
-	FinishS   = "f"
-)
-
-// usage
-const (
-	OrderIDU  = "ID заказа(*)"
-	OrderIDsU = "IDs заказов(*)"
-	UserIDU   = "ID клиента(*)"
-	ExpiryU   = "Срок хранения в формате YYYY-MM-DD(*)"
-	LimitU    = "Ограничение по количеству заказов в списке"
-	IsStoredU = "Показать заказы клиента, находящиеся в нашем ПВЗ"
-	StartU    = "Нижняя граница по количеству заказов в списке"
-	FinishU   = "Верхняя граница по количеству заказов в списке"
-)
-
-// дефолтные значения
-const (
-	DefaultIntValue    = -1
-	DefaultStringValue = ""
-	DefaultBoolValue   = false
-)
-
-// DefaultIntSliceValue для обнуление значения флага
-func DefaultIntSliceValue() []int {
-	return []int{}
+// Unzip метод для распаковки значений в сеттер
+func (f *Flag[any]) Unzip() (string, string, any, string) {
+	return f.Name, f.Shorthand, f.Value, f.Usage
 }
 
 // resetFlags сбрасывает флаги, чтобы они не сохранялись в последующих вызовах
@@ -70,7 +35,7 @@ func resetFlags(cmd *cobra.Command) {
 		case pflag.Value:
 			switch flag.Value.Type() {
 			case "int":
-				flag.Value.Set("-1")
+				flag.Value.Set("0")
 			case "bool":
 				flag.Value.Set("false")
 			}

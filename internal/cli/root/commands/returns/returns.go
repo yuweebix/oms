@@ -20,8 +20,6 @@ func InitReturnCmd(parentCmd *cobra.Command, c *cli.CLI) {
 	for _, init := range commands.InitCommands {
 		init(returnsCmd, c)
 	}
-	returnsCmd.Run = func(cmd *cobra.Command, args []string) {
-		cmd.Help()
-	}
+
 	parentCmd.AddCommand(returnsCmd)
 }

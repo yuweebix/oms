@@ -25,31 +25,30 @@ func NewStorage(fileName string) (*Storage, error) {
 
 // readJSONFileToMap читает json файл и переносит его содержимое
 func readJSONFileToMap[K comparable, V any](s *Storage) (database map[K]V, err error) {
-	var b []byte
-
-	if b, err = os.ReadFile(s.fileName); err != nil {
-		return
+	b, err := os.ReadFile(s.fileName)
+	if err != nil {
+		return nil, err
 	}
 
 	// если файл пуст, инициализируем пустую мапу
 	if len(b) == 0 {
 		database = make(map[K]V)
-		return
+		return database, nil
 	}
 
-	if err = json.Unmarshal(b, &database); err != nil {
-		return
+	err = json.Unmarshal(b, &database)
+	if err != nil {
+		return nil, err
 	}
 
-	return
+	return database, nil
 }
 
 // writeMapToJSONFile переводит содержимое мапы в json
 func writeMapToJSONFile[K comparable, V any](s *Storage, database map[K]V) (err error) {
-	var b []byte
-
-	if b, err = json.MarshalIndent(database, "  ", "  "); err != nil {
-		return
+	b, err := json.MarshalIndent(database, "  ", "  ")
+	if err != nil {
+		return err
 	}
 
 	return os.WriteFile(s.fileName, b, 0666)

@@ -10,7 +10,7 @@ import (
 )
 
 // AcceptOrder принимает заказ от курьера
-func (s *Service) AcceptOrder(o *models.Order) error {
+func (s *Service) AcceptOrder(o *models.Order) (_ error) {
 	// срок хранения превышен
 	if o.Expiry.Before(time.Now()) {
 		return e.ErrOrderExpired
@@ -25,14 +25,14 @@ func (s *Service) AcceptOrder(o *models.Order) error {
 }
 
 // ReturnOrder возвращает заказ курьеру
-func (s *Service) ReturnOrder(o *models.Order) error {
-	var err error
-
-	if o, err = s.storage.GetOrder(o); err != nil {
+func (s *Service) ReturnOrder(o *models.Order) (err error) {
+	o, err = s.storage.GetOrder(o)
+	if err != nil {
 		return err
 	}
 
-	if o.Expiry.After(time.Now()) {
+	// если вернули, то не имеет значение прошёл ли срок хранения
+	if o.Status != models.StatusReturned && o.Expiry.After(time.Now()) {
 		return e.ErrOrderNotExpired
 	}
 
@@ -42,10 +42,7 @@ func (s *Service) ReturnOrder(o *models.Order) error {
 }
 
 // ListOrders выводит список заказов
-func (s *Service) ListOrders(userID int, limit int, isStored bool) ([]*models.Order, error) {
-	var list []*models.Order
-	var err error
-
+func (s *Service) ListOrders(userID int, limit int, isStored bool) (list []*models.Order, err error) {
 	list, err = s.storage.ListOrders(userID)
 	if err != nil {
 		return nil, err
@@ -61,20 +58,15 @@ func (s *Service) ListOrders(userID int, limit int, isStored bool) ([]*models.Or
 	})
 
 	// 0 <= limit <= len(list)
-	if limit > len(list) {
+	if limit <= 0 || limit > len(list) {
 		limit = len(list)
-	} else if limit < 0 {
-		limit = 0
 	}
 
 	return list[:limit], nil
 }
 
 // DeliverOrders принимает список заказов, переводит их в форму для обработки в хранилище
-func (s *Service) DeliverOrders(orderIDs []int) error {
-	var list []*models.Order
-	var err error
-
+func (s *Service) DeliverOrders(orderIDs []int) (err error) {
 	// создаем сет для быстрого поиска
 	set := make(map[int]struct{}, len(orderIDs))
 	for _, v := range orderIDs {
@@ -85,7 +77,7 @@ func (s *Service) DeliverOrders(orderIDs []int) error {
 		return e.ErrEmpty
 	}
 
-	list, err = s.storage.GetOrdersForDelivery(set)
+	list, err := s.storage.GetOrdersForDelivery(set)
 	if err != nil {
 		return err
 	}
@@ -131,8 +123,7 @@ func (s *Service) DeliverOrders(orderIDs []int) error {
 }
 
 // filterByStoredOrders фильтрует заказы, оставляя только те, что находятся в ПВЗ
-func filterByStoredOrders(list []*models.Order) []*models.Order {
-	var newList []*models.Order
+func filterByStoredOrders(list []*models.Order) (newList []*models.Order) {
 	for _, o := range list {
 		if o.Status == models.StatusAccepted || o.Status == models.StatusReturned {
 			newList = append(newList, o)
