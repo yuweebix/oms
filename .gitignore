@@ -1,2 +1,3 @@
+.gitignore
+.vscode
 orders.json
-.idea/
