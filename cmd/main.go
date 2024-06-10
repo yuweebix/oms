@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"log"
 	"os"
 	"strings"
 
@@ -13,20 +14,21 @@ import (
 )
 
 const (
-	fileName = "orders.json"
+	storageFileName = "orders.json"
+	logFileName     = "log.txt"
 )
 
 func main() {
 	// инициализируем хранилище
-	storageJSON, err := storage.NewStorage(fileName)
+	storageJSON, err := storage.NewStorage(storageFileName)
 	if err != nil {
-		fmt.Println(err.Error())
+		log.Fatalln(err)
 		os.Exit(1)
 	}
 	// инициализируем модуль
 	service := service.NewService(storageJSON)
 	// инициализируем CLI
-	c := cli.NewCLI(service)
+	c := cli.NewCLI(service, logFileName)
 	// инициализируем главную команду
 	root.InitRootCmd(c)
 	// считываем команды
@@ -36,7 +38,7 @@ func main() {
 
 		text, err := in.ReadString('\n')
 		if err != nil {
-			fmt.Println(err)
+			log.Fatalln(err)
 			os.Exit(1)
 		}
 
@@ -49,7 +51,8 @@ func main() {
 		}
 
 		// запускаем команду
-		if err := root.Execute(c, args); err != nil {
+		err = root.Execute(c, args)
+		if err != nil {
 			fmt.Println(err.Error())
 		}
 	}

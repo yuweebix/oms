@@ -1,7 +1,6 @@
 package commands
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -55,7 +54,7 @@ func InitAcceptCmd(parentCmd *cobra.Command, c *cli.CLI) {
 			return err
 		}
 
-		fmt.Println("Заказ принят.")
+		c.Logger.Println("Заказ принят.")
 		return nil
 	}
 
@@ -82,7 +81,7 @@ func InitDeliverCmd(parentCmd *cobra.Command, c *cli.CLI) {
 			return err
 		}
 
-		fmt.Println("Заказы выданы.")
+		c.Logger.Println("Заказы выданы.")
 		return nil
 	}
 
@@ -120,7 +119,7 @@ func InitListCmd(parentCmd *cobra.Command, c *cli.CLI) {
 		}
 
 		for _, v := range list {
-			fmt.Printf("Заказ: %v. Получатель: %v. Хранится до %v. Статус: %v\n", v.ID, v.User.ID, v.Expiry, getStatusMessage(v))
+			c.Logger.Printf("Заказ: %v. Получатель: %v. Хранится до %v. Статус: %v\n", v.ID, v.User.ID, v.Expiry, getStatusMessage(v))
 		}
 		return nil
 	}
@@ -151,7 +150,7 @@ func InitReturnCmd(parentCmd *cobra.Command, c *cli.CLI) {
 			return err
 		}
 
-		fmt.Println("Заказ вернут курьеру")
+		c.Logger.Println("Заказ вернут курьеру.")
 		return nil
 	}
 

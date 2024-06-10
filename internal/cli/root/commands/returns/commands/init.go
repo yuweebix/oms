@@ -1,8 +1,6 @@
 package commands
 
 import (
-	"fmt"
-
 	"github.com/spf13/cobra"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/cli"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/models"
@@ -40,7 +38,7 @@ func InitAcceptCmd(parentCmd *cobra.Command, c *cli.CLI) {
 			return err
 		}
 
-		fmt.Println("Заказ возвращен.")
+		c.Logger.Println("Заказ возвращен.")
 		return nil
 	}
 
@@ -69,7 +67,7 @@ func InitListCmd(parentCmd *cobra.Command, c *cli.CLI) {
 		}
 
 		for _, v := range list {
-			fmt.Printf("Возврат: %v. Получатель: %v.\n", v.ID, v.User.ID)
+			c.Logger.Printf("Возврат: %v. Получатель: %v.\n", v.ID, v.User.ID)
 		}
 		return nil
 	}

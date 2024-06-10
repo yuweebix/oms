@@ -1,6 +1,11 @@
 package cli
 
-import "gitlab.ozon.dev/yuweebix/homework-1/internal/models"
+import (
+	"log"
+	"os"
+
+	"gitlab.ozon.dev/yuweebix/homework-1/internal/models"
+)
 
 // service интерфейс необходимых CLI функций для реализации сервисом
 type service interface {
@@ -18,14 +23,29 @@ type service interface {
 // CLI представляет слой командной строки приложения
 type CLI struct {
 	service service
+	Logger  *log.Logger
 }
 
 // NewCLI конструктор с добавлением зависимостей
-func NewCLI(s service) *CLI {
-	return &CLI{service: s}
+func NewCLI(s service, logFileName string) *CLI {
+	logger := createLogger(logFileName)
+
+	return &CLI{
+		service: s,
+		Logger:  logger,
+	}
 }
 
 // Service возвращает интерфейс service
 func (c *CLI) Service() service {
 	return c.service
+}
+
+func createLogger(logFileName string) *log.Logger {
+	logFile, err := os.OpenFile(logFileName, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
+	if err != nil {
+		log.Fatal(err)
+	}
+	logger := log.New(logFile, "CLI: ", log.LstdFlags)
+	return logger
 }
