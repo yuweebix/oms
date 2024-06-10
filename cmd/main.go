@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/cli"
-	"gitlab.ozon.dev/yuweebix/homework-1/internal/cli/root"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/service"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/storage"
 )
@@ -25,12 +24,13 @@ func main() {
 		log.Fatalln(err)
 		os.Exit(1)
 	}
+
 	// инициализируем модуль
 	service := service.NewService(storageJSON)
+
 	// инициализируем CLI
 	c := cli.NewCLI(service, logFileName)
-	// инициализируем главную команду
-	root.InitRootCmd(c)
+
 	// считываем команды
 	in := bufio.NewReader(os.Stdin)
 	for {
@@ -51,9 +51,6 @@ func main() {
 		}
 
 		// запускаем команду
-		err = root.Execute(c, args)
-		if err != nil {
-			fmt.Println(err.Error())
-		}
+		c.Execute(args)
 	}
 }

@@ -4,6 +4,7 @@ import (
 	"log"
 	"os"
 
+	"gitlab.ozon.dev/yuweebix/homework-1/internal/cli/flags"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/models"
 )
 
@@ -23,22 +24,28 @@ type service interface {
 // CLI представляет слой командной строки приложения
 type CLI struct {
 	service service
-	Logger  *log.Logger
+	logger  *log.Logger
 }
 
 // NewCLI конструктор с добавлением зависимостей
 func NewCLI(s service, logFileName string) *CLI {
 	logger := createLogger(logFileName)
-
-	return &CLI{
+	c := &CLI{
 		service: s,
-		Logger:  logger,
+		logger:  logger,
 	}
+	c.initRootCmd()
+	return c
 }
 
-// Service возвращает интерфейс service
-func (c *CLI) Service() service {
-	return c.service
+// Execute выполняет команду CLI
+func (c *CLI) Execute(args []string) {
+	rootCmd.SetArgs(args)
+	defer flags.ResetAllFlags(rootCmd)
+	err := rootCmd.Execute()
+	if err != nil {
+		c.logger.Println(err)
+	}
 }
 
 func createLogger(logFileName string) *log.Logger {
