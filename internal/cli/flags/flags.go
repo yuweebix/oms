@@ -26,19 +26,11 @@ func resetFlags(cmd *cobra.Command) {
 	cmd.Flags().VisitAll(func(flag *pflag.Flag) {
 		switch flag.Value.(type) {
 		case pflag.SliceValue:
-			switch flag.Value.Type() {
-			case "intSlice":
-				if val, ok := flag.Value.(pflag.SliceValue); ok {
-					val.Replace([]string{})
-				}
-			}
+			flag.Value.(pflag.SliceValue).Replace([]string{})
+			flag.Changed = false
 		case pflag.Value:
-			switch flag.Value.Type() {
-			case "int":
-				flag.Value.Set("0")
-			case "bool":
-				flag.Value.Set("false")
-			}
+			flag.Value.Set("")
+			flag.Changed = false
 		}
 	})
 }

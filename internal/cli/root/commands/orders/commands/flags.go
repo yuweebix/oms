@@ -25,13 +25,13 @@ var (
 		Value:     0,
 	}
 	flagExpiry = f.Flag[string]{
-		Name:      "flagExpiry",
+		Name:      "expiry",
 		Shorthand: "e",
 		Usage:     "Срок хранения в формате YYYY-MM-DD(*)",
 		Value:     "",
 	}
 	flagLimit = f.Flag[int]{
-		Name:      "flagLimit",
+		Name:      "limit",
 		Shorthand: "l",
 		Usage:     "Ограничение по количеству заказов в списке",
 		Value:     0,

@@ -19,13 +19,13 @@ var (
 		Value:     0,
 	}
 	flagStart = f.Flag[int]{
-		Name:      "flagStart",
+		Name:      "start",
 		Shorthand: "s",
 		Usage:     "Нижняя граница по количеству заказов в списке",
 		Value:     0,
 	}
 	flagFinish = f.Flag[int]{
-		Name:      "flagFinish",
+		Name:      "finish",
 		Shorthand: "f",
 		Usage:     "Верхняя граница по количеству заказов в списке",
 		Value:     0,
