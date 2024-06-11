@@ -18,39 +18,43 @@ const (
 )
 
 func main() {
-	// инициализируем хранилище
+	// инициализируем хранилище, сервис и утилиту
 	storageJSON, err := storage.NewStorage(storageFileName)
 	if err != nil {
 		log.Fatalln(err)
 		os.Exit(1)
 	}
-
-	// инициализируем модуль
 	service := service.NewService(storageJSON)
-
-	// инициализируем CLI
 	c := cli.NewCLI(service, logFileName)
 
+	// инициализируем канал для ввода
+	ch := make(chan []string)
 	// считываем команды
-	in := bufio.NewReader(os.Stdin)
+	go func() {
+		in := bufio.NewReader(os.Stdin)
+		for {
+			fmt.Print("> ")
+
+			text, err := in.ReadString('\n')
+			if err != nil {
+				log.Fatalln(err)
+				os.Exit(1)
+			}
+
+			text = strings.TrimSpace(text)
+			args := strings.Fields(text)
+
+			// выходим
+			if len(args) > 0 && args[0] == "exit" {
+				break
+			}
+			ch <- args
+		}
+	}()
+
 	for {
-		fmt.Print("> ")
-
-		text, err := in.ReadString('\n')
-		if err != nil {
-			log.Fatalln(err)
-			os.Exit(1)
-		}
-
-		text = strings.TrimSpace(text)
-		args := strings.Fields(text)
-
-		// выходим
-		if len(args) > 0 && args[0] == "exit" {
-			break
-		}
-
 		// запускаем команду
+		args := <-ch
 		c.Execute(args)
 	}
 }

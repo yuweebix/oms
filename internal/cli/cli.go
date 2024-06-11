@@ -48,6 +48,7 @@ func (c *CLI) Execute(args []string) {
 	}
 }
 
+// createLogger вспомогательная функция для открытия файла и привязки к нему логгера
 func createLogger(logFileName string) *log.Logger {
 	logFile, err := os.OpenFile(logFileName, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
 	if err != nil {
