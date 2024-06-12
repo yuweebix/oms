@@ -294,5 +294,5 @@ func (c *CLI) initWorkersCmd(parentCmd *cobra.Command) {
 		return nil
 	}
 
-	parentCmd.AddCommand(parentCmd)
+	parentCmd.AddCommand(workersCmd)
 }
