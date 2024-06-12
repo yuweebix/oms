@@ -40,6 +40,17 @@ var returnsCmd = &cobra.Command{
   returns [command] --help`,
 }
 
+// workersCmd команда операций с рабочими
+var workersCmd = &cobra.Command{
+	Use:   "workers",
+	Short: "Изменить количество выполняющих команды рабочих горутин",
+	Long: `Команда "workers" изменяет количество рабочих [горутин].
+
+Пример использования:
+  workers --number 5
+	workers --number -5`,
+}
+
 // orders подкоманды
 
 // ordersAcceptCmd команда принятия заказа от курьера

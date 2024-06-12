@@ -12,7 +12,7 @@ type initCommand func(*cobra.Command)
 
 // Функции для получения списков команд и подкоманд
 func getInitCommands(c *CLI) []initCommand {
-	return []initCommand{c.initOrdersCmd, c.initReturnsCmd}
+	return []initCommand{c.initOrdersCmd, c.initReturnsCmd, c.initWorkersCmd}
 }
 
 func getInitOrdersSubcommands(c *CLI) []initCommand {
@@ -270,4 +270,29 @@ func (c *CLI) initReturnsListCmd(parentCmd *cobra.Command) {
 	}
 
 	parentCmd.AddCommand(returnsListCmd)
+}
+
+// initWorkersCmd принимает количество рабочих горутин
+func (c *CLI) initWorkersCmd(parentCmd *cobra.Command) {
+	// инициализируем флаги
+	workersCmd.Flags().IntP(flagWorkersNum.Unzip())
+
+	workersCmd.MarkFlagRequired(flagWorkersNum.Name)
+
+	workersCmd.RunE = func(cmd *cobra.Command, args []string) (err error) {
+		num, err := cmd.Flags().GetInt(flagWorkersNum.Name)
+		if err != nil {
+			return err
+		}
+
+		err = c.service.ChangeWorkersNumber(num)
+		if err != nil {
+			return err
+		}
+
+		c.logger.Println("Количество рабочих горутин было изменено.")
+		return nil
+	}
+
+	parentCmd.AddCommand(parentCmd)
 }

@@ -19,6 +19,9 @@ type service interface {
 	// возвраты
 	AcceptReturn(o *models.Order) error                     // логика принятия возврата от клиента
 	ListReturns(start, finish int) ([]*models.Order, error) // логика вывода возвратов
+
+	// рабочие
+	ChangeWorkersNumber(workersNum int) error // логика изменения количества рабочих горутин
 }
 
 // CLI представляет слой командной строки приложения

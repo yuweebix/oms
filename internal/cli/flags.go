@@ -63,3 +63,13 @@ var (
 		Value:     0,
 	}
 )
+
+// workers флаги
+var (
+	flagWorkersNum = f.Flag[int]{
+		Name:      "number",
+		Shorthand: "n",
+		Usage:     "количество рабочих",
+		Value:     0,
+	}
+)
