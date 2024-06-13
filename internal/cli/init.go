@@ -5,6 +5,7 @@ import (
 
 	"github.com/spf13/cobra"
 	e "gitlab.ozon.dev/yuweebix/homework-1/internal/cli/errors"
+	"gitlab.ozon.dev/yuweebix/homework-1/internal/cli/flags"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/models"
 )
 
@@ -64,15 +65,26 @@ func (c *CLI) initOrdersAcceptCmd(parentCmd *cobra.Command) {
 
 	// функционал команды
 	ordersAcceptCmd.RunE = func(cmd *cobra.Command, args []string) (err error) {
-		orderID, err := cmd.Flags().GetInt(flagOrderID.Name)
-		if err != nil {
-			return err
-		}
-		userID, err := cmd.Flags().GetInt(flagUserID.Name)
-		if err != nil {
-			return err
-		}
-		expiry, err := cmd.Flags().GetString(flagExpiry.Name)
+		orderID, userID, expiry, err := func() (orderID, userID int, expiry string, err error) {
+			c.mu.Lock()
+			defer c.mu.Unlock()
+			defer flags.ResetFlags(ordersAcceptCmd)
+
+			orderID, err = cmd.Flags().GetInt(flagOrderID.Name)
+			if err != nil {
+				return
+			}
+			userID, err = cmd.Flags().GetInt(flagUserID.Name)
+			if err != nil {
+				return
+			}
+			expiry, err = cmd.Flags().GetString(flagExpiry.Name)
+			if err != nil {
+				return
+			}
+
+			return
+		}()
 		if err != nil {
 			return err
 		}
@@ -108,9 +120,20 @@ func (c *CLI) initOrdersDeliverCmd(parentCmd *cobra.Command) {
 
 	// функционал команды
 	ordersDeliverCmd.RunE = func(cmd *cobra.Command, args []string) (err error) {
-		orderIDs, err := cmd.Flags().GetIntSlice(flagOrderIDs.Name)
-		if err != nil {
+		orderIDs, err := func() (orderIDs []int, err error) {
+			c.mu.Lock()
+			defer c.mu.Unlock()
+			defer flags.ResetFlags(ordersDeliverCmd)
+
+			orderIDs, err = cmd.Flags().GetIntSlice(flagOrderIDs.Name)
+			if err != nil {
+				return
+			}
+
 			return
+		}()
+		if err != nil {
+			return err
 		}
 
 		err = c.service.DeliverOrders(orderIDs)
@@ -137,15 +160,26 @@ func (c *CLI) initOrdersListCmd(parentCmd *cobra.Command) {
 
 	// функционал команды
 	ordersListCmd.RunE = func(cmd *cobra.Command, args []string) (err error) {
-		userID, err := cmd.Flags().GetInt(flagUserID.Name)
-		if err != nil {
-			return err
-		}
-		limit, err := cmd.Flags().GetInt(flagLimit.Name)
-		if err != nil {
-			return err
-		}
-		isStored, err := cmd.Flags().GetBool(flagIsStored.Name)
+		userID, limit, isStored, err := func() (userID, limit int, isStored bool, err error) {
+			c.mu.Lock()
+			defer c.mu.Unlock()
+			defer flags.ResetFlags(ordersListCmd)
+
+			userID, err = cmd.Flags().GetInt(flagUserID.Name)
+			if err != nil {
+				return
+			}
+			limit, err = cmd.Flags().GetInt(flagLimit.Name)
+			if err != nil {
+				return
+			}
+			isStored, err = cmd.Flags().GetBool(flagIsStored.Name)
+			if err != nil {
+				return
+			}
+
+			return
+		}()
 		if err != nil {
 			return err
 		}
@@ -174,7 +208,18 @@ func (c *CLI) initOrdersReturnCmd(parentCmd *cobra.Command) {
 
 	// функционал команды
 	ordersReturnCmd.RunE = func(cmd *cobra.Command, args []string) (err error) {
-		orderID, err := cmd.Flags().GetInt(flagOrderID.Name)
+		orderID, err := func() (orderID int, err error) {
+			c.mu.Lock()
+			defer c.mu.Unlock()
+			defer flags.ResetFlags(ordersReturnCmd)
+
+			orderID, err = cmd.Flags().GetInt(flagOrderID.Name)
+			if err != nil {
+				return
+			}
+
+			return
+		}()
 		if err != nil {
 			return err
 		}
@@ -218,18 +263,29 @@ func (c *CLI) initReturnsAcceptCmd(parentCmd *cobra.Command) {
 	returnsAcceptCmd.MarkFlagRequired(flagUserID.Name)
 
 	returnsAcceptCmd.RunE = func(cmd *cobra.Command, args []string) (err error) {
-		orderID, err := cmd.Flags().GetInt(flagOrderID.Name)
-		if err != nil {
-			return err
-		}
-		flagUserID.Value, err = cmd.Flags().GetInt(flagUserID.Name)
+		orderID, userID, err := func() (orderID, userID int, err error) {
+			c.mu.Lock()
+			defer c.mu.Unlock()
+			defer flags.ResetFlags(returnsAcceptCmd)
+
+			orderID, err = cmd.Flags().GetInt(flagOrderID.Name)
+			if err != nil {
+				return
+			}
+			userID, err = cmd.Flags().GetInt(flagUserID.Name)
+			if err != nil {
+				return
+			}
+
+			return
+		}()
 		if err != nil {
 			return err
 		}
 
 		err = c.service.AcceptReturn(&models.Order{
 			ID:   orderID,
-			User: &models.User{ID: flagUserID.Value},
+			User: &models.User{ID: userID},
 		})
 		if err != nil {
 			return err
@@ -249,11 +305,22 @@ func (c *CLI) initReturnsListCmd(parentCmd *cobra.Command) {
 	returnsListCmd.Flags().IntP(flagFinish.Unzip()) // опциональный флаг
 
 	returnsListCmd.RunE = func(cmd *cobra.Command, args []string) (err error) {
-		start, err := cmd.Flags().GetInt(flagStart.Name)
-		if err != nil {
-			return err
-		}
-		finish, err := cmd.Flags().GetInt(flagFinish.Name)
+		start, finish, err := func() (start, finish int, err error) {
+			c.mu.Lock()
+			defer c.mu.Unlock()
+			defer flags.ResetFlags(returnsListCmd)
+
+			start, err = cmd.Flags().GetInt(flagStart.Name)
+			if err != nil {
+				return
+			}
+			finish, err = cmd.Flags().GetInt(flagFinish.Name)
+			if err != nil {
+				return
+			}
+
+			return
+		}()
 		if err != nil {
 			return err
 		}
@@ -280,7 +347,18 @@ func (c *CLI) initWorkersCmd(parentCmd *cobra.Command) {
 	workersCmd.MarkFlagRequired(flagWorkersNum.Name)
 
 	workersCmd.RunE = func(cmd *cobra.Command, args []string) (err error) {
-		num, err := cmd.Flags().GetInt(flagWorkersNum.Name)
+		num, err := func() (num int, err error) {
+			c.mu.Lock()
+			defer c.mu.Unlock()
+			defer flags.ResetFlags(workersCmd)
+
+			num, err = cmd.Flags().GetInt(flagWorkersNum.Name)
+			if err != nil {
+				return
+			}
+
+			return
+		}()
 		if err != nil {
 			return err
 		}

@@ -3,8 +3,8 @@ package cli
 import (
 	"log"
 	"os"
+	"sync"
 
-	"gitlab.ozon.dev/yuweebix/homework-1/internal/cli/flags"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/models"
 )
 
@@ -28,6 +28,7 @@ type service interface {
 type CLI struct {
 	service service
 	logger  *log.Logger
+	mu      *sync.Mutex
 }
 
 // NewCLI конструктор с добавлением зависимостей
@@ -36,6 +37,7 @@ func NewCLI(s service, logFileName string) *CLI {
 	c := &CLI{
 		service: s,
 		logger:  logger,
+		mu:      &sync.Mutex{},
 	}
 	c.initRootCmd()
 	return c
@@ -43,8 +45,10 @@ func NewCLI(s service, logFileName string) *CLI {
 
 // Execute выполняет команду CLI
 func (c *CLI) Execute(args []string) {
+	c.mu.Lock()
 	rootCmd.SetArgs(args)
-	defer flags.ResetAllFlags(rootCmd)
+	c.mu.Unlock()
+
 	err := rootCmd.Execute()
 	if err != nil {
 		c.logger.Println(err)

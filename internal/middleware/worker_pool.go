@@ -63,11 +63,11 @@ func (wp *WorkerPool) worker() {
 				return
 			default:
 				if checkCmd(job.cmd) {
-					wp.notificationChan <- fmt.Sprintf("команда [%v] начала исполняться", job.cmd)
+					wp.notificationChan <- fmt.Sprintf("команда %v начала исполняться", job.cmd)
 				}
 				job.task()
 				if checkCmd(job.cmd) {
-					wp.notificationChan <- fmt.Sprintf("команда [%v] закончила исполняться", job.cmd)
+					wp.notificationChan <- fmt.Sprintf("команда %v закончила исполняться", job.cmd)
 				}
 			}
 		}
