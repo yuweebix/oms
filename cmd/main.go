@@ -11,19 +11,33 @@ import (
 	"sync"
 	"syscall"
 
+	"github.com/joho/godotenv"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/cli"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/middleware"
+	"gitlab.ozon.dev/yuweebix/homework-1/internal/repository"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/service"
-	"gitlab.ozon.dev/yuweebix/homework-1/internal/storage"
 )
 
 const (
-	storageFileName = "orders.json"
-	logFileName     = "log.txt"
-	numWorkers      = 5 // начальное количество рабочих в пуле
+	// storageFileName = "orders.json"
+	// logFileName     = "log.txt"
+	numWorkers = 5 // начальное количество рабочих в пуле
 )
 
 func main() {
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatalf("Error loading .env file: %v", err)
+	}
+	connString := fmt.Sprintf(
+		"postgres://%s:%s@%s:%s/%s",
+		os.Getenv("POSTGRES_USER"),
+		os.Getenv("POSTGRES_PASSWORD"),
+		os.Getenv("POSTGRES_HOST"),
+		os.Getenv("POSTGRES_PORT"),
+		os.Getenv("POSTGRES_DB"),
+	)
+
 	wg := sync.WaitGroup{}
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -40,12 +54,19 @@ func main() {
 	}
 
 	// инициализируем хранилище, сервис и утилиту
-	storageJSON, err := storage.NewStorage(storageFileName)
+	// storageJSON, err := storage.NewStorage(storageFileName)
+	// if err != nil {
+	// 	log.Fatalln(err)
+	// }
+	// service := service.NewService(storageJSON, wp)
+	// c := cli.NewCLI(service, logFileName)
+
+	repository, err := repository.NewRepository(ctx, connString)
 	if err != nil {
 		log.Fatalln(err)
 	}
-	service := service.NewService(storageJSON, wp)
-	c := cli.NewCLI(service, logFileName)
+	service := service.NewService(repository, wp)
+	c := cli.NewCLI(service, connString)
 
 	wp.Start()
 

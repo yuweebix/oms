@@ -21,8 +21,12 @@ type Repository struct {
 	db  *pgx.Conn
 }
 
-func NewRepository(ctx context.Context, db *pgx.Conn) *Repository {
-	return &Repository{ctx: ctx, db: db}
+func NewRepository(ctx context.Context, connString string) (*Repository, error) {
+	conn, err := pgx.Connect(ctx, connString)
+	if err != nil {
+		return nil, err
+	}
+	return &Repository{ctx: ctx, db: conn}, nil
 }
 
 func toModelsOrder(so *schemas.Order) (mo *models.Order) {
