@@ -10,12 +10,10 @@ import (
 
 const (
 	ordersTable = "orders"
-	usersTable  = "users"
 )
 
 var (
 	ordersColumns = []string{"id", "user_id", "stored_until", "return_by", "status", "hash", "created_at"}
-	usersColumns  = []string{"id"}
 )
 
 type Repository struct {
