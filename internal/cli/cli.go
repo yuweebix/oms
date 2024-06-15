@@ -59,7 +59,7 @@ func (c *CLI) Execute(args []string) {
 func createLogger(logFileName string) *log.Logger {
 	logFile, err := os.OpenFile(logFileName, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalln(err)
 	}
 	logger := log.New(logFile, "CLI: ", log.LstdFlags)
 	return logger

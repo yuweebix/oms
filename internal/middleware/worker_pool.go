@@ -11,6 +11,7 @@ import (
 
 const (
 	maxGoroutines = 1_000_000
+	numJobs       = 100
 )
 
 // job представляет задание, передаваемое в пул рабочих
@@ -41,7 +42,7 @@ func NewWorkerPool(ctx context.Context, numWorkers int, notificationChan chan st
 
 	ctx, cancel := context.WithCancel(ctx)
 	return &WorkerPool{
-		jobs:             make(chan job, 100), // рандомное значение
+		jobs:             make(chan job, numJobs),
 		numWorkers:       numWorkers,
 		notificationChan: notificationChan,
 		cancel:           cancel,

@@ -36,14 +36,12 @@ func main() {
 	wp, err := middleware.NewWorkerPool(ctx, numWorkers, notificationChan)
 	if err != nil {
 		log.Fatalln(err)
-		os.Exit(1)
 	}
 
 	// инициализируем хранилище, сервис и утилиту
 	storageJSON, err := storage.NewStorage(storageFileName)
 	if err != nil {
 		log.Fatalln(err)
-		os.Exit(1)
 	}
 	service := service.NewService(storageJSON, wp)
 	c := cli.NewCLI(service, logFileName)
@@ -51,8 +49,8 @@ func main() {
 	wp.Start()
 
 	// инициализируем канал для считывания команд
-	// и каналом для синхронизации
-	ch := make(chan []string)
+	// и каналами для синхронизации
+	commandChan := make(chan []string)
 	inSig := make(chan struct{})
 	outSig := make(chan struct{})
 	var wg sync.WaitGroup
@@ -65,10 +63,9 @@ func main() {
 		for {
 			// считываем команду
 			<-outSig
-			text, err := in.ReadString('\n')
+			text, err := in.ReadString('\n') // TODO: добавить прерывание ввода здесь при получении <-ctx.Done()
 			if err != nil {
 				log.Fatalln(err)
-				os.Exit(1)
 			}
 			inSig <- struct{}{}
 
@@ -81,7 +78,7 @@ func main() {
 				break
 			}
 
-			ch <- args
+			commandChan <- args
 		}
 	}()
 
@@ -117,7 +114,7 @@ func main() {
 			wp.Stop()
 			wg.Wait() // Ждем завершения всех горутин
 			return
-		case args := <-ch:
+		case args := <-commandChan:
 			wp.Enqueue(ctx, func() { c.Execute(args) }, args)
 		}
 	}
