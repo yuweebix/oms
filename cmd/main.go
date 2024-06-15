@@ -24,6 +24,7 @@ const (
 )
 
 func main() {
+	wg := sync.WaitGroup{}
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
@@ -53,7 +54,6 @@ func main() {
 	commandChan := make(chan []string)
 	inSig := make(chan struct{})
 	outSig := make(chan struct{})
-	var wg sync.WaitGroup
 
 	// горутина для считывания команд
 	wg.Add(1)
@@ -63,7 +63,7 @@ func main() {
 		for {
 			// считываем команду
 			<-outSig
-			text, err := in.ReadString('\n') // TODO: добавить прерывание ввода здесь при получении <-ctx.Done()
+			text, err := in.ReadString('\n')
 			if err != nil {
 				log.Fatalln(err)
 			}
@@ -73,12 +73,17 @@ func main() {
 			args := strings.Fields(text)
 
 			// выходим
-			if len(args) > 0 && args[0] == "exit" {
-				cancel()
-				break
-			}
+			select {
+			case <-ctx.Done():
+				return
+			default:
+				if len(args) > 0 && args[0] == "exit" {
+					cancel()
+					return
+				}
 
-			commandChan <- args
+				commandChan <- args
+			}
 		}
 	}()
 
@@ -111,6 +116,7 @@ func main() {
 			return
 		case <-sigs:
 			cancel()
+			fmt.Println("\nНажмите Enter, чтобы завершить программу.")
 			wp.Stop()
 			wg.Wait() // Ждем завершения всех горутин
 			return
