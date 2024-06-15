@@ -5,8 +5,8 @@ import (
 	e "gitlab.ozon.dev/yuweebix/homework-1/internal/storage/errors"
 )
 
-// AddOrder добавляет заказ в хранилище
-func (s *Storage) AddOrder(o *models.Order) (err error) {
+// CreateOrder добавляет заказ в хранилище
+func (s *Storage) CreateOrder(o *models.Order) (err error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -46,8 +46,8 @@ func (s *Storage) DeleteOrder(o *models.Order) (err error) {
 	return s.saveOrders(database)
 }
 
-// ListOrders возвращает список заказов клиента
-func (s *Storage) ListOrders(userID int) (list []*models.Order, err error) {
+// GetOrders возвращает список заказов клиента
+func (s *Storage) GetOrders(userID int) (list []*models.Order, err error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
@@ -68,8 +68,7 @@ func (s *Storage) ListOrders(userID int) (list []*models.Order, err error) {
 	return list, nil
 }
 
-// DeliverOrder помечает заказ, как переданный клиенту
-// на вход даются IDs заказов в форме сета
+// GetOrdersForDelivery возваращает список заказов клиенту на выдачу
 func (s *Storage) GetOrdersForDelivery(orderIDs map[int]struct{}) (list []*models.Order, err error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()

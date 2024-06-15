@@ -38,12 +38,12 @@ func (s Service) AcceptReturn(o *models.Order) (err error) {
 	if err != nil {
 		return err
 	}
-	return s.storage.AddOrder(ro)
+	return s.storage.CreateOrder(ro)
 }
 
 // ListReturns выводит список заказов
 func (s Service) ListReturns(start, finish int) (list []*models.Order, err error) {
-	list, err = s.storage.ListReturns()
+	list, err = s.storage.GetReturns()
 	if err != nil {
 		return nil, err
 	}

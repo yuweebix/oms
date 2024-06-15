@@ -21,7 +21,7 @@ func (s *Service) AcceptOrder(o *models.Order) (_ error) {
 	o.CreatedAt = time.Now().UTC()
 	o.Hash = hash.GenerateHash() // HASH
 
-	return s.storage.AddOrder(o)
+	return s.storage.CreateOrder(o)
 }
 
 // ReturnOrder возвращает заказ курьеру
@@ -43,7 +43,7 @@ func (s *Service) ReturnOrder(o *models.Order) (err error) {
 
 // ListOrders выводит список заказов
 func (s *Service) ListOrders(userID int, limit int, isStored bool) (list []*models.Order, err error) {
-	list, err = s.storage.ListOrders(userID)
+	list, err = s.storage.GetOrders(userID)
 	if err != nil {
 		return nil, err
 	}
@@ -113,7 +113,7 @@ func (s *Service) DeliverOrders(orderIDs []int) (err error) {
 			return err
 		}
 
-		err = s.storage.AddOrder(list[i])
+		err = s.storage.CreateOrder(list[i])
 		if err != nil {
 			return err
 		}

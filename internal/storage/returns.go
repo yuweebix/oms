@@ -4,8 +4,8 @@ import (
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/models"
 )
 
-// ListReturns передает список возвратов от start-ого возврата до finish-ого возврата
-func (s *Storage) ListReturns() (list []*models.Order, err error) {
+// GetReturns передает список возвратов от start-ого возврата до finish-ого возврата
+func (s *Storage) GetReturns() (list []*models.Order, err error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
