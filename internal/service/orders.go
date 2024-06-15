@@ -1,6 +1,7 @@
 package service
 
 import (
+	"errors"
 	"sort"
 	"time"
 
@@ -108,13 +109,19 @@ func (s *Service) DeliverOrders(orderIDs []int) (err error) {
 		list[i].ReturnBy = time.Now().UTC().AddDate(0, 0, 2)
 		list[i].Hash = hash.GenerateHash() // HASH
 
-		err = s.storage.DeleteOrder(list[i])
+		err = s.storage.UpdateOrder(list[i])
 		if err != nil {
-			return err
-		}
+			if errors.Is(err, errors.ErrUnsupported) {
+				err = s.storage.DeleteOrder(list[i])
+				if err != nil {
+					return err
+				}
 
-		err = s.storage.CreateOrder(list[i])
-		if err != nil {
+				err = s.storage.CreateOrder(list[i])
+				if err != nil {
+					return err
+				}
+			}
 			return err
 		}
 	}

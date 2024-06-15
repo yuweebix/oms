@@ -25,7 +25,7 @@ func (r *Repository) CreateOrder(o *models.Order) (err error) {
 		Values(o.Unzip()).
 		PlaceholderFormat(sq.Dollar)
 
-	// преобразуем в сырой запрос
+	// преобразуем в сырой вид
 	rawQuery, args, err := query.ToSql()
 	if err != nil {
 		return err
@@ -60,7 +60,7 @@ func (r *Repository) DeleteOrder(o *models.Order) (err error) {
 		Where(sq.Eq{"id": o.ID}).
 		PlaceholderFormat(sq.Dollar)
 
-	// преобразуем в сырой запрос
+	// преобразуем в сырой вид
 	rawQuery, args, err := query.ToSql()
 	if err != nil {
 		return err
@@ -72,6 +72,47 @@ func (r *Repository) DeleteOrder(o *models.Order) (err error) {
 	}
 
 	// коммитим
+	err = tx.Commit(r.ctx)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// UpdateOrder обновляет данные заказа в бд
+func (r *Repository) UpdateOrder(o *models.Order) (err error) {
+	// начинаем транзакцию
+	tx, err := r.db.BeginTx(r.ctx, pgx.TxOptions{IsoLevel: pgx.Serializable})
+	if err != nil {
+		return err
+	}
+	// если закоммититься, то откатить ничего не получится
+	defer tx.Rollback(r.ctx)
+
+	// создаем sql запрос
+	query := sq.Update(ordersTable).
+		Set("user_id", o.User.ID).
+		Set("stored_until", o.Expiry).
+		Set("return_by", o.ReturnBy).
+		Set("status", o.Status).
+		Set("hash", o.Hash).
+		Set("created_at", o.CreatedAt).
+		Where(sq.Eq{"id": o.ID}).
+		PlaceholderFormat(sq.Dollar)
+
+	// преобразуем в сырой вид
+	rawQuery, args, err := query.ToSql()
+	if err != nil {
+		return err
+	}
+
+	_, err = tx.Exec(r.ctx, rawQuery, args...)
+	if err != nil {
+		return err
+	}
+
+	// комитим
 	err = tx.Commit(r.ctx)
 	if err != nil {
 		return err
@@ -96,7 +137,7 @@ func (r *Repository) GetOrders(userID int) (list []*models.Order, err error) {
 		Where(sq.Eq{"user_id": userID}).
 		PlaceholderFormat(sq.Dollar)
 
-	// преобразуем в сырой запрос
+	// преобразуем в сырой вид
 	rawQuery, args, err := query.ToSql()
 	if err != nil {
 		return nil, err
@@ -140,7 +181,7 @@ func (r *Repository) GetOrdersForDelivery(orderIDs map[int]struct{}) (list []*mo
 		Where(sq.Eq{"id": ids}).
 		PlaceholderFormat(sq.Dollar)
 
-	// преобразуем в сырой запрос
+	// преобразуем в сырой вид
 	rawQuery, args, err := query.ToSql()
 	if err != nil {
 		return nil, err
@@ -181,7 +222,7 @@ func (r *Repository) GetOrder(o *models.Order) (result *models.Order, err error)
 		Where(sq.Eq{"id": o.ID}).
 		PlaceholderFormat(sq.Dollar)
 
-	// преобразуем в сырой запрос
+	// преобразуем в сырой вид
 	rawQuery, args, err := query.ToSql()
 	if err != nil {
 		return nil, err

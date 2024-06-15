@@ -1,6 +1,8 @@
 package storage
 
 import (
+	"errors"
+
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/models"
 	e "gitlab.ozon.dev/yuweebix/homework-1/internal/storage/errors"
 )
@@ -66,6 +68,10 @@ func (s *Storage) GetOrders(userID int) (list []*models.Order, err error) {
 	}
 
 	return list, nil
+}
+
+func (s *Storage) UpdateOrder(o *models.Order) (err error) {
+	return errors.ErrUnsupported
 }
 
 // GetOrdersForDelivery возваращает список заказов клиенту на выдачу

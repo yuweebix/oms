@@ -24,7 +24,7 @@ func (r *Repository) GetReturns() (list []*models.Order, err error) {
 		Where(sq.Eq{"status": models.StatusReturned}).
 		PlaceholderFormat(sq.Dollar)
 
-	// преобразуем в сырой запрос
+	// преобразуем в сырой вид
 	rawQuery, args, err := query.ToSql()
 	if err != nil {
 		return nil, err
