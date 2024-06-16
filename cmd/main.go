@@ -117,9 +117,6 @@ func main() {
 		case <-sigs:
 			cancel()
 			fmt.Println("\nНажмите Enter, чтобы завершить программу.")
-			wp.Stop()
-			wg.Wait() // Ждем завершения всех горутин
-			return
 		case args := <-commandChan:
 			wp.Enqueue(ctx, func() { c.Execute(args) }, args)
 		}

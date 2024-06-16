@@ -16,10 +16,9 @@ const (
 
 // job представляет задание, передаваемое в пул рабочих
 type job struct {
-	ctx    context.Context
-	cancel context.CancelFunc
-	task   func()
-	cmd    []string
+	ctx  context.Context
+	task func()
+	cmd  []string
 }
 
 // WorkerPool представляет пул рабочих, который управляет выполнением заданий
@@ -63,11 +62,12 @@ func (wp *WorkerPool) worker() {
 			case <-job.ctx.Done():
 				return
 			default:
-				if checkCmd(job.cmd) {
+				isChecked := checkCmd(job.cmd)
+				if isChecked {
 					wp.notificationChan <- fmt.Sprintf("команда %v начала исполняться", job.cmd)
 				}
 				job.task()
-				if checkCmd(job.cmd) {
+				if isChecked {
 					wp.notificationChan <- fmt.Sprintf("команда %v закончила исполняться", job.cmd)
 				}
 			}
@@ -104,17 +104,6 @@ func (wp *WorkerPool) Enqueue(ctx context.Context, task func(), cmd []string) {
 	wp.jobs <- job
 }
 
-// EnqueueWithCancel добавляет задание в очередь с отменой
-func (wp *WorkerPool) EnqueueWithCancel(ctx context.Context, cancel context.CancelFunc, task func(), cmd []string) {
-	job := job{
-		ctx:    ctx,
-		cancel: cancel,
-		task:   task,
-		cmd:    cmd,
-	}
-	wp.jobs <- job
-}
-
 // AddWorkers добавляет новых рабочих в пул
 func (wp *WorkerPool) AddWorkers(n int) error {
 	wp.mu.Lock()
@@ -147,8 +136,8 @@ func (wp *WorkerPool) RemoveWorkers(n int) error {
 	for i := 0; i < n; i++ {
 		// создаем контекст с отменой для завершения одного рабочего
 		jobCtx, cancel := context.WithCancel(wp.ctx)
-		cancel()                                             // вызываем cancel для завершения рабочего
-		wp.EnqueueWithCancel(jobCtx, cancel, func() {}, nil) // отправляем dummy job с cancel для завершения рабочего
+		cancel()                           // вызываем cancel для завершения рабочего
+		wp.Enqueue(jobCtx, func() {}, nil) // отправляем dummy job с cancel для завершения рабочего
 	}
 	wp.numWorkers -= n
 
