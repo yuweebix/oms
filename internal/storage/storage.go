@@ -3,6 +3,7 @@ package storage
 import (
 	"encoding/json"
 	"os"
+	"sync"
 
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/models"
 )
@@ -10,6 +11,7 @@ import (
 // Storage представляет слой хранилища (потом заменить бдшкой)
 type Storage struct {
 	fileName string
+	mu       *sync.RWMutex
 }
 
 // NewStorage открывает json файл, что используется как хранилище, и если его нет создает его
@@ -20,7 +22,10 @@ func NewStorage(fileName string) (*Storage, error) {
 	}
 	defer file.Close()
 
-	return &Storage{fileName: fileName}, nil
+	return &Storage{
+		fileName: fileName,
+		mu:       &sync.RWMutex{},
+	}, nil
 }
 
 // readJSONFileToMap читает json файл и переносит его содержимое
@@ -46,7 +51,7 @@ func readJSONFileToMap[K comparable, V any](s *Storage) (database map[K]V, err e
 
 // writeMapToJSONFile переводит содержимое мапы в json
 func writeMapToJSONFile[K comparable, V any](s *Storage, database map[K]V) (err error) {
-	b, err := json.MarshalIndent(database, "  ", "  ")
+	b, err := json.MarshalIndent(database, "", "  ")
 	if err != nil {
 		return err
 	}

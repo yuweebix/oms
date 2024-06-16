@@ -7,6 +7,9 @@ import (
 
 // AddOrder добавляет заказ в хранилище
 func (s *Storage) AddOrder(o *models.Order) (err error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	// запишем данные из файла в database
 	database, err := s.loadOrders()
 	if err != nil {
@@ -25,6 +28,9 @@ func (s *Storage) AddOrder(o *models.Order) (err error) {
 
 // DeleteOrder удаляет заказ из хранилища
 func (s *Storage) DeleteOrder(o *models.Order) (err error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	// запишем данные из файла в database
 	database, err := s.loadOrders()
 	if err != nil {
@@ -42,6 +48,9 @@ func (s *Storage) DeleteOrder(o *models.Order) (err error) {
 
 // ListOrders возвращает список заказов клиента
 func (s *Storage) ListOrders(userID int) (list []*models.Order, err error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
 	// запишем данные из файла в database
 	database, err := s.loadOrders()
 	if err != nil {
@@ -62,6 +71,9 @@ func (s *Storage) ListOrders(userID int) (list []*models.Order, err error) {
 // DeliverOrder помечает заказ, как переданный клиенту
 // на вход даются IDs заказов в форме сета
 func (s *Storage) GetOrdersForDelivery(orderIDs map[int]struct{}) (list []*models.Order, err error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
 	// запишем данные из файла в database
 	database, err := s.loadOrders()
 	if err != nil {
@@ -80,6 +92,9 @@ func (s *Storage) GetOrdersForDelivery(orderIDs map[int]struct{}) (list []*model
 
 // GetOrder пересылает полный объект заказа
 func (s *Storage) GetOrder(o *models.Order) (result *models.Order, err error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	// запишем данные из файла в database
 	database, err := s.loadOrders()
 	if err != nil {

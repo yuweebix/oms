@@ -6,6 +6,9 @@ import (
 
 // ListReturns передает список возвратов от start-ого возврата до finish-ого возврата
 func (s *Storage) ListReturns() (list []*models.Order, err error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
 	// запишем данные из файла в database
 	database, err := s.loadOrders()
 	if err != nil {
