@@ -82,6 +82,13 @@ func main() {
 			case <-ctx.Done():
 				return
 			default:
+				if len(args) == 0 { // нажимая просто Enter, выводим все уведомления на данный момент
+					continue
+				}
+				if len(args) > 0 && args[0] == "clear" {
+					fmt.Print("\033[H\033[2J") // full clear
+					continue
+				}
 				if len(args) > 0 && args[0] == "exit" {
 					cancel()
 					return
@@ -117,11 +124,11 @@ func main() {
 		select {
 		case <-ctx.Done():
 			wp.Stop()
-			wg.Wait() // Ждем завершения всех горутин
+			wg.Wait()
 			return
 		case <-sigs:
 			cancel()
-			fmt.Println("\nНажмите Enter, чтобы завершить программу.")
+			fmt.Println("\nНажмите Enter, чтобы закрыть утилиту.")
 		case args := <-commandChan:
 			wp.Enqueue(ctx, func() { c.Execute(args) }, args)
 		}
