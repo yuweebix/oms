@@ -5,77 +5,97 @@ import (
 	"fmt"
 	"strings"
 	"sync"
+	"sync/atomic"
 
 	e "gitlab.ozon.dev/yuweebix/homework-1/internal/middleware/errors"
 )
 
 const (
 	maxGoroutines = 1_000_000
-	numJobs       = 100
 )
 
-// job представляет задание, передаваемое в пул рабочих
+var (
+	numJobs = atomic.Int64{}
+)
+
+// job представляет работу, передаваемое в пул воркеров
 type job struct {
-	ctx    context.Context
-	cancel context.CancelFunc
-	task   func()
-	cmd    []string
+	ctx  context.Context
+	task func()
+	cmd  []string
 }
 
-// WorkerPool представляет пул рабочих, который управляет выполнением заданий
+// WorkerPool представляет пул воркеров, который управляет выполнением работ
 type WorkerPool struct {
-	jobs             chan job
-	numWorkers       int
-	wg               sync.WaitGroup
-	mu               sync.Mutex
-	notificationChan chan string
-	cancel           context.CancelFunc
 	ctx              context.Context
+	cancel           context.CancelFunc
+	pool             *sync.Pool
+	mu               sync.Mutex
+	wg               sync.WaitGroup
+	notificationChan chan string
+	numWorkers       int
 }
 
-// NewWorkerPool создает новый пул рабочих с заданным количеством рабочих и контекстом
+// NewWorkerPool создает новый пул воркеров с заданным количеством воркеров и контекстом
 func NewWorkerPool(ctx context.Context, numWorkers int, notificationChan chan string) (*WorkerPool, error) {
-	// слишком много рабочих
+	// слишком много воркеров
 	if numWorkers > maxGoroutines {
 		return nil, e.ErrGoroutinesNumExceeded
 	}
 
 	ctx, cancel := context.WithCancel(ctx)
 	return &WorkerPool{
-		jobs:             make(chan job, numJobs),
-		numWorkers:       numWorkers,
-		notificationChan: notificationChan,
-		cancel:           cancel,
 		ctx:              ctx,
+		cancel:           cancel,
+		pool:             &sync.Pool{},
+		notificationChan: notificationChan,
+		numWorkers:       numWorkers,
 	}, nil
 }
 
-// worker представляет собой функцию для выполнения заданий рабочими
-// args передаются снова, чтобы выписать, какая команда работает
+// worker представляет собой функцию для выполнения заданий воркерами
 func (wp *WorkerPool) worker() {
 	defer wp.wg.Done()
 	for {
-		select {
-		case <-wp.ctx.Done():
-			return
-		case job := <-wp.jobs:
+		// вытаскиваем работу из пула
+		// если пул пустой, то продолжаем цикл
+		// выходим по сигналу
+		wp.mu.Lock()
+		job, ok := wp.pool.Get().(*job) // работа сама удалится из пула
+		wp.mu.Unlock()
+		if !ok {
 			select {
-			case <-job.ctx.Done():
-				return
+			case <-wp.ctx.Done():
+				if numJobs.Load() == 0 {
+					return
+				}
 			default:
-				if checkCmd(job.cmd) {
-					wp.notificationChan <- fmt.Sprintf("команда %v начала исполняться", job.cmd)
-				}
-				job.task()
-				if checkCmd(job.cmd) {
-					wp.notificationChan <- fmt.Sprintf("команда %v закончила исполняться", job.cmd)
-				}
 			}
+			continue
 		}
+
+		select {
+		case <-job.ctx.Done():
+			if numJobs.Load() == 0 {
+				return
+			}
+		default:
+		}
+
+		isChecked := checkCmd(job.cmd)
+		if isChecked {
+			wp.notificationChan <- fmt.Sprintf("команда %v начала исполняться", job.cmd)
+		}
+		job.task()
+		if isChecked {
+			wp.notificationChan <- fmt.Sprintf("команда %v закончила исполняться", job.cmd)
+		}
+
+		numJobs.Add(-1)
 	}
 }
 
-// Start запускает рабочих в пуле
+// Start запускает воркеров в пуле
 func (wp *WorkerPool) Start() {
 	wp.mu.Lock()
 	defer wp.mu.Unlock()
@@ -86,41 +106,34 @@ func (wp *WorkerPool) Start() {
 	}
 }
 
-// Stop завершает всех рабочих в пуле
+// Stop завершает всех воркеров в пуле
 func (wp *WorkerPool) Stop() {
 	wp.cancel()
 	wp.wg.Wait()
-	close(wp.jobs)
 	close(wp.notificationChan)
 }
 
-// Enqueue добавляет задание в очередь
+// Enqueue добавляет работу в пул
 func (wp *WorkerPool) Enqueue(ctx context.Context, task func(), cmd []string) {
-	job := job{
+	numJobs.Add(1)
+
+	job := &job{
 		ctx:  ctx,
 		task: task,
 		cmd:  cmd,
 	}
-	wp.jobs <- job
+
+	wp.mu.Lock()
+	wp.pool.Put(job)
+	wp.mu.Unlock()
 }
 
-// EnqueueWithCancel добавляет задание в очередь с отменой
-func (wp *WorkerPool) EnqueueWithCancel(ctx context.Context, cancel context.CancelFunc, task func(), cmd []string) {
-	job := job{
-		ctx:    ctx,
-		cancel: cancel,
-		task:   task,
-		cmd:    cmd,
-	}
-	wp.jobs <- job
-}
-
-// AddWorkers добавляет новых рабочих в пул
+// AddWorkers добавляет новых воркеров в пул
 func (wp *WorkerPool) AddWorkers(n int) error {
 	wp.mu.Lock()
 	defer wp.mu.Unlock()
 
-	// слишком много рабочих
+	// слишком много воркеров
 	if wp.numWorkers+n > maxGoroutines {
 		return e.ErrGoroutinesNumExceeded
 	}
@@ -134,21 +147,21 @@ func (wp *WorkerPool) AddWorkers(n int) error {
 	return nil
 }
 
-// RemoveWorkers удаляет рабочих из пула
+// RemoveWorkers удаляет воркеров из пула
 func (wp *WorkerPool) RemoveWorkers(n int) error {
 	wp.mu.Lock()
 	defer wp.mu.Unlock()
 
-	// не может быть меньше одного рабочего
+	// не может быть меньше одного воркера
 	if wp.numWorkers-n < 1 {
 		return e.ErrGoroutinesNumSubceeded
 	}
 
 	for i := 0; i < n; i++ {
-		// создаем контекст с отменой для завершения одного рабочего
+		// создаем контекст с отменой для завершения одного воркера
 		jobCtx, cancel := context.WithCancel(wp.ctx)
-		cancel()                                             // вызываем cancel для завершения рабочего
-		wp.EnqueueWithCancel(jobCtx, cancel, func() {}, nil) // отправляем dummy job с cancel для завершения рабочего
+		cancel()                           // вызываем cancel для завершения воркера
+		wp.Enqueue(jobCtx, func() {}, nil) // отправляем dummy job с cancel для завершения воркера
 	}
 	wp.numWorkers -= n
 
