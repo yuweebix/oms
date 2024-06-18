@@ -19,9 +19,8 @@ import (
 )
 
 const (
-	// storageFileName = "orders.json"
-	// logFileName     = "log.txt"
-	numWorkers = 5 // начальное количество рабочих в пуле
+	logFileName = "log.txt"
+	numWorkers  = 5 // начальное количество рабочих в пуле
 )
 
 func main() {
@@ -29,14 +28,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Error loading .env file: %v", err)
 	}
-	connString := fmt.Sprintf(
-		"postgres://%s:%s@%s:%s/%s",
-		os.Getenv("POSTGRES_USER"),
-		os.Getenv("POSTGRES_PASSWORD"),
-		os.Getenv("POSTGRES_HOST"),
-		os.Getenv("POSTGRES_PORT"),
-		os.Getenv("POSTGRES_DB"),
-	)
+	connString := os.Getenv("DATABASE_URL")
 
 	wg := sync.WaitGroup{}
 	ctx, cancel := context.WithCancel(context.Background())
@@ -53,20 +45,12 @@ func main() {
 		log.Fatalln(err)
 	}
 
-	// инициализируем хранилище, сервис и утилиту
-	// storageJSON, err := storage.NewStorage(storageFileName)
-	// if err != nil {
-	// 	log.Fatalln(err)
-	// }
-	// service := service.NewService(storageJSON, wp)
-	// c := cli.NewCLI(service, logFileName)
-
 	repository, err := repository.NewRepository(ctx, connString)
 	if err != nil {
 		log.Fatalln(err)
 	}
 	service := service.NewService(repository, wp)
-	c := cli.NewCLI(service, connString)
+	c := cli.NewCLI(service, logFileName)
 
 	wp.Start()
 
