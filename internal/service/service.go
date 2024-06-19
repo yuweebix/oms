@@ -13,15 +13,21 @@ type storage interface {
 
 	// возвраты
 	ListReturns() ([]*models.Order, error) // выдать список возвратов
+}
 
+type middleware interface {
+	// рабочие
+	AddWorkers(n int) error
+	RemoveWorkers(n int) error
 }
 
 // Service представляет слой бизнес-логики приложения
 type Service struct {
-	storage storage
+	storage    storage
+	middleware middleware
 }
 
 // NewService конструктор с добавлением зависимостей
-func NewService(s storage) *Service {
-	return &Service{storage: s}
+func NewService(s storage, m middleware) *Service {
+	return &Service{storage: s, middleware: m}
 }

@@ -1,10 +1,12 @@
-package commands
+package cli
 
 import (
 	f "gitlab.ozon.dev/yuweebix/homework-1/internal/cli/flags"
 )
 
-// флаги для сеттера кобры
+// инициализируем дефолтные флаги
+
+// orders флаги
 var (
 	flagOrderID = f.Flag[int]{
 		Name:      "order_id",
@@ -25,13 +27,13 @@ var (
 		Value:     0,
 	}
 	flagExpiry = f.Flag[string]{
-		Name:      "flagExpiry",
+		Name:      "expiry",
 		Shorthand: "e",
 		Usage:     "Срок хранения в формате YYYY-MM-DD(*)",
 		Value:     "",
 	}
 	flagLimit = f.Flag[int]{
-		Name:      "flagLimit",
+		Name:      "limit",
 		Shorthand: "l",
 		Usage:     "Ограничение по количеству заказов в списке",
 		Value:     0,
@@ -41,5 +43,33 @@ var (
 		Shorthand: "i",
 		Usage:     "Показать заказы клиента, находящиеся в нашем ПВЗ",
 		Value:     false,
+	}
+)
+
+// returns флаги
+var (
+	// flagOrderID
+	// flagUserID
+	flagStart = f.Flag[int]{
+		Name:      "start",
+		Shorthand: "s",
+		Usage:     "Нижняя граница по количеству заказов в списке",
+		Value:     0,
+	}
+	flagFinish = f.Flag[int]{
+		Name:      "finish",
+		Shorthand: "f",
+		Usage:     "Верхняя граница по количеству заказов в списке",
+		Value:     0,
+	}
+)
+
+// workers флаги
+var (
+	flagWorkersNum = f.Flag[int]{
+		Name:      "number",
+		Shorthand: "n",
+		Usage:     "количество рабочих",
+		Value:     0,
 	}
 )

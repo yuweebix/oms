@@ -2,55 +2,123 @@ package main
 
 import (
 	"bufio"
+	"context"
 	"fmt"
+	"log"
 	"os"
+	"os/signal"
 	"strings"
+	"sync"
+	"syscall"
 
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/cli"
-	"gitlab.ozon.dev/yuweebix/homework-1/internal/cli/root"
+	"gitlab.ozon.dev/yuweebix/homework-1/internal/middleware"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/service"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/storage"
 )
 
 const (
-	fileName = "orders.json"
+	storageFileName = "orders.json"
+	logFileName     = "log.txt"
+	numWorkers      = 5 // начальное количество рабочих в пуле
 )
 
 func main() {
-	// инициализируем хранилище
-	storageJSON, err := storage.NewStorage(fileName)
+	wg := sync.WaitGroup{}
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	// graceful shutdown
+	sigs := make(chan os.Signal, 1)
+	signal.Notify(sigs, syscall.SIGTERM, syscall.SIGINT)
+
+	// инициализируем пул рабочих
+	notificationChan := make(chan string, 100)
+	wp, err := middleware.NewWorkerPool(ctx, numWorkers, notificationChan)
 	if err != nil {
-		fmt.Println(err.Error())
-		os.Exit(1)
+		log.Fatalln(err)
 	}
-	// инициализируем модуль
-	service := service.NewService(storageJSON)
-	// инициализируем CLI
-	c := cli.NewCLI(service)
-	// инициализируем главную команду
-	root.InitRootCmd(c)
-	// считываем команды
-	in := bufio.NewReader(os.Stdin)
+
+	// инициализируем хранилище, сервис и утилиту
+	storageJSON, err := storage.NewStorage(storageFileName)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	service := service.NewService(storageJSON, wp)
+	c := cli.NewCLI(service, logFileName)
+
+	wp.Start()
+
+	// инициализируем канал для считывания команд
+	// и каналами для синхронизации
+	commandChan := make(chan []string)
+	inSig := make(chan struct{})
+	outSig := make(chan struct{})
+
+	// горутина для считывания команд
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		in := bufio.NewReader(os.Stdin)
+		for {
+			// считываем команду
+			<-outSig
+			text, err := in.ReadString('\n')
+			if err != nil {
+				log.Fatalln(err)
+			}
+			inSig <- struct{}{}
+
+			text = strings.TrimSpace(text)
+			args := strings.Fields(text)
+
+			// выходим
+			select {
+			case <-ctx.Done():
+				return
+			default:
+				if len(args) > 0 && args[0] == "exit" {
+					cancel()
+					return
+				}
+
+				commandChan <- args
+			}
+		}
+	}()
+
+	// горутина для обработки уведомлений
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		for {
+			select {
+			case <-ctx.Done():
+				for notification := range notificationChan {
+					fmt.Println(notification)
+				}
+				return
+			default:
+				outSig <- struct{}{}
+				<-inSig
+				for len(notificationChan) > 0 {
+					fmt.Println(<-notificationChan)
+				}
+			}
+		}
+	}()
+
 	for {
-		fmt.Print("> ")
-
-		text, err := in.ReadString('\n')
-		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
-		}
-
-		text = strings.TrimSpace(text)
-		args := strings.Fields(text)
-
-		// выходим
-		if len(args) > 0 && args[0] == "exit" {
-			break
-		}
-
-		// запускаем команду
-		if err := root.Execute(c, args); err != nil {
-			fmt.Println(err.Error())
+		select {
+		case <-ctx.Done():
+			wp.Stop()
+			wg.Wait() // Ждем завершения всех горутин
+			return
+		case <-sigs:
+			cancel()
+			fmt.Println("\nНажмите Enter, чтобы завершить программу.")
+		case args := <-commandChan:
+			wp.Enqueue(ctx, func() { c.Execute(args) }, args)
 		}
 	}
 }
