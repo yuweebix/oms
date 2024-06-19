@@ -92,9 +92,9 @@ var ordersListCmd = &cobra.Command{
 	Long: `Команда "list" используется для получения списка заказов.
 
 Пример использования:
-  orders list -user_id=123 --limit=10 -is_stored=true
+  orders list --user_id=123 --limit=10 --offset=0 --is_stored=true
 
-Команда возвращает заказы клиента, которые находятся в ПВЗ, с возможностью ограничить количество возвращаемых заказов.`,
+Команда возвращает заказы клиента, которые находятся в ПВЗ, с возможностью ограничить количество возвращаемых заказов и задать смещение.`,
 	SilenceUsage:  true,
 	SilenceErrors: true,
 }
@@ -139,7 +139,7 @@ var returnsListCmd = &cobra.Command{
 	Long: `Команда "list" используется для получения списка возвратов.
 
 Пример использования:
-  returns list --start=1 --finish=10
+  returns list --limit=10 --offset=0
 
 Команда возвращает список возвратов с возможностью пагинации.`,
 	SilenceUsage:  true,

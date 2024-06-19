@@ -8,19 +8,19 @@ import (
 
 // orders флаги
 var (
-	flagOrderID = f.Flag[int]{
+	flagOrderID = f.Flag[uint64]{
 		Name:      "order_id",
 		Shorthand: "o",
 		Usage:     "ID заказа(*)",
 		Value:     0,
 	}
-	flagOrderIDs = f.Flag[[]int]{
+	flagOrderIDs = f.Flag[[]uint64]{
 		Name:      "order_ids",
 		Shorthand: "o",
 		Usage:     "IDs заказов(*)",
-		Value:     []int{},
+		Value:     []uint64{},
 	}
-	flagUserID = f.Flag[int]{
+	flagUserID = f.Flag[uint64]{
 		Name:      "user_id",
 		Shorthand: "u",
 		Usage:     "ID клиента(*)",
@@ -32,10 +32,16 @@ var (
 		Usage:     "Срок хранения в формате YYYY-MM-DD(*)",
 		Value:     "",
 	}
-	flagLimit = f.Flag[int]{
+	flagLimit = f.Flag[uint64]{
 		Name:      "limit",
 		Shorthand: "l",
 		Usage:     "Ограничение по количеству заказов в списке",
+		Value:     0,
+	}
+	flagOffset = f.Flag[uint64]{
+		Name:      "offset",
+		Shorthand: "s",
+		Usage:     "Смещение по количеству заказов в списке",
 		Value:     0,
 	}
 	flagIsStored = f.Flag[bool]{
@@ -48,20 +54,10 @@ var (
 
 // returns флаги
 var (
-	// flagOrderID
-	// flagUserID
-	flagStart = f.Flag[int]{
-		Name:      "start",
-		Shorthand: "s",
-		Usage:     "Нижняя граница по количеству заказов в списке",
-		Value:     0,
-	}
-	flagFinish = f.Flag[int]{
-		Name:      "finish",
-		Shorthand: "f",
-		Usage:     "Верхняя граница по количеству заказов в списке",
-		Value:     0,
-	}
+// flagOrderID
+// flagUserID
+// flagLimit
+// flagOffset
 )
 
 // workers флаги

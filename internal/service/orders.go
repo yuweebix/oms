@@ -1,12 +1,15 @@
 package service
 
 import (
-	"sort"
 	"time"
 
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/models"
 	e "gitlab.ozon.dev/yuweebix/homework-1/internal/service/errors"
 	"gitlab.ozon.dev/yuweebix/homework-1/pkg/hash"
+)
+
+const (
+	returnByAllowedTime = time.Hour * 48
 )
 
 // AcceptOrder принимает заказ от курьера
@@ -21,7 +24,7 @@ func (s *Service) AcceptOrder(o *models.Order) (_ error) {
 	o.CreatedAt = time.Now().UTC()
 	o.Hash = hash.GenerateHash() // HASH
 
-	return s.storage.AddOrder(o)
+	return s.storage.CreateOrder(o)
 }
 
 // ReturnOrder возвращает заказ курьеру
@@ -41,43 +44,23 @@ func (s *Service) ReturnOrder(o *models.Order) (err error) {
 	return s.storage.DeleteOrder(o)
 }
 
-// ListOrders выводит список заказов
-func (s *Service) ListOrders(userID int, limit int, isStored bool) (list []*models.Order, err error) {
-	list, err = s.storage.ListOrders(userID)
+// ListOrders выводит список заказов с пагинацией, сортировкой и фильтрацией
+func (s *Service) ListOrders(userID uint64, limit uint64, offset uint64, isStored bool) (list []*models.Order, err error) {
+	list, err = s.storage.GetOrders(userID, limit, offset, isStored)
 	if err != nil {
 		return nil, err
 	}
 
-	if isStored {
-		list = filterByStoredOrders(list)
-	}
-
-	// сортим по времени получения
-	sort.Slice(list, func(i, j int) bool {
-		return list[i].CreatedAt.After(list[j].CreatedAt)
-	})
-
-	// 0 <= limit <= len(list)
-	if limit <= 0 || limit > len(list) {
-		limit = len(list)
-	}
-
-	return list[:limit], nil
+	return list, nil
 }
 
 // DeliverOrders принимает список заказов, переводит их в форму для обработки в хранилище
-func (s *Service) DeliverOrders(orderIDs []int) (err error) {
-	// создаем сет для быстрого поиска
-	set := make(map[int]struct{}, len(orderIDs))
-	for _, v := range orderIDs {
-		set[v] = struct{}{}
-	}
-
+func (s *Service) DeliverOrders(orderIDs []uint64) (err error) {
 	if len(orderIDs) == 0 {
 		return e.ErrEmpty
 	}
 
-	list, err := s.storage.GetOrdersForDelivery(set)
+	list, err := s.storage.GetOrdersForDelivery(orderIDs)
 	if err != nil {
 		return err
 	}
@@ -105,29 +88,14 @@ func (s *Service) DeliverOrders(orderIDs []int) (err error) {
 	// помечаем как переданные клиенту и оставляем два дня на возврат
 	for i := range list {
 		list[i].Status = models.StatusDelivered
-		list[i].ReturnBy = time.Now().UTC().AddDate(0, 0, 2)
+		list[i].ReturnBy = time.Now().UTC().Add(returnByAllowedTime)
 		list[i].Hash = hash.GenerateHash() // HASH
 
-		err = s.storage.DeleteOrder(list[i])
-		if err != nil {
-			return err
-		}
-
-		err = s.storage.AddOrder(list[i])
+		err = s.storage.UpdateOrder(list[i])
 		if err != nil {
 			return err
 		}
 	}
 
 	return nil
-}
-
-// filterByStoredOrders фильтрует заказы, оставляя только те, что находятся в ПВЗ
-func filterByStoredOrders(list []*models.Order) (newList []*models.Order) {
-	for _, o := range list {
-		if o.Status == models.StatusAccepted || o.Status == models.StatusReturned {
-			newList = append(newList, o)
-		}
-	}
-	return newList
 }

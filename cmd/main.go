@@ -11,19 +11,25 @@ import (
 	"sync"
 	"syscall"
 
+	"github.com/joho/godotenv"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/cli"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/middleware"
+	"gitlab.ozon.dev/yuweebix/homework-1/internal/repository"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/service"
-	"gitlab.ozon.dev/yuweebix/homework-1/internal/storage"
 )
 
 const (
-	storageFileName = "orders.json"
-	logFileName     = "log.txt"
-	numWorkers      = 5 // начальное количество рабочих в пуле
+	logFileName = "log.txt"
+	numWorkers  = 5 // начальное количество рабочих в пуле
 )
 
 func main() {
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatalf("Error loading .env file: %v", err)
+	}
+	connString := os.Getenv("DATABASE_URL")
+
 	wg := sync.WaitGroup{}
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -39,12 +45,11 @@ func main() {
 		log.Fatalln(err)
 	}
 
-	// инициализируем хранилище, сервис и утилиту
-	storageJSON, err := storage.NewStorage(storageFileName)
+	repository, err := repository.NewRepository(ctx, connString)
 	if err != nil {
 		log.Fatalln(err)
 	}
-	service := service.NewService(storageJSON, wp)
+	service := service.NewService(repository, wp)
 	c := cli.NewCLI(service, logFileName)
 
 	wp.Start()
@@ -77,6 +82,13 @@ func main() {
 			case <-ctx.Done():
 				return
 			default:
+				if len(args) == 0 { // нажимая просто Enter, выводим все уведомления на данный момент
+					continue
+				}
+				if len(args) > 0 && args[0] == "clear" {
+					fmt.Print("\033[H\033[2J") // full clear
+					continue
+				}
 				if len(args) > 0 && args[0] == "exit" {
 					cancel()
 					return
@@ -112,11 +124,11 @@ func main() {
 		select {
 		case <-ctx.Done():
 			wp.Stop()
-			wg.Wait() // Ждем завершения всех горутин
+			wg.Wait()
 			return
 		case <-sigs:
 			cancel()
-			fmt.Println("\nНажмите Enter, чтобы завершить программу.")
+			fmt.Println("\nНажмите Enter, чтобы закрыть утилиту.")
 		case args := <-commandChan:
 			wp.Enqueue(ctx, func() { c.Execute(args) }, args)
 		}
