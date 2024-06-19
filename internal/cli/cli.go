@@ -11,14 +11,14 @@ import (
 // service интерфейс необходимых CLI функций для реализации сервисом
 type service interface {
 	// заказы
-	AcceptOrder(o *models.Order) error                                        // логика принятия заказа от курьера
-	ReturnOrder(o *models.Order) error                                        // логика возврата просроченного заказа курьеру
-	ListOrders(userID int, limit int, isStored bool) ([]*models.Order, error) // логика вывода списка заказов
-	DeliverOrders(orderIDs []int) error                                       // логика выдачи заказов клиенту
+	AcceptOrder(o *models.Order) error                                                             // логика принятия заказа от курьера
+	ReturnOrder(o *models.Order) error                                                             // логика возврата просроченного заказа курьеру
+	ListOrders(userID uint64, limit uint64, offset uint64, isStored bool) ([]*models.Order, error) // логика вывода списка заказов
+	DeliverOrders(orderIDs []uint64) error                                                         // логика выдачи заказов клиенту
 
 	// возвраты
-	AcceptReturn(o *models.Order) error                     // логика принятия возврата от клиента
-	ListReturns(start, finish int) ([]*models.Order, error) // логика вывода возвратов
+	AcceptReturn(o *models.Order) error                               // логика принятия возврата от клиента
+	ListReturns(limit uint64, offset uint64) ([]*models.Order, error) // логика вывода возвратов
 
 	// рабочие
 	ChangeWorkersNumber(workersNum int) error // логика изменения количества рабочих горутин
