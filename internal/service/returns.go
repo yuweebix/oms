@@ -41,29 +41,12 @@ func (s Service) AcceptReturn(o *models.Order) (err error) {
 	return nil
 }
 
-// ListReturns выводит список заказов
-func (s Service) ListReturns(start, finish int) (list []*models.Order, err error) {
-	list, err = s.storage.GetReturns()
+// ListReturns выводит список возвратов с пагинацией
+func (s *Service) ListReturns(limit uint64, offset uint64) (list []*models.Order, err error) {
+	list, err = s.storage.GetReturns(limit, offset)
 	if err != nil {
 		return nil, err
 	}
 
-	// 1 <= start <= len(list)
-	if start > len(list) {
-		return nil, nil
-	} else if start < 1 {
-		start = 1
-	}
-
-	// 1 <= finish <= len(list)
-	if finish < 1 || finish > len(list) {
-		finish = len(list)
-	}
-
-	// start <= finish
-	if start > finish {
-		return nil, nil
-	}
-
-	return list[start-1 : finish], nil
+	return list, nil
 }

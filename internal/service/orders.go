@@ -1,7 +1,6 @@
 package service
 
 import (
-	"sort"
 	"time"
 
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/models"
@@ -45,43 +44,23 @@ func (s *Service) ReturnOrder(o *models.Order) (err error) {
 	return s.storage.DeleteOrder(o)
 }
 
-// ListOrders выводит список заказов
-func (s *Service) ListOrders(userID int, limit int, isStored bool) (list []*models.Order, err error) {
-	list, err = s.storage.GetOrders(userID)
+// ListOrders выводит список заказов с пагинацией, сортировкой и фильтрацией
+func (s *Service) ListOrders(userID uint64, limit uint64, offset uint64, isStored bool) (list []*models.Order, err error) {
+	list, err = s.storage.GetOrders(userID, limit, offset, isStored)
 	if err != nil {
 		return nil, err
 	}
 
-	if isStored {
-		list = filterByStoredOrders(list)
-	}
-
-	// сортим по времени получения
-	sort.Slice(list, func(i, j int) bool {
-		return list[i].CreatedAt.After(list[j].CreatedAt)
-	})
-
-	// 0 <= limit <= len(list)
-	if limit <= 0 || limit > len(list) {
-		limit = len(list)
-	}
-
-	return list[:limit], nil
+	return list, nil
 }
 
 // DeliverOrders принимает список заказов, переводит их в форму для обработки в хранилище
-func (s *Service) DeliverOrders(orderIDs []int) (err error) {
+func (s *Service) DeliverOrders(orderIDs []uint64) (err error) {
 	if len(orderIDs) == 0 {
 		return e.ErrEmpty
 	}
 
-	// создаем сет для быстрого поиска
-	set := make(map[int]struct{}, len(orderIDs))
-	for _, v := range orderIDs {
-		set[v] = struct{}{}
-	}
-
-	list, err := s.storage.GetOrdersForDelivery(set)
+	list, err := s.storage.GetOrdersForDelivery(orderIDs)
 	if err != nil {
 		return err
 	}
@@ -119,14 +98,4 @@ func (s *Service) DeliverOrders(orderIDs []int) (err error) {
 	}
 
 	return nil
-}
-
-// filterByStoredOrders фильтрует заказы, оставляя только те, что находятся в ПВЗ
-func filterByStoredOrders(list []*models.Order) (newList []*models.Order) {
-	for _, o := range list {
-		if o.Status == models.StatusAccepted || o.Status == models.StatusReturned {
-			newList = append(newList, o)
-		}
-	}
-	return newList
 }

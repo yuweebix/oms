@@ -1,8 +1,8 @@
 -- +goose Up
 -- +goose StatementBegin
 CREATE TABLE IF NOT EXISTS orders (
-    id INT PRIMARY KEY,
-    user_id INT,
+    id BIGINT PRIMARY KEY,
+    user_id BIGINT,
     stored_until TIMESTAMP NOT NULL,
     return_by TIMESTAMP NOT NULL,
     status VARCHAR(16) NOT NULL,

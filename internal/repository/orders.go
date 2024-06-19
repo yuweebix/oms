@@ -7,7 +7,6 @@ import (
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/models"
 	e "gitlab.ozon.dev/yuweebix/homework-1/internal/repository/errors"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/repository/schemas"
-	"golang.org/x/exp/maps"
 )
 
 // CreateOrder добавляет заказ в бд
@@ -144,7 +143,7 @@ func (r *Repository) UpdateOrder(o *models.Order) (err error) {
 }
 
 // GetOrders возвращает список заказов клиента
-func (r *Repository) GetOrders(userID int) (list []*models.Order, err error) {
+func (r *Repository) GetOrders(userID uint64, limit uint64, offset uint64, isStored bool) (list []*models.Order, err error) {
 	// начинаем транзакцию
 	tx, err := r.db.BeginTx(r.ctx, pgx.TxOptions{IsoLevel: pgx.ReadCommitted})
 	if err != nil {
@@ -157,6 +156,19 @@ func (r *Repository) GetOrders(userID int) (list []*models.Order, err error) {
 	query := sq.Select(ordersColumns...).
 		From(ordersTable).
 		Where(sq.Eq{"user_id": userID}).
+		OrderBy("created_at DESC") // сортировка по времени создания в убывающем порядке
+
+	// применяем фильтрацию по isStored, если необходимо
+	if isStored {
+		query = query.Where(sq.Or{
+			sq.Eq{"status": models.StatusAccepted},
+			sq.Eq{"status": models.StatusReturned},
+		})
+	}
+
+	// добавляем Limit и Offset
+	query = query.Limit(limit).
+		Offset(offset).
 		PlaceholderFormat(sq.Dollar)
 
 	// преобразуем в сырой вид
@@ -186,7 +198,7 @@ func (r *Repository) GetOrders(userID int) (list []*models.Order, err error) {
 }
 
 // GetOrdersForDelivery возвращает список заказов клиенту на выдачу
-func (r *Repository) GetOrdersForDelivery(orderIDs map[int]struct{}) (list []*models.Order, err error) {
+func (r *Repository) GetOrdersForDelivery(orderIDs []uint64) (list []*models.Order, err error) {
 	// начинаем транзакцию
 	tx, err := r.db.BeginTx(r.ctx, pgx.TxOptions{IsoLevel: pgx.RepeatableRead})
 	if err != nil {
@@ -195,12 +207,10 @@ func (r *Repository) GetOrdersForDelivery(orderIDs map[int]struct{}) (list []*mo
 	// если закоммититься, то откатить ничего не получится
 	defer tx.Rollback(r.ctx)
 
-	ids := maps.Keys(orderIDs)
-
 	// создаем sql запрос
 	query := sq.Select(ordersColumns...).
 		From(ordersTable).
-		Where(sq.Eq{"id": ids}).
+		Where(sq.Eq{"id": orderIDs}).
 		PlaceholderFormat(sq.Dollar)
 
 	// преобразуем в сырой вид

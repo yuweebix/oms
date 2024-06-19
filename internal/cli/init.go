@@ -1,6 +1,8 @@
 package cli
 
 import (
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -54,8 +56,8 @@ func (c *CLI) initReturnsCmd(parentCmd *cobra.Command) {
 // initOrdersAcceptCmd принимает данные о заказе на принятие
 func (c *CLI) initOrdersAcceptCmd(parentCmd *cobra.Command) {
 	// инициализируем флаги
-	ordersAcceptCmd.Flags().IntP(flagOrderID.Unzip())
-	ordersAcceptCmd.Flags().IntP(flagUserID.Unzip())
+	ordersAcceptCmd.Flags().Uint64P(flagOrderID.Unzip())
+	ordersAcceptCmd.Flags().Uint64P(flagUserID.Unzip())
 	ordersAcceptCmd.Flags().StringP(flagExpiry.Unzip())
 
 	// помечаем флаги как обязательные
@@ -65,16 +67,16 @@ func (c *CLI) initOrdersAcceptCmd(parentCmd *cobra.Command) {
 
 	// функционал команды
 	ordersAcceptCmd.RunE = func(cmd *cobra.Command, args []string) (err error) {
-		orderID, userID, expiry, err := func() (orderID, userID int, expiry string, err error) {
+		orderID, userID, expiry, err := func() (orderID, userID uint64, expiry string, err error) {
 			c.mu.Lock()
 			defer c.mu.Unlock()
 			defer flags.ResetFlags(ordersAcceptCmd)
 
-			orderID, err = cmd.Flags().GetInt(flagOrderID.Name)
+			orderID, err = cmd.Flags().GetUint64(flagOrderID.Name)
 			if err != nil {
 				return
 			}
-			userID, err = cmd.Flags().GetInt(flagUserID.Name)
+			userID, err = cmd.Flags().GetUint64(flagUserID.Name)
 			if err != nil {
 				return
 			}
@@ -113,24 +115,29 @@ func (c *CLI) initOrdersAcceptCmd(parentCmd *cobra.Command) {
 // initOrdersDeliverCmd принимает данные о заказе на принятие
 func (c *CLI) initOrdersDeliverCmd(parentCmd *cobra.Command) {
 	// инициализируем флаги
-	ordersDeliverCmd.Flags().IntSliceP(flagOrderIDs.Unzip())
+	ordersDeliverCmd.Flags().StringP(flagOrderIDs.Name, flagOrderIDs.Shorthand, "", flagOrderIDs.Usage)
 
 	// помечаем флаги как обязательные
 	ordersDeliverCmd.MarkFlagRequired(flagOrderIDs.Name)
 
 	// функционал команды
 	ordersDeliverCmd.RunE = func(cmd *cobra.Command, args []string) (err error) {
-		orderIDs, err := func() (orderIDs []int, err error) {
+		orderIDs, err := func() (orderIDs []uint64, err error) {
 			c.mu.Lock()
 			defer c.mu.Unlock()
 			defer flags.ResetFlags(ordersDeliverCmd)
 
-			orderIDs, err = cmd.Flags().GetIntSlice(flagOrderIDs.Name)
+			idsStr, err := cmd.Flags().GetString(flagOrderIDs.Name)
 			if err != nil {
-				return
+				return nil, err
 			}
 
-			return
+			orderIDs, err = stringToUint64Slice(idsStr)
+			if err != nil {
+				return nil, err
+			}
+
+			return orderIDs, nil
 		}()
 		if err != nil {
 			return err
@@ -151,8 +158,9 @@ func (c *CLI) initOrdersDeliverCmd(parentCmd *cobra.Command) {
 // initOrdersListCmd принимает данные о заказе на принятие
 func (c *CLI) initOrdersListCmd(parentCmd *cobra.Command) {
 	// инициализируем флаги
-	ordersListCmd.Flags().IntP(flagUserID.Unzip())
-	ordersListCmd.Flags().IntP(flagLimit.Unzip())     // опциональный флаг
+	ordersListCmd.Flags().Uint64P(flagUserID.Unzip())
+	ordersListCmd.Flags().Uint64P(flagLimit.Unzip())  // опциональный флаг
+	ordersListCmd.Flags().Uint64P(flagOffset.Unzip()) // опциональный флаг
 	ordersListCmd.Flags().BoolP(flagIsStored.Unzip()) // опциональный флаг
 
 	// помечаем флаги как обязательные
@@ -160,16 +168,20 @@ func (c *CLI) initOrdersListCmd(parentCmd *cobra.Command) {
 
 	// функционал команды
 	ordersListCmd.RunE = func(cmd *cobra.Command, args []string) (err error) {
-		userID, limit, isStored, err := func() (userID, limit int, isStored bool, err error) {
+		userID, limit, offset, isStored, err := func() (userID, limit, offset uint64, isStored bool, err error) {
 			c.mu.Lock()
 			defer c.mu.Unlock()
 			defer flags.ResetFlags(ordersListCmd)
 
-			userID, err = cmd.Flags().GetInt(flagUserID.Name)
+			userID, err = cmd.Flags().GetUint64(flagUserID.Name)
 			if err != nil {
 				return
 			}
-			limit, err = cmd.Flags().GetInt(flagLimit.Name)
+			limit, err = cmd.Flags().GetUint64(flagLimit.Name)
+			if err != nil {
+				return
+			}
+			offset, err = cmd.Flags().GetUint64(flagOffset.Name)
 			if err != nil {
 				return
 			}
@@ -184,7 +196,7 @@ func (c *CLI) initOrdersListCmd(parentCmd *cobra.Command) {
 			return err
 		}
 
-		list, err := c.service.ListOrders(userID, limit, isStored)
+		list, err := c.service.ListOrders(userID, limit, offset, isStored)
 		if err != nil {
 			return err
 		}
@@ -201,19 +213,19 @@ func (c *CLI) initOrdersListCmd(parentCmd *cobra.Command) {
 // initOrdersReturnCmd принимает данные о заказе на принятие
 func (c *CLI) initOrdersReturnCmd(parentCmd *cobra.Command) {
 	// инициализируем флаги
-	ordersReturnCmd.Flags().IntP(flagOrderID.Unzip())
+	ordersReturnCmd.Flags().Uint64P(flagOrderID.Unzip())
 
 	// помечаем флаги как обязательные
 	ordersReturnCmd.MarkFlagRequired(flagOrderID.Name)
 
 	// функционал команды
 	ordersReturnCmd.RunE = func(cmd *cobra.Command, args []string) (err error) {
-		orderID, err := func() (orderID int, err error) {
+		orderID, err := func() (orderID uint64, err error) {
 			c.mu.Lock()
 			defer c.mu.Unlock()
 			defer flags.ResetFlags(ordersReturnCmd)
 
-			orderID, err = cmd.Flags().GetInt(flagOrderID.Name)
+			orderID, err = cmd.Flags().GetUint64(flagOrderID.Name)
 			if err != nil {
 				return
 			}
@@ -255,24 +267,24 @@ func getStatusMessage(o *models.Order) (status string) {
 // initReturnsAcceptCmd принимает данные о заказе на принятие
 func (c *CLI) initReturnsAcceptCmd(parentCmd *cobra.Command) {
 	// инициализируем флаги
-	returnsAcceptCmd.Flags().IntP(flagOrderID.Unzip())
-	returnsAcceptCmd.Flags().IntP(flagUserID.Unzip())
+	returnsAcceptCmd.Flags().Uint64P(flagOrderID.Unzip())
+	returnsAcceptCmd.Flags().Uint64P(flagUserID.Unzip())
 
 	// помечаем флаги как обязательные
 	returnsAcceptCmd.MarkFlagRequired(flagOrderID.Name)
 	returnsAcceptCmd.MarkFlagRequired(flagUserID.Name)
 
 	returnsAcceptCmd.RunE = func(cmd *cobra.Command, args []string) (err error) {
-		orderID, userID, err := func() (orderID, userID int, err error) {
+		orderID, userID, err := func() (orderID, userID uint64, err error) {
 			c.mu.Lock()
 			defer c.mu.Unlock()
 			defer flags.ResetFlags(returnsAcceptCmd)
 
-			orderID, err = cmd.Flags().GetInt(flagOrderID.Name)
+			orderID, err = cmd.Flags().GetUint64(flagOrderID.Name)
 			if err != nil {
 				return
 			}
-			userID, err = cmd.Flags().GetInt(flagUserID.Name)
+			userID, err = cmd.Flags().GetUint64(flagUserID.Name)
 			if err != nil {
 				return
 			}
@@ -298,23 +310,24 @@ func (c *CLI) initReturnsAcceptCmd(parentCmd *cobra.Command) {
 	parentCmd.AddCommand(returnsAcceptCmd)
 }
 
-// initReturnsListCmd принимает данные о заказе на принятие
+// initReturnsListCmd принимает данные о возврате на принятие
 func (c *CLI) initReturnsListCmd(parentCmd *cobra.Command) {
 	// инициализируем флаги
-	returnsListCmd.Flags().IntP(flagStart.Unzip())  // опциональный флаг
-	returnsListCmd.Flags().IntP(flagFinish.Unzip()) // опциональный флаг
+	returnsListCmd.Flags().Uint64P(flagLimit.Unzip())  // опциональный флаг
+	returnsListCmd.Flags().Uint64P(flagOffset.Unzip()) // опциональный флаг
 
+	// функционал команды
 	returnsListCmd.RunE = func(cmd *cobra.Command, args []string) (err error) {
-		start, finish, err := func() (start, finish int, err error) {
+		limit, offset, err := func() (limit, offset uint64, err error) {
 			c.mu.Lock()
 			defer c.mu.Unlock()
 			defer flags.ResetFlags(returnsListCmd)
 
-			start, err = cmd.Flags().GetInt(flagStart.Name)
+			limit, err = cmd.Flags().GetUint64(flagLimit.Name)
 			if err != nil {
 				return
 			}
-			finish, err = cmd.Flags().GetInt(flagFinish.Name)
+			offset, err = cmd.Flags().GetUint64(flagOffset.Name)
 			if err != nil {
 				return
 			}
@@ -325,7 +338,7 @@ func (c *CLI) initReturnsListCmd(parentCmd *cobra.Command) {
 			return err
 		}
 
-		list, err := c.service.ListReturns(start, finish)
+		list, err := c.service.ListReturns(limit, offset)
 		if err != nil {
 			return err
 		}
@@ -373,4 +386,18 @@ func (c *CLI) initWorkersCmd(parentCmd *cobra.Command) {
 	}
 
 	parentCmd.AddCommand(workersCmd)
+}
+
+// stringToUint64Slice конвертирует строку вида "1,2,3" в слайс uint64
+func stringToUint64Slice(s string) ([]uint64, error) {
+	idsStrSlice := strings.Split(s, ",")
+	orderIDs := make([]uint64, len(idsStrSlice))
+	for i, idStr := range idsStrSlice {
+		id, err := strconv.ParseUint(idStr, 10, 64)
+		if err != nil {
+			return nil, err
+		}
+		orderIDs[i] = id
+	}
+	return orderIDs, nil
 }

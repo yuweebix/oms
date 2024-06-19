@@ -8,8 +8,8 @@ import (
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/repository/schemas"
 )
 
-// GetReturns передает список возвратов
-func (r *Repository) GetReturns() (list []*models.Order, err error) {
+// GetReturns возвращает список возвратов
+func (r *Repository) GetReturns(limit uint64, offset uint64) (list []*models.Order, err error) {
 	// начинаем транзакцию
 	tx, err := r.db.BeginTx(r.ctx, pgx.TxOptions{IsoLevel: pgx.ReadCommitted})
 	if err != nil {
@@ -22,6 +22,8 @@ func (r *Repository) GetReturns() (list []*models.Order, err error) {
 	query := sq.Select(ordersColumns...).
 		From(ordersTable).
 		Where(sq.Eq{"status": models.StatusReturned}).
+		Limit(limit).
+		Offset(offset).
 		PlaceholderFormat(sq.Dollar)
 
 	// преобразуем в сырой вид

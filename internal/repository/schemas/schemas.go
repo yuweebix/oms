@@ -7,8 +7,8 @@ import (
 )
 
 type Order struct {
-	ID        int           `db:"order_id"`
-	UserID    int           `db:"user_id"`
+	ID        uint64        `db:"id"`
+	UserID    uint64        `db:"user_id"`
 	Expiry    time.Time     `db:"stored_until"`
 	ReturnBy  time.Time     `db:"return_by"`
 	Status    models.Status `db:"status"`
