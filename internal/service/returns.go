@@ -1,7 +1,6 @@
 package service
 
 import (
-	"errors"
 	"time"
 
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/models"
@@ -37,17 +36,6 @@ func (s Service) AcceptReturn(o *models.Order) (err error) {
 
 	err = s.storage.UpdateOrder(ro)
 	if err != nil {
-		if errors.Is(err, errors.ErrUnsupported) {
-			err = s.storage.DeleteOrder(ro)
-			if err != nil {
-				return err
-			}
-
-			err = s.storage.CreateOrder(ro)
-			if err != nil {
-				return err
-			}
-		}
 		return err
 	}
 	return nil

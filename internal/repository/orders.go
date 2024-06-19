@@ -5,6 +5,7 @@ import (
 	"github.com/georgysavva/scany/v2/pgxscan"
 	"github.com/jackc/pgx/v5"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/models"
+	e "gitlab.ozon.dev/yuweebix/homework-1/internal/repository/errors"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/repository/schemas"
 	"golang.org/x/exp/maps"
 )
@@ -12,7 +13,7 @@ import (
 // CreateOrder добавляет заказ в бд
 func (r *Repository) CreateOrder(o *models.Order) (err error) {
 	// начинаем транзакцию
-	tx, err := r.db.BeginTx(r.ctx, pgx.TxOptions{IsoLevel: pgx.Serializable})
+	tx, err := r.db.BeginTx(r.ctx, pgx.TxOptions{IsoLevel: pgx.ReadCommitted})
 	if err != nil {
 		return err
 	}
@@ -31,9 +32,16 @@ func (r *Repository) CreateOrder(o *models.Order) (err error) {
 		return err
 	}
 
-	_, err = tx.Exec(r.ctx, rawQuery, args...)
+	res, err := tx.Exec(r.ctx, rawQuery, args...)
 	if err != nil {
 		return err
+	}
+
+	// проверка на то, изменилось ли что-то вообще
+	if res.RowsAffected() > 1 {
+		return e.ErrTooManyRowsAffected
+	} else if res.RowsAffected() == 0 {
+		return e.ErrNoRowsAffected
 	}
 
 	// коммитим
@@ -48,7 +56,7 @@ func (r *Repository) CreateOrder(o *models.Order) (err error) {
 // DeleteOrder удаляет заказ из бд
 func (r *Repository) DeleteOrder(o *models.Order) (err error) {
 	// начинаем транзакцию
-	tx, err := r.db.BeginTx(r.ctx, pgx.TxOptions{IsoLevel: pgx.Serializable})
+	tx, err := r.db.BeginTx(r.ctx, pgx.TxOptions{IsoLevel: pgx.RepeatableRead})
 	if err != nil {
 		return err
 	}
@@ -66,9 +74,16 @@ func (r *Repository) DeleteOrder(o *models.Order) (err error) {
 		return err
 	}
 
-	_, err = tx.Exec(r.ctx, rawQuery, args...)
+	res, err := tx.Exec(r.ctx, rawQuery, args...)
 	if err != nil {
 		return err
+	}
+
+	// проверка на то, изменилось ли что-то вообще
+	if res.RowsAffected() > 1 {
+		return e.ErrTooManyRowsAffected
+	} else if res.RowsAffected() == 0 {
+		return e.ErrNoRowsAffected
 	}
 
 	// коммитим
@@ -83,7 +98,7 @@ func (r *Repository) DeleteOrder(o *models.Order) (err error) {
 // UpdateOrder обновляет данные заказа в бд
 func (r *Repository) UpdateOrder(o *models.Order) (err error) {
 	// начинаем транзакцию
-	tx, err := r.db.BeginTx(r.ctx, pgx.TxOptions{IsoLevel: pgx.Serializable})
+	tx, err := r.db.BeginTx(r.ctx, pgx.TxOptions{IsoLevel: pgx.RepeatableRead})
 	if err != nil {
 		return err
 	}
@@ -107,12 +122,19 @@ func (r *Repository) UpdateOrder(o *models.Order) (err error) {
 		return err
 	}
 
-	_, err = tx.Exec(r.ctx, rawQuery, args...)
+	res, err := tx.Exec(r.ctx, rawQuery, args...)
 	if err != nil {
 		return err
 	}
 
-	// комитим
+	// проверка на то, изменилось ли что-то вообще
+	if res.RowsAffected() > 1 {
+		return e.ErrTooManyRowsAffected
+	} else if res.RowsAffected() == 0 {
+		return e.ErrNoRowsAffected
+	}
+
+	// коммитим
 	err = tx.Commit(r.ctx)
 	if err != nil {
 		return err
@@ -166,7 +188,7 @@ func (r *Repository) GetOrders(userID int) (list []*models.Order, err error) {
 // GetOrdersForDelivery возвращает список заказов клиенту на выдачу
 func (r *Repository) GetOrdersForDelivery(orderIDs map[int]struct{}) (list []*models.Order, err error) {
 	// начинаем транзакцию
-	tx, err := r.db.BeginTx(r.ctx, pgx.TxOptions{IsoLevel: pgx.ReadCommitted})
+	tx, err := r.db.BeginTx(r.ctx, pgx.TxOptions{IsoLevel: pgx.RepeatableRead})
 	if err != nil {
 		return nil, err
 	}

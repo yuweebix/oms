@@ -1,13 +1,16 @@
 package service
 
 import (
-	"errors"
 	"sort"
 	"time"
 
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/models"
 	e "gitlab.ozon.dev/yuweebix/homework-1/internal/service/errors"
 	"gitlab.ozon.dev/yuweebix/homework-1/pkg/hash"
+)
+
+const (
+	returnByAllowedTime = time.Hour * 48
 )
 
 // AcceptOrder принимает заказ от курьера
@@ -68,14 +71,14 @@ func (s *Service) ListOrders(userID int, limit int, isStored bool) (list []*mode
 
 // DeliverOrders принимает список заказов, переводит их в форму для обработки в хранилище
 func (s *Service) DeliverOrders(orderIDs []int) (err error) {
+	if len(orderIDs) == 0 {
+		return e.ErrEmpty
+	}
+
 	// создаем сет для быстрого поиска
 	set := make(map[int]struct{}, len(orderIDs))
 	for _, v := range orderIDs {
 		set[v] = struct{}{}
-	}
-
-	if len(orderIDs) == 0 {
-		return e.ErrEmpty
 	}
 
 	list, err := s.storage.GetOrdersForDelivery(set)
@@ -106,22 +109,11 @@ func (s *Service) DeliverOrders(orderIDs []int) (err error) {
 	// помечаем как переданные клиенту и оставляем два дня на возврат
 	for i := range list {
 		list[i].Status = models.StatusDelivered
-		list[i].ReturnBy = time.Now().UTC().AddDate(0, 0, 2)
+		list[i].ReturnBy = time.Now().UTC().Add(returnByAllowedTime)
 		list[i].Hash = hash.GenerateHash() // HASH
 
 		err = s.storage.UpdateOrder(list[i])
 		if err != nil {
-			if errors.Is(err, errors.ErrUnsupported) {
-				err = s.storage.DeleteOrder(list[i])
-				if err != nil {
-					return err
-				}
-
-				err = s.storage.CreateOrder(list[i])
-				if err != nil {
-					return err
-				}
-			}
 			return err
 		}
 	}
