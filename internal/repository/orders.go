@@ -38,9 +38,9 @@ func (r *Repository) CreateOrder(o *models.Order) (err error) {
 
 	// проверка на то, изменилось ли что-то вообще
 	if res.RowsAffected() > 1 {
-		return e.ErrTooManyRowsAffected
+		return e.ErrTooManyOrdersAffected
 	} else if res.RowsAffected() == 0 {
-		return e.ErrNoRowsAffected
+		return e.ErrNoOrdersAffected
 	}
 
 	// коммитим
@@ -80,9 +80,9 @@ func (r *Repository) DeleteOrder(o *models.Order) (err error) {
 
 	// проверка на то, изменилось ли что-то вообще
 	if res.RowsAffected() > 1 {
-		return e.ErrTooManyRowsAffected
+		return e.ErrTooManyOrdersAffected
 	} else if res.RowsAffected() == 0 {
-		return e.ErrNoRowsAffected
+		return e.ErrNoOrdersAffected
 	}
 
 	// коммитим
@@ -128,9 +128,9 @@ func (r *Repository) UpdateOrder(o *models.Order) (err error) {
 
 	// проверка на то, изменилось ли что-то вообще
 	if res.RowsAffected() > 1 {
-		return e.ErrTooManyRowsAffected
+		return e.ErrTooManyOrdersAffected
 	} else if res.RowsAffected() == 0 {
-		return e.ErrNoRowsAffected
+		return e.ErrNoOrdersAffected
 	}
 
 	// коммитим
