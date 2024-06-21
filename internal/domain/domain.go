@@ -16,7 +16,7 @@ type storage interface {
 	GetReturns(limit uint64, offset uint64) ([]*models.Order, error) // выдать список возвратов
 }
 
-type middleware interface {
+type threading interface {
 	// рабочие
 	AddWorkers(n int) error
 	RemoveWorkers(n int) error
@@ -24,11 +24,11 @@ type middleware interface {
 
 // Domain представляет слой бизнес-логики приложения
 type Domain struct {
-	storage    storage
-	middleware middleware
+	storage   storage
+	threading threading
 }
 
 // NewDomain конструктор с добавлением зависимостей
-func NewDomain(s storage, m middleware) *Domain {
-	return &Domain{storage: s, middleware: m}
+func NewDomain(s storage, m threading) *Domain {
+	return &Domain{storage: s, threading: m}
 }

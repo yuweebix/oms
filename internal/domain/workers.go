@@ -11,9 +11,9 @@ func (s *Domain) ChangeWorkersNumber(workersNum int) error {
 }
 
 func (s *Domain) addWorkers(num int) error {
-	return s.middleware.AddWorkers(num)
+	return s.threading.AddWorkers(num)
 }
 
 func (s *Domain) removeWorkers(num int) error {
-	return s.middleware.RemoveWorkers(num)
+	return s.threading.RemoveWorkers(num)
 }

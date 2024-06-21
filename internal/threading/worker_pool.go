@@ -1,4 +1,4 @@
-package middleware
+package threading
 
 import (
 	"context"
@@ -7,7 +7,7 @@ import (
 	"sync"
 	"sync/atomic"
 
-	e "gitlab.ozon.dev/yuweebix/homework-1/internal/middleware/errors"
+	e "gitlab.ozon.dev/yuweebix/homework-1/internal/threading/errors"
 )
 
 const (

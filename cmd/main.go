@@ -14,8 +14,8 @@ import (
 	"github.com/joho/godotenv"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/cli"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/domain"
-	"gitlab.ozon.dev/yuweebix/homework-1/internal/middleware"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/repository"
+	"gitlab.ozon.dev/yuweebix/homework-1/internal/threading"
 )
 
 const (
@@ -40,7 +40,7 @@ func main() {
 
 	// инициализируем пул рабочих
 	notificationChan := make(chan string, 100)
-	wp, err := middleware.NewWorkerPool(ctx, numWorkers, notificationChan)
+	wp, err := threading.NewWorkerPool(ctx, numWorkers, notificationChan)
 	if err != nil {
 		log.Fatalln(err)
 	}
