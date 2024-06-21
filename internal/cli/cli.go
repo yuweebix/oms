@@ -8,8 +8,8 @@ import (
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/models"
 )
 
-// service интерфейс необходимых CLI функций для реализации сервисом
-type service interface {
+// domain интерфейс необходимых CLI функций для реализации сервисом
+type domain interface {
 	// заказы
 	AcceptOrder(o *models.Order) error                                                             // логика принятия заказа от курьера
 	ReturnOrder(o *models.Order) error                                                             // логика возврата просроченного заказа курьеру
@@ -26,18 +26,18 @@ type service interface {
 
 // CLI представляет слой командной строки приложения
 type CLI struct {
-	service service
-	logger  *log.Logger
-	mu      *sync.Mutex
+	domain domain
+	logger *log.Logger
+	mu     *sync.Mutex
 }
 
 // NewCLI конструктор с добавлением зависимостей
-func NewCLI(s service, logFileName string) *CLI {
+func NewCLI(s domain, logFileName string) *CLI {
 	logger := createLogger(logFileName)
 	c := &CLI{
-		service: s,
-		logger:  logger,
-		mu:      &sync.Mutex{},
+		domain: s,
+		logger: logger,
+		mu:     &sync.Mutex{},
 	}
 	c.initRootCmd()
 	return c

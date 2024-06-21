@@ -1,10 +1,10 @@
-package service
+package domain
 
 import (
 	"time"
 
+	e "gitlab.ozon.dev/yuweebix/homework-1/internal/domain/errors"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/models"
-	e "gitlab.ozon.dev/yuweebix/homework-1/internal/service/errors"
 	"gitlab.ozon.dev/yuweebix/homework-1/pkg/hash"
 )
 
@@ -13,7 +13,7 @@ const (
 )
 
 // AcceptOrder принимает заказ от курьера
-func (s *Service) AcceptOrder(o *models.Order) (_ error) {
+func (s *Domain) AcceptOrder(o *models.Order) (_ error) {
 	// срок хранения превышен
 	if o.Expiry.Before(time.Now()) {
 		return e.ErrOrderExpired
@@ -28,7 +28,7 @@ func (s *Service) AcceptOrder(o *models.Order) (_ error) {
 }
 
 // ReturnOrder возвращает заказ курьеру
-func (s *Service) ReturnOrder(o *models.Order) (err error) {
+func (s *Domain) ReturnOrder(o *models.Order) (err error) {
 	o, err = s.storage.GetOrder(o)
 	if err != nil {
 		return err
@@ -45,7 +45,7 @@ func (s *Service) ReturnOrder(o *models.Order) (err error) {
 }
 
 // ListOrders выводит список заказов с пагинацией, сортировкой и фильтрацией
-func (s *Service) ListOrders(userID uint64, limit uint64, offset uint64, isStored bool) (list []*models.Order, err error) {
+func (s *Domain) ListOrders(userID uint64, limit uint64, offset uint64, isStored bool) (list []*models.Order, err error) {
 	list, err = s.storage.GetOrders(userID, limit, offset, isStored)
 	if err != nil {
 		return nil, err
@@ -55,7 +55,7 @@ func (s *Service) ListOrders(userID uint64, limit uint64, offset uint64, isStore
 }
 
 // DeliverOrders принимает список заказов, переводит их в форму для обработки в хранилище
-func (s *Service) DeliverOrders(orderIDs []uint64) (err error) {
+func (s *Domain) DeliverOrders(orderIDs []uint64) (err error) {
 	if len(orderIDs) == 0 {
 		return e.ErrEmpty
 	}

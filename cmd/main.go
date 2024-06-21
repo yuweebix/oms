@@ -13,9 +13,9 @@ import (
 
 	"github.com/joho/godotenv"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/cli"
+	"gitlab.ozon.dev/yuweebix/homework-1/internal/domain"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/middleware"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/repository"
-	"gitlab.ozon.dev/yuweebix/homework-1/internal/service"
 )
 
 const (
@@ -49,8 +49,8 @@ func main() {
 	if err != nil {
 		log.Fatalln(err)
 	}
-	service := service.NewService(repository, wp)
-	c := cli.NewCLI(service, logFileName)
+	domain := domain.NewDomain(repository, wp)
+	c := cli.NewCLI(domain, logFileName)
 
 	wp.Start()
 

@@ -1,4 +1,4 @@
-package service
+package domain
 
 import "gitlab.ozon.dev/yuweebix/homework-1/internal/models"
 
@@ -22,13 +22,13 @@ type middleware interface {
 	RemoveWorkers(n int) error
 }
 
-// Service представляет слой бизнес-логики приложения
-type Service struct {
+// Domain представляет слой бизнес-логики приложения
+type Domain struct {
 	storage    storage
 	middleware middleware
 }
 
-// NewService конструктор с добавлением зависимостей
-func NewService(s storage, m middleware) *Service {
-	return &Service{storage: s, middleware: m}
+// NewDomain конструктор с добавлением зависимостей
+func NewDomain(s storage, m middleware) *Domain {
+	return &Domain{storage: s, middleware: m}
 }

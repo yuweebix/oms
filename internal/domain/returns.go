@@ -1,15 +1,15 @@
-package service
+package domain
 
 import (
 	"time"
 
+	e "gitlab.ozon.dev/yuweebix/homework-1/internal/domain/errors"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/models"
-	e "gitlab.ozon.dev/yuweebix/homework-1/internal/service/errors"
 	"gitlab.ozon.dev/yuweebix/homework-1/pkg/hash"
 )
 
 // AcceptReturn принимает возврат от клиента
-func (s Service) AcceptReturn(o *models.Order) (err error) {
+func (s Domain) AcceptReturn(o *models.Order) (err error) {
 	ro, err := s.storage.GetOrder(o) // ro - return order
 	if err != nil {
 		return err
@@ -42,7 +42,7 @@ func (s Service) AcceptReturn(o *models.Order) (err error) {
 }
 
 // ListReturns выводит список возвратов с пагинацией
-func (s *Service) ListReturns(limit uint64, offset uint64) (list []*models.Order, err error) {
+func (s *Domain) ListReturns(limit uint64, offset uint64) (list []*models.Order, err error) {
 	list, err = s.storage.GetReturns(limit, offset)
 	if err != nil {
 		return nil, err

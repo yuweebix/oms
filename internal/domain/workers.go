@@ -1,7 +1,7 @@
-package service
+package domain
 
 // рабочие
-func (s *Service) ChangeWorkersNumber(workersNum int) error {
+func (s *Domain) ChangeWorkersNumber(workersNum int) error {
 	if workersNum > 0 {
 		return s.addWorkers(workersNum)
 	} else if workersNum < 0 {
@@ -10,10 +10,10 @@ func (s *Service) ChangeWorkersNumber(workersNum int) error {
 	return nil
 }
 
-func (s *Service) addWorkers(num int) error {
+func (s *Domain) addWorkers(num int) error {
 	return s.middleware.AddWorkers(num)
 }
 
-func (s *Service) removeWorkers(num int) error {
+func (s *Domain) removeWorkers(num int) error {
 	return s.middleware.RemoveWorkers(num)
 }
