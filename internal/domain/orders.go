@@ -25,7 +25,7 @@ func (s *Domain) AcceptOrder(o *models.Order) (_ error) {
 		return err
 	}
 
-	// Проверка ограничений веса для упаковки и обновление стоимости
+	// если равен нулю, то лимита нету
 	if packaging.WeightLimit != 0 && o.Weight > packaging.WeightLimit {
 		return e.ErrOrderTooHeavy
 	}
