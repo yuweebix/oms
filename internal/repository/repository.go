@@ -13,7 +13,7 @@ const (
 )
 
 var (
-	ordersColumns = []string{"id", "user_id", "stored_until", "return_by", "status", "hash", "created_at"}
+	ordersColumns = []string{"id", "user_id", "stored_until", "return_by", "status", "hash", "created_at", "cost", "weight"}
 )
 
 type Repository struct {
@@ -38,6 +38,8 @@ func toModelsOrder(so *schemas.Order) (mo *models.Order) {
 		Status:    so.Status,
 		Hash:      so.Hash,
 		CreatedAt: so.CreatedAt,
+		Cost:      so.Cost,
+		Weight:    so.Weight,
 	}
 	return mo
 }

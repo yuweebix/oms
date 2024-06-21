@@ -32,6 +32,18 @@ var (
 		Usage:     "Срок хранения в формате YYYY-MM-DD(*)",
 		Value:     "",
 	}
+	flagCost = f.Flag[float64]{
+		Name:      "cost",
+		Shorthand: "c",
+		Usage:     "Стоимость заказа(*)",
+		Value:     0,
+	}
+	flagWeight = f.Flag[float64]{
+		Name:      "weight",
+		Shorthand: "w",
+		Usage:     "Вес заказа в кг(*)",
+		Value:     0,
+	}
 	flagLimit = f.Flag[uint64]{
 		Name:      "limit",
 		Shorthand: "l",

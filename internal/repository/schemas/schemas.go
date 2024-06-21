@@ -14,4 +14,6 @@ type Order struct {
 	Status    models.Status `db:"status"`
 	Hash      string        `db:"hash"`
 	CreatedAt time.Time     `db:"created_at"`
+	Cost      float64       `db:"cost"`
+	Weight    float64       `db:"weight"`
 }

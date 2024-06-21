@@ -59,15 +59,19 @@ func (c *CLI) initOrdersAcceptCmd(parentCmd *cobra.Command) {
 	ordersAcceptCmd.Flags().Uint64P(flagOrderID.Unzip())
 	ordersAcceptCmd.Flags().Uint64P(flagUserID.Unzip())
 	ordersAcceptCmd.Flags().StringP(flagExpiry.Unzip())
+	ordersAcceptCmd.Flags().Float64P(flagCost.Unzip())
+	ordersAcceptCmd.Flags().Float64P(flagWeight.Unzip())
 
 	// помечаем флаги как обязательные
 	ordersAcceptCmd.MarkFlagRequired(flagOrderID.Name)
 	ordersAcceptCmd.MarkFlagRequired(flagUserID.Name)
 	ordersAcceptCmd.MarkFlagRequired(flagExpiry.Name)
+	ordersAcceptCmd.MarkFlagRequired(flagCost.Name)
+	ordersAcceptCmd.MarkFlagRequired(flagWeight.Name)
 
 	// функционал команды
 	ordersAcceptCmd.RunE = func(cmd *cobra.Command, args []string) (err error) {
-		orderID, userID, expiry, err := func() (orderID, userID uint64, expiry string, err error) {
+		orderID, userID, expiry, cost, weight, err := func() (orderID, userID uint64, expiry string, cost, weight float64, err error) {
 			c.mu.Lock()
 			defer c.mu.Unlock()
 			defer flags.ResetFlags(ordersAcceptCmd)
@@ -81,6 +85,14 @@ func (c *CLI) initOrdersAcceptCmd(parentCmd *cobra.Command) {
 				return
 			}
 			expiry, err = cmd.Flags().GetString(flagExpiry.Name)
+			if err != nil {
+				return
+			}
+			cost, err = cmd.Flags().GetFloat64(flagCost.Name)
+			if err != nil {
+				return
+			}
+			weight, err = cmd.Flags().GetFloat64(flagWeight.Name)
 			if err != nil {
 				return
 			}
@@ -100,6 +112,8 @@ func (c *CLI) initOrdersAcceptCmd(parentCmd *cobra.Command) {
 			ID:     orderID,
 			User:   &models.User{ID: userID},
 			Expiry: flagExpiryDate,
+			Cost:   cost,
+			Weight: weight,
 		})
 		if err != nil {
 			return err
