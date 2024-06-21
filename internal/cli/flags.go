@@ -44,6 +44,12 @@ var (
 		Usage:     "Вес заказа в кг(*)",
 		Value:     0,
 	}
+	flagPackaging = f.Flag[string]{
+		Name:      "packaging",
+		Shorthand: "p",
+		Usage:     "Тип упаковки (bag, box, wrap)(*)",
+		Value:     "",
+	}
 	flagLimit = f.Flag[uint64]{
 		Name:      "limit",
 		Shorthand: "l",

@@ -19,7 +19,24 @@ func (s *Domain) AcceptOrder(o *models.Order) (_ error) {
 		return e.ErrOrderExpired
 	}
 
-	// помечаем заказ как принятый
+	// проверка наличия упаковки в базе данных
+	packaging, err := s.storage.GetPackaging(&o.Packaging)
+	if err != nil {
+		return err
+	}
+
+	// Проверка ограничений веса для упаковки и обновление стоимости
+	if packaging.WeightLimit != 0 && o.Weight > packaging.WeightLimit {
+		return e.ErrOrderTooHeavy
+	}
+
+	o.Cost += packaging.Cost
+	o.Packaging = models.Packaging{
+		Type:        packaging.Type,
+		Cost:        packaging.Cost,
+		WeightLimit: packaging.WeightLimit,
+	}
+
 	o.Status = models.StatusAccepted
 	o.CreatedAt = time.Now().UTC()
 	o.Hash = hash.GenerateHash() // HASH

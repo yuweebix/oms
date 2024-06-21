@@ -16,4 +16,11 @@ type Order struct {
 	CreatedAt time.Time     `db:"created_at"`
 	Cost      float64       `db:"cost"`
 	Weight    float64       `db:"weight"`
+	Packaging string        `db:"packaging"`
+}
+
+type Packaging struct {
+	Type        string  `db:"type"`
+	Cost        float64 `db:"cost"`
+	WeightLimit float64 `db:"weight_limit"`
 }

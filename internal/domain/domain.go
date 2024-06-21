@@ -14,6 +14,9 @@ type storage interface {
 
 	// возвраты
 	GetReturns(limit uint64, offset uint64) ([]*models.Order, error) // выдать список возвратов
+
+	// упаковка
+	GetPackaging(p *models.Packaging) (*models.Packaging, error) // получить данные об упаковке
 }
 
 type threading interface {

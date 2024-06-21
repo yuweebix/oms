@@ -9,11 +9,13 @@ import (
 )
 
 const (
-	ordersTable = "orders"
+	ordersTable    = "orders"
+	packagingTable = "packaging"
 )
 
 var (
-	ordersColumns = []string{"id", "user_id", "stored_until", "return_by", "status", "hash", "created_at", "cost", "weight"}
+	ordersColumns    = []string{"id", "user_id", "stored_until", "return_by", "status", "hash", "created_at", "cost", "weight", "packaging"}
+	packagingColumns = []string{"type", "cost", "weight_limit"}
 )
 
 type Repository struct {
@@ -42,4 +44,13 @@ func toModelsOrder(so *schemas.Order) (mo *models.Order) {
 		Weight:    so.Weight,
 	}
 	return mo
+}
+
+func toModelsPackaging(sp *schemas.Packaging) (mp *models.Packaging) {
+	mp = &models.Packaging{
+		Type:        sp.Type,
+		Cost:        sp.Cost,
+		WeightLimit: sp.WeightLimit,
+	}
+	return mp
 }

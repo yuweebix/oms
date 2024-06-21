@@ -60,7 +60,7 @@ var ordersAcceptCmd = &cobra.Command{
 	Long: `Команда "accept" используется для принятия заказа от курьера. 
 
 Пример использования:
-  orders accept --order_id=420 --user_id=69 --expiry=2025-05-05 --cost=1337.69 --weight=0.69
+  orders accept --order_id=420 --user_id=69 --expiry=2025-05-05 --cost=1337.69 --weight=0.69 --packaging=bag
 
 Условия:
   - Заказ не может быть принят дважды.
