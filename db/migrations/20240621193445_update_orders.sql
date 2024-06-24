@@ -1,8 +1,8 @@
 -- +goose Up
 -- +goose StatementBegin
 ALTER TABLE orders
-ADD COLUMN cost NUMERIC(10, 2),
-ADD COLUMN weight NUMERIC(10, 2),
+ADD COLUMN cost BIGINT, -- в микрорублях
+ADD COLUMN weight REAL,
 ADD COLUMN packaging VARCHAR(16);
 
 UPDATE orders

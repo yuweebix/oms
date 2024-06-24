@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"math"
 	"strconv"
 	"strings"
 	"time"
@@ -118,7 +119,7 @@ func (c *CLI) initOrdersAcceptCmd(parentCmd *cobra.Command) {
 			ID:        orderID,
 			User:      &models.User{ID: userID},
 			Expiry:    flagExpiryDate,
-			Cost:      cost,
+			Cost:      convertToMicrocurrency(cost),
 			Weight:    weight,
 			Packaging: models.PackagingType(packaging),
 		})
@@ -421,4 +422,11 @@ func stringToUint64Slice(s string) ([]uint64, error) {
 		orderIDs[i] = id
 	}
 	return orderIDs, nil
+}
+
+// convertToMicrocurrency переводит полученную валюту в формате float в bigint для бдшки
+func convertToMicrocurrency(amount float64) uint64 {
+	// 1 рубль = 1_000_000 микрорублей / 1 доллар = 1_000_000 микродолларов
+	microamount := amount * 1_000_000
+	return uint64(math.Round(microamount))
 }

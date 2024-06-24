@@ -3,7 +3,7 @@ package models
 type PackagingType string
 
 type Packaging struct {
-	Cost        float64 `json:"cost"`
+	Cost        uint64  `json:"cost"`
 	WeightLimit float64 `json:"weight_limit"`
 }
 

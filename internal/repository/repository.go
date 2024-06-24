@@ -31,14 +31,14 @@ func NewRepository(ctx context.Context, connString string) (*Repository, error) 
 
 func toModelsOrder(so *schemas.Order) (mo *models.Order) {
 	mo = &models.Order{
-		ID:        so.ID,
-		User:      &models.User{ID: so.UserID},
+		ID:        uint64(so.ID),
+		User:      &models.User{ID: uint64(so.UserID)},
 		Expiry:    so.Expiry,
 		ReturnBy:  so.ReturnBy,
 		Status:    so.Status,
 		Hash:      so.Hash,
 		CreatedAt: so.CreatedAt,
-		Cost:      so.Cost,
+		Cost:      uint64(so.Cost),
 		Weight:    so.Weight,
 	}
 	return mo

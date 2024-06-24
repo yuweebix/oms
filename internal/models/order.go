@@ -10,12 +10,12 @@ type Order struct {
 	Status    Status        `json:"status"`
 	Hash      string        `json:"hash"`
 	CreatedAt time.Time     `json:"created_at"`
-	Cost      float64       `json:"cost"`
+	Cost      uint64        `json:"cost"`
 	Weight    float64       `json:"weight"`
 	Packaging PackagingType `json:"packaging"`
 }
 
 // Unzip метод для распаковки значений в сеттер
-func (o *Order) Unzip() (uint64, uint64, time.Time, time.Time, Status, string, time.Time, float64, float64, PackagingType) {
+func (o *Order) Unzip() (uint64, uint64, time.Time, time.Time, Status, string, time.Time, uint64, float64, PackagingType) {
 	return o.ID, o.User.ID, o.Expiry, o.ReturnBy, o.Status, o.Hash, o.CreatedAt, o.Cost, o.Weight, o.Packaging
 }
