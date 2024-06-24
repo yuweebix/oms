@@ -45,12 +45,12 @@ func main() {
 		log.Fatalln(err)
 	}
 
-	repository, err := repository.NewRepository(ctx, connString)
+	r, err := repository.NewRepository(ctx, connString)
 	if err != nil {
 		log.Fatalln(err)
 	}
-	domain := domain.NewDomain(repository, wp)
-	c := cli.NewCLI(domain, logFileName)
+	d := domain.NewDomain(r, wp)
+	c := cli.NewCLI(d, logFileName)
 
 	wp.Start()
 
