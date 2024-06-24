@@ -3,11 +3,11 @@ package threading
 import (
 	"context"
 	"fmt"
-	"strings"
 	"sync"
 	"sync/atomic"
 
 	e "gitlab.ozon.dev/yuweebix/homework-1/internal/threading/errors"
+	"gitlab.ozon.dev/yuweebix/homework-1/pkg/utils"
 )
 
 const (
@@ -82,7 +82,7 @@ func (wp *WorkerPool) worker() {
 		default:
 		}
 
-		isChecked := checkCmd(job.cmd)
+		isChecked := !utils.ContainsHelpFlag(job.cmd) && len(job.cmd) != 0
 		if isChecked {
 			wp.notificationChan <- fmt.Sprintf("команда %v начала исполняться", job.cmd)
 		}
@@ -166,17 +166,4 @@ func (wp *WorkerPool) RemoveWorkers(n int) error {
 	wp.numWorkers -= n
 
 	return nil
-}
-
-func checkCmd(cmd []string) bool {
-	if len(cmd) == 0 {
-		return false
-	}
-	if strings.Contains(strings.Join(cmd, " "), "help") {
-		return false
-	}
-	if strings.Contains(strings.Join(cmd, " "), "-h") {
-		return false
-	}
-	return true
 }

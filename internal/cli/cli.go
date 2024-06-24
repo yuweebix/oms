@@ -5,7 +5,9 @@ import (
 	"os"
 	"sync"
 
+	"gitlab.ozon.dev/yuweebix/homework-1/internal/cli/flags"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/models"
+	"gitlab.ozon.dev/yuweebix/homework-1/pkg/utils"
 )
 
 // domain интерфейс необходимых CLI функций для реализации сервисом
@@ -53,6 +55,13 @@ func (c *CLI) Execute(args []string) {
 	if err != nil {
 		c.logger.Println(err)
 	}
+
+	// позле вызова help, нужно отдельно сбрасывать, потому что она за границами run-функций
+	c.mu.Lock()
+	if utils.ContainsHelpFlag(args) {
+		flags.ResetAllHelpFlags(rootCmd)
+	}
+	c.mu.Unlock()
 }
 
 // createLogger вспомогательная функция для открытия файла и привязки к нему логгера
