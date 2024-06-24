@@ -18,9 +18,3 @@ type Order struct {
 	Weight    float64       `db:"weight"`
 	Packaging string        `db:"packaging"`
 }
-
-type Packaging struct {
-	Type        string  `db:"type"`
-	Cost        float64 `db:"cost"`
-	WeightLimit float64 `db:"weight_limit"`
-}

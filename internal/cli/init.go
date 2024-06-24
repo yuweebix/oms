@@ -115,14 +115,12 @@ func (c *CLI) initOrdersAcceptCmd(parentCmd *cobra.Command) {
 		}
 
 		err = c.domain.AcceptOrder(&models.Order{
-			ID:     orderID,
-			User:   &models.User{ID: userID},
-			Expiry: flagExpiryDate,
-			Cost:   cost,
-			Weight: weight,
-			Packaging: models.Packaging{
-				Type: packaging,
-			},
+			ID:        orderID,
+			User:      &models.User{ID: userID},
+			Expiry:    flagExpiryDate,
+			Cost:      cost,
+			Weight:    weight,
+			Packaging: models.PackagingType(packaging),
 		})
 		if err != nil {
 			return err
