@@ -34,29 +34,65 @@ func (d *Domain) AcceptOrder(o *models.Order) (_ error) {
 	o.CreatedAt = time.Now().UTC()
 	o.Hash = hash.GenerateHash() // HASH
 
-	return d.storage.CreateOrder(o)
+	opts := models.TxOptions{
+		// RepeatableRead излишне: мы просто вставляем новый заказ, а не выполняем сложные операции
+		// ReadUncommitted недостаточно: из-за возможного грязного чтения
+		IsoLevel:   models.ReadCommitted,
+		AccessMode: models.ReadWrite,
+	}
+
+	return d.storage.Begin(opts, func(tx models.Tx) error {
+		return d.storage.CreateOrder(tx, o)
+	})
 }
 
 // ReturnOrder возвращает заказ курьеру
-func (d *Domain) ReturnOrder(o *models.Order) (err error) {
-	o, err = d.storage.GetOrder(o)
-	if err != nil {
-		return err
+func (d *Domain) ReturnOrder(o *models.Order) (_ error) {
+	opts := models.TxOptions{
+		// RepeatableRead излишне: потому что читаем только одну запись и удаляем её в рамках одной транзакции
+		// ReadUncommitted недостаточно: из-за возможного грязного чтения
+		IsoLevel:   models.ReadCommitted,
+		AccessMode: models.ReadWrite,
 	}
 
-	// если вернули, то не имеет значение прошёл ли срок хранения
-	if o.Status != models.StatusReturned && o.Expiry.After(time.Now()) {
-		return e.ErrOrderNotExpired
-	}
+	// начинаем транзакцию
+	return d.storage.Begin(opts, func(tx models.Tx) error {
+		o, err := d.storage.GetOrder(tx, o)
+		if err != nil {
+			return err
+		}
 
-	o.Hash = hash.GenerateHash() // HASH
+		// если заказ вернули в пвз, то не имеет значение прошёл ли срок хранения
+		if o.Status != models.StatusReturned && o.Expiry.After(time.Now()) {
+			return e.ErrOrderNotExpired
+		}
 
-	return d.storage.DeleteOrder(o)
+		o.Hash = hash.GenerateHash() // HASH
+
+		return d.storage.DeleteOrder(tx, o)
+	})
 }
 
 // ListOrders выводит список заказов с пагинацией, сортировкой и фильтрацией
 func (d *Domain) ListOrders(userID uint64, limit uint64, offset uint64, isStored bool) (list []*models.Order, err error) {
-	list, err = d.storage.GetOrders(userID, limit, offset, isStored)
+	opts := models.TxOptions{
+		// вообще можно и без транзакции, ведь мы просто читаем данные,
+		// и нам даже не критично, чтобы они были актуальными, потому что ничего не изменяется и не проверяется
+		// но для некоторой "гибкости", и для того, чтобы соответствовали все функции некому "стандарту", что первый аргумент - tx, оставил
+		// ReadCommitted излишне: всё сделаем по минимуму
+		IsoLevel:   models.ReadUncommitted,
+		AccessMode: models.ReadOnly,
+	}
+
+	// начинаем транзакцию
+	err = d.storage.Begin(opts, func(tx models.Tx) error {
+		list, err = d.storage.GetOrders(tx, userID, limit, offset, isStored)
+		if err != nil {
+			return err
+		}
+		return nil
+	})
+
 	if err != nil {
 		return nil, err
 	}
@@ -70,41 +106,55 @@ func (d *Domain) DeliverOrders(orderIDs []uint64) (err error) {
 		return e.ErrEmpty
 	}
 
-	list, err := d.storage.GetOrdersForDelivery(orderIDs)
-	if err != nil {
-		return err
+	opts := models.TxOptions{
+		// кмк, более критично, чтобы данные были более синхронизированы при изменении данных, а не добавления
+		IsoLevel:   models.RepeatableRead,
+		AccessMode: models.ReadWrite,
 	}
 
-	// когда передаются ID заказов, которых нет в базе данных
-	if len(list) != len(orderIDs) {
-		return e.ErrOrderNotFound
-	}
-
-	// Можно выдавать только те заказы, которые были приняты от курьера и чей срок хранения меньше текущей даты.
-	// Все ID заказов должны принадлежать только одному клиенту.
-	user_id := list[0].User.ID
-	for _, v := range list {
-		if v.Status != models.StatusAccepted {
-			return e.ErrStatusInvalid
-		}
-		if v.User.ID != user_id {
-			return e.ErrUserInvalid
-		}
-		if v.Expiry.Before(time.Now()) {
-			return e.ErrOrderExpired
-		}
-	}
-
-	// помечаем как переданные клиенту и оставляем два дня на возврат
-	for i := range list {
-		list[i].Status = models.StatusDelivered
-		list[i].ReturnBy = time.Now().UTC().Add(returnByAllowedTime)
-		list[i].Hash = hash.GenerateHash() // HASH
-
-		err = d.storage.UpdateOrder(list[i])
+	// начинаем транзакцию
+	err = d.storage.Begin(opts, func(tx models.Tx) error {
+		list, err := d.storage.GetOrdersForDelivery(tx, orderIDs)
 		if err != nil {
 			return err
 		}
+
+		// когда передаются ID заказов, которых нет в базе данных
+		if len(list) != len(orderIDs) {
+			return e.ErrOrderNotFound
+		}
+
+		// можно выдавать только те заказы, которые были приняты от курьера и чей срок хранения меньше текущей даты
+		// все ID заказов должны принадлежать только одному клиенту
+		user_id := list[0].User.ID
+		for _, v := range list {
+			if v.Status != models.StatusAccepted {
+				return e.ErrStatusInvalid
+			}
+			if v.User.ID != user_id {
+				return e.ErrUserInvalid
+			}
+			if v.Expiry.Before(time.Now()) {
+				return e.ErrOrderExpired
+			}
+		}
+
+		// помечаем как переданные клиенту и оставляем два дня на возврат
+		for i := range list {
+			list[i].Status = models.StatusDelivered
+			list[i].ReturnBy = time.Now().UTC().Add(returnByAllowedTime)
+			list[i].Hash = hash.GenerateHash() // HASH
+
+			err = d.storage.UpdateOrder(tx, list[i])
+			if err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
+	if err != nil {
+		return err
 	}
 
 	return nil

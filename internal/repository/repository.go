@@ -43,3 +43,19 @@ func toModelsOrder(so *schemas.Order) (mo *models.Order) {
 	}
 	return mo
 }
+
+// convertTxOptions переводит models.TxOptions в pgx.TxOptions
+func convertTxOptions(opts models.TxOptions) pgx.TxOptions {
+	return pgx.TxOptions{
+		IsoLevel:   pgx.TxIsoLevel(opts.IsoLevel),
+		AccessMode: pgx.TxAccessMode(opts.AccessMode),
+	}
+}
+
+// Begin начинает исполнение транзакции с заданными опциями
+func (r *Repository) Begin(opts models.TxOptions, fn func(tx models.Tx) error) error {
+	pgxOpts := convertTxOptions(opts)
+	return pgx.BeginTxFunc(r.ctx, r.db, pgxOpts, func(tx pgx.Tx) error {
+		return fn(tx)
+	})
+}
