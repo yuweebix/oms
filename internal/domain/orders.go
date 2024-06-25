@@ -19,8 +19,12 @@ func (s *Domain) AcceptOrder(o *models.Order) (_ error) {
 		return e.ErrOrderExpired
 	}
 
+	packaging, ok := models.GetPackaging(o.Packaging)
+	// нету такой упаковки
+	if !ok {
+		return e.ErrPackagingInvalid
+	}
 	// если равен нулю, то лимита нету
-	packaging := models.GetPackaging(o.Packaging)
 	if packaging.WeightLimit != 0 && o.Weight > packaging.WeightLimit {
 		return e.ErrOrderTooHeavy
 	}

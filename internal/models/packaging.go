@@ -13,6 +13,8 @@ var packagingTable = map[PackagingType]Packaging{
 	"wrap": {Cost: 1, WeightLimit: 0}, // ограничения по весу нету
 }
 
-func GetPackaging(t PackagingType) Packaging {
-	return packagingTable[t]
+// GetPackaging передает значение таблицы, если он присутствует
+func GetPackaging(t PackagingType) (Packaging, bool) {
+	res, ok := packagingTable[t]
+	return res, ok
 }

@@ -21,5 +21,9 @@ var (
 )
 
 var (
+	ErrPackagingInvalid = errors.New("packaging invalid")
+)
+
+var (
 	ErrOrderTooHeavy = errors.New("order is over the weight limit for the packaging")
 )
