@@ -9,8 +9,8 @@ import (
 )
 
 // AcceptReturn принимает возврат от клиента
-func (s Domain) AcceptReturn(o *models.Order) (err error) {
-	ro, err := s.storage.GetOrder(o) // ro - return order
+func (d *Domain) AcceptReturn(o *models.Order) (err error) {
+	ro, err := d.storage.GetOrder(o) // ro - return order
 	if err != nil {
 		return err
 	}
@@ -34,7 +34,7 @@ func (s Domain) AcceptReturn(o *models.Order) (err error) {
 	ro.Status = models.StatusReturned
 	ro.Hash = hash.GenerateHash() // HASH
 
-	err = s.storage.UpdateOrder(ro)
+	err = d.storage.UpdateOrder(ro)
 	if err != nil {
 		return err
 	}
@@ -42,8 +42,8 @@ func (s Domain) AcceptReturn(o *models.Order) (err error) {
 }
 
 // ListReturns выводит список возвратов с пагинацией
-func (s *Domain) ListReturns(limit uint64, offset uint64) (list []*models.Order, err error) {
-	list, err = s.storage.GetReturns(limit, offset)
+func (d *Domain) ListReturns(limit uint64, offset uint64) (list []*models.Order, err error) {
+	list, err = d.storage.GetReturns(limit, offset)
 	if err != nil {
 		return nil, err
 	}

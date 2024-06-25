@@ -34,10 +34,10 @@ type CLI struct {
 }
 
 // NewCLI конструктор с добавлением зависимостей
-func NewCLI(s domain, logFileName string) *CLI {
+func NewCLI(d domain, logFileName string) *CLI {
 	logger := createLogger(logFileName)
 	c := &CLI{
-		domain: s,
+		domain: d,
 		logger: logger,
 		mu:     &sync.Mutex{},
 	}

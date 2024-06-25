@@ -13,7 +13,7 @@ const (
 )
 
 // AcceptOrder принимает заказ от курьера
-func (s *Domain) AcceptOrder(o *models.Order) (_ error) {
+func (d *Domain) AcceptOrder(o *models.Order) (_ error) {
 	// срок хранения превышен
 	if o.Expiry.Before(time.Now()) {
 		return e.ErrOrderExpired
@@ -34,12 +34,12 @@ func (s *Domain) AcceptOrder(o *models.Order) (_ error) {
 	o.CreatedAt = time.Now().UTC()
 	o.Hash = hash.GenerateHash() // HASH
 
-	return s.storage.CreateOrder(o)
+	return d.storage.CreateOrder(o)
 }
 
 // ReturnOrder возвращает заказ курьеру
-func (s *Domain) ReturnOrder(o *models.Order) (err error) {
-	o, err = s.storage.GetOrder(o)
+func (d *Domain) ReturnOrder(o *models.Order) (err error) {
+	o, err = d.storage.GetOrder(o)
 	if err != nil {
 		return err
 	}
@@ -51,12 +51,12 @@ func (s *Domain) ReturnOrder(o *models.Order) (err error) {
 
 	o.Hash = hash.GenerateHash() // HASH
 
-	return s.storage.DeleteOrder(o)
+	return d.storage.DeleteOrder(o)
 }
 
 // ListOrders выводит список заказов с пагинацией, сортировкой и фильтрацией
-func (s *Domain) ListOrders(userID uint64, limit uint64, offset uint64, isStored bool) (list []*models.Order, err error) {
-	list, err = s.storage.GetOrders(userID, limit, offset, isStored)
+func (d *Domain) ListOrders(userID uint64, limit uint64, offset uint64, isStored bool) (list []*models.Order, err error) {
+	list, err = d.storage.GetOrders(userID, limit, offset, isStored)
 	if err != nil {
 		return nil, err
 	}
@@ -65,12 +65,12 @@ func (s *Domain) ListOrders(userID uint64, limit uint64, offset uint64, isStored
 }
 
 // DeliverOrders принимает список заказов, переводит их в форму для обработки в хранилище
-func (s *Domain) DeliverOrders(orderIDs []uint64) (err error) {
+func (d *Domain) DeliverOrders(orderIDs []uint64) (err error) {
 	if len(orderIDs) == 0 {
 		return e.ErrEmpty
 	}
 
-	list, err := s.storage.GetOrdersForDelivery(orderIDs)
+	list, err := d.storage.GetOrdersForDelivery(orderIDs)
 	if err != nil {
 		return err
 	}
@@ -101,7 +101,7 @@ func (s *Domain) DeliverOrders(orderIDs []uint64) (err error) {
 		list[i].ReturnBy = time.Now().UTC().Add(returnByAllowedTime)
 		list[i].Hash = hash.GenerateHash() // HASH
 
-		err = s.storage.UpdateOrder(list[i])
+		err = d.storage.UpdateOrder(list[i])
 		if err != nil {
 			return err
 		}

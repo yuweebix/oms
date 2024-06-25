@@ -1,19 +1,19 @@
 package domain
 
 // рабочие
-func (s *Domain) ChangeWorkersNumber(workersNum int) error {
+func (d *Domain) ChangeWorkersNumber(workersNum int) error {
 	if workersNum > 0 {
-		return s.addWorkers(workersNum)
+		return d.addWorkers(workersNum)
 	} else if workersNum < 0 {
-		return s.removeWorkers(workersNum)
+		return d.removeWorkers(workersNum)
 	}
 	return nil
 }
 
-func (s *Domain) addWorkers(num int) error {
-	return s.threading.AddWorkers(num)
+func (d *Domain) addWorkers(num int) error {
+	return d.threading.AddWorkers(num)
 }
 
-func (s *Domain) removeWorkers(num int) error {
-	return s.threading.RemoveWorkers(num)
+func (d *Domain) removeWorkers(num int) error {
+	return d.threading.RemoveWorkers(num)
 }
