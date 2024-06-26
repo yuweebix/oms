@@ -1,6 +1,8 @@
 package repository
 
 import (
+	"context"
+
 	sq "github.com/Masterminds/squirrel"
 	"github.com/georgysavva/scany/v2/pgxscan"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/models"
@@ -9,7 +11,9 @@ import (
 )
 
 // CreateOrder добавляет заказ в бд
-func (r *Repository) CreateOrder(tx models.Tx, o *models.Order) (err error) {
+func (r *Repository) CreateOrder(ctx context.Context, o *models.Order) (err error) {
+	qr := r.GetQuerier(ctx)
+
 	// создаем sql запрос
 	query := sq.Insert(ordersTable).
 		Columns(ordersColumns...).
@@ -22,7 +26,7 @@ func (r *Repository) CreateOrder(tx models.Tx, o *models.Order) (err error) {
 		return err
 	}
 
-	res, err := tx.Exec(r.ctx, rawQuery, args...)
+	res, err := qr.Exec(ctx, rawQuery, args...)
 	if err != nil {
 		return err
 	}
@@ -38,7 +42,9 @@ func (r *Repository) CreateOrder(tx models.Tx, o *models.Order) (err error) {
 }
 
 // DeleteOrder удаляет заказ из бд
-func (r *Repository) DeleteOrder(tx models.Tx, o *models.Order) (err error) {
+func (r *Repository) DeleteOrder(ctx context.Context, o *models.Order) (err error) {
+	qr := r.GetQuerier(ctx)
+
 	// создаем sql запрос
 	query := sq.Delete(ordersTable).
 		Where(sq.Eq{"id": o.ID}).
@@ -50,7 +56,7 @@ func (r *Repository) DeleteOrder(tx models.Tx, o *models.Order) (err error) {
 		return err
 	}
 
-	res, err := tx.Exec(r.ctx, rawQuery, args...)
+	res, err := qr.Exec(ctx, rawQuery, args...)
 	if err != nil {
 		return err
 	}
@@ -66,7 +72,9 @@ func (r *Repository) DeleteOrder(tx models.Tx, o *models.Order) (err error) {
 }
 
 // UpdateOrder обновляет данные заказа в бд
-func (r *Repository) UpdateOrder(tx models.Tx, o *models.Order) (err error) {
+func (r *Repository) UpdateOrder(ctx context.Context, o *models.Order) (err error) {
+	qr := r.GetQuerier(ctx)
+
 	// создаем sql запрос
 	query := sq.Update(ordersTable).
 		Set("user_id", o.User.ID).
@@ -84,7 +92,7 @@ func (r *Repository) UpdateOrder(tx models.Tx, o *models.Order) (err error) {
 		return err
 	}
 
-	res, err := tx.Exec(r.ctx, rawQuery, args...)
+	res, err := qr.Exec(ctx, rawQuery, args...)
 	if err != nil {
 		return err
 	}
@@ -100,7 +108,9 @@ func (r *Repository) UpdateOrder(tx models.Tx, o *models.Order) (err error) {
 }
 
 // GetOrders возвращает список заказов клиента
-func (r *Repository) GetOrders(tx models.Tx, userID uint64, limit uint64, offset uint64, isStored bool) (list []*models.Order, err error) {
+func (r *Repository) GetOrders(ctx context.Context, userID uint64, limit uint64, offset uint64, isStored bool) (list []*models.Order, err error) {
+	qr := r.GetQuerier(ctx)
+
 	// создаем sql запрос
 	query := sq.Select(ordersColumns...).
 		From(ordersTable).
@@ -127,7 +137,7 @@ func (r *Repository) GetOrders(tx models.Tx, userID uint64, limit uint64, offset
 	}
 
 	orders := []schemas.Order{}
-	err = pgxscan.Select(r.ctx, tx, &orders, rawQuery, args...)
+	err = pgxscan.Select(ctx, qr, &orders, rawQuery, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -141,7 +151,9 @@ func (r *Repository) GetOrders(tx models.Tx, userID uint64, limit uint64, offset
 }
 
 // GetOrdersForDelivery возвращает список заказов клиенту на выдачу
-func (r *Repository) GetOrdersForDelivery(tx models.Tx, orderIDs []uint64) (list []*models.Order, err error) {
+func (r *Repository) GetOrdersForDelivery(ctx context.Context, orderIDs []uint64) (list []*models.Order, err error) {
+	qr := r.GetQuerier(ctx)
+
 	// создаем sql запрос
 	query := sq.Select(ordersColumns...).
 		From(ordersTable).
@@ -155,7 +167,7 @@ func (r *Repository) GetOrdersForDelivery(tx models.Tx, orderIDs []uint64) (list
 	}
 
 	orders := []schemas.Order{}
-	err = pgxscan.Select(r.ctx, tx, &orders, rawQuery, args...)
+	err = pgxscan.Select(ctx, qr, &orders, rawQuery, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -168,7 +180,9 @@ func (r *Repository) GetOrdersForDelivery(tx models.Tx, orderIDs []uint64) (list
 }
 
 // GetOrder пересылает полный объект заказа
-func (r *Repository) GetOrder(tx models.Tx, o *models.Order) (result *models.Order, err error) {
+func (r *Repository) GetOrder(ctx context.Context, o *models.Order) (result *models.Order, err error) {
+	qr := r.GetQuerier(ctx)
+
 	// создаем sql запрос
 	query := sq.Select(ordersColumns...).
 		From(ordersTable).
@@ -182,7 +196,7 @@ func (r *Repository) GetOrder(tx models.Tx, o *models.Order) (result *models.Ord
 	}
 
 	order := schemas.Order{}
-	err = pgxscan.Get(r.ctx, tx, &order, rawQuery, args...)
+	err = pgxscan.Get(ctx, qr, &order, rawQuery, args...)
 	if err != nil {
 		return nil, err
 	}

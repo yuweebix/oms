@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"context"
 	"time"
 
 	e "gitlab.ozon.dev/yuweebix/homework-1/internal/domain/errors"
@@ -17,8 +18,8 @@ func (d *Domain) AcceptReturn(o *models.Order) (err error) {
 	}
 
 	// начинаем транзакцию
-	err = d.storage.Begin(opts, func(tx models.Tx) error {
-		ro, err := d.storage.GetOrder(tx, o) // ro - return order
+	err = d.storage.RunTx(context.Background(), opts, func(ctxTX context.Context) error {
+		ro, err := d.storage.GetOrder(ctxTX, o) // ro - return order
 		if err != nil {
 			return err
 		}
@@ -43,7 +44,7 @@ func (d *Domain) AcceptReturn(o *models.Order) (err error) {
 		ro.Hash = hash.GenerateHash() // Генерация HASH
 
 		// обновляем заказ в хранилище
-		err = d.storage.UpdateOrder(tx, ro)
+		err = d.storage.UpdateOrder(ctxTX, ro)
 		if err != nil {
 			return err
 		}
@@ -66,8 +67,8 @@ func (d *Domain) ListReturns(limit uint64, offset uint64) (list []*models.Order,
 	}
 
 	// начинаем транзакцию
-	err = d.storage.Begin(opts, func(tx models.Tx) error {
-		list, err = d.storage.GetReturns(tx, limit, offset)
+	err = d.storage.RunTx(context.Background(), opts, func(ctxTX context.Context) error {
+		list, err = d.storage.GetReturns(ctxTX, limit, offset)
 		if err != nil {
 			return err
 		}

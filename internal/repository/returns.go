@@ -1,6 +1,8 @@
 package repository
 
 import (
+	"context"
+
 	sq "github.com/Masterminds/squirrel"
 	"github.com/georgysavva/scany/v2/pgxscan"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/models"
@@ -8,7 +10,9 @@ import (
 )
 
 // GetReturns возвращает список возвратов
-func (r *Repository) GetReturns(tx models.Tx, limit uint64, offset uint64) (list []*models.Order, err error) {
+func (r *Repository) GetReturns(ctx context.Context, limit uint64, offset uint64) (list []*models.Order, err error) {
+	qr := r.GetQuerier(ctx)
+
 	// создаем sql запрос
 	query := sq.Select(ordersColumns...).
 		From(ordersTable).
@@ -24,7 +28,7 @@ func (r *Repository) GetReturns(tx models.Tx, limit uint64, offset uint64) (list
 	}
 
 	orders := []schemas.Order{}
-	err = pgxscan.Select(r.ctx, tx, &orders, rawQuery, args...)
+	err = pgxscan.Select(ctx, qr, &orders, rawQuery, args...)
 	if err != nil {
 		return nil, err
 	}

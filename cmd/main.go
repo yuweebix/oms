@@ -49,6 +49,8 @@ func main() {
 	if err != nil {
 		log.Fatalln(err)
 	}
+	defer r.Close()
+
 	d := domain.NewDomain(r, wp)
 	c := cli.NewCLI(d, logFileName)
 

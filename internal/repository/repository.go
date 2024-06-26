@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/models"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/repository/schemas"
 )
@@ -17,20 +18,29 @@ var (
 )
 
 type Repository struct {
-	ctx context.Context
-	db  *pgx.Conn
+	pool *pgxpool.Pool
 }
 
 func NewRepository(ctx context.Context, connString string) (*Repository, error) {
-	conn, err := pgx.Connect(ctx, connString)
+	config, err := pgxpool.ParseConfig(connString)
 	if err != nil {
 		return nil, err
 	}
-	return &Repository{ctx: ctx, db: conn}, nil
+
+	pool, err := pgxpool.NewWithConfig(ctx, config)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Repository{pool: pool}, nil
 }
 
-func toModelsOrder(so *schemas.Order) (mo *models.Order) {
-	mo = &models.Order{
+func (r *Repository) Close() {
+	r.pool.Close()
+}
+
+func toModelsOrder(so *schemas.Order) *models.Order {
+	return &models.Order{
 		ID:        uint64(so.ID),
 		User:      &models.User{ID: uint64(so.UserID)},
 		Expiry:    so.Expiry,
@@ -41,21 +51,11 @@ func toModelsOrder(so *schemas.Order) (mo *models.Order) {
 		Cost:      uint64(so.Cost),
 		Weight:    so.Weight,
 	}
-	return mo
 }
 
-// convertTxOptions переводит models.TxOptions в pgx.TxOptions
 func convertTxOptions(opts models.TxOptions) pgx.TxOptions {
 	return pgx.TxOptions{
 		IsoLevel:   pgx.TxIsoLevel(opts.IsoLevel),
 		AccessMode: pgx.TxAccessMode(opts.AccessMode),
 	}
-}
-
-// Begin начинает исполнение транзакции с заданными опциями
-func (r *Repository) Begin(opts models.TxOptions, fn func(tx models.Tx) error) error {
-	pgxOpts := convertTxOptions(opts)
-	return pgx.BeginTxFunc(r.ctx, r.db, pgxOpts, func(tx pgx.Tx) error {
-		return fn(tx)
-	})
 }

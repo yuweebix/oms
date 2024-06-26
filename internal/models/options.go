@@ -1,11 +1,5 @@
 package models
 
-import "github.com/jackc/pgx/v5"
-
-type Tx interface {
-	pgx.Tx
-}
-
 type TxIsoLevel string
 type TxAccessMode string
 type DeferrableMode string

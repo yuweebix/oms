@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"context"
 	"time"
 
 	e "gitlab.ozon.dev/yuweebix/homework-1/internal/domain/errors"
@@ -41,8 +42,8 @@ func (d *Domain) AcceptOrder(o *models.Order) (_ error) {
 		AccessMode: models.ReadWrite,
 	}
 
-	return d.storage.Begin(opts, func(tx models.Tx) error {
-		return d.storage.CreateOrder(tx, o)
+	return d.storage.RunTx(context.Background(), opts, func(ctxTX context.Context) error {
+		return d.storage.CreateOrder(ctxTX, o)
 	})
 }
 
@@ -56,8 +57,8 @@ func (d *Domain) ReturnOrder(o *models.Order) (_ error) {
 	}
 
 	// начинаем транзакцию
-	return d.storage.Begin(opts, func(tx models.Tx) error {
-		o, err := d.storage.GetOrder(tx, o)
+	return d.storage.RunTx(context.Background(), opts, func(ctxTX context.Context) error {
+		o, err := d.storage.GetOrder(ctxTX, o)
 		if err != nil {
 			return err
 		}
@@ -69,7 +70,7 @@ func (d *Domain) ReturnOrder(o *models.Order) (_ error) {
 
 		o.Hash = hash.GenerateHash() // HASH
 
-		return d.storage.DeleteOrder(tx, o)
+		return d.storage.DeleteOrder(ctxTX, o)
 	})
 }
 
@@ -78,15 +79,15 @@ func (d *Domain) ListOrders(userID uint64, limit uint64, offset uint64, isStored
 	opts := models.TxOptions{
 		// вообще можно и без транзакции, ведь мы просто читаем данные,
 		// и нам даже не критично, чтобы они были актуальными, потому что ничего не изменяется и не проверяется
-		// но для некоторой "гибкости", и для того, чтобы соответствовали все функции некому "стандарту", что первый аргумент - tx, оставил
+		// но для некоторой "гибкости", и для того, чтобы соответствовали все функции некому "стандарту", что первый аргумент - ctxTX, оставил
 		// ReadCommitted излишне: всё сделаем по минимуму
 		IsoLevel:   models.ReadUncommitted,
 		AccessMode: models.ReadOnly,
 	}
 
 	// начинаем транзакцию
-	err = d.storage.Begin(opts, func(tx models.Tx) error {
-		list, err = d.storage.GetOrders(tx, userID, limit, offset, isStored)
+	err = d.storage.RunTx(context.Background(), opts, func(ctxTX context.Context) error {
+		list, err = d.storage.GetOrders(ctxTX, userID, limit, offset, isStored)
 		if err != nil {
 			return err
 		}
@@ -113,8 +114,8 @@ func (d *Domain) DeliverOrders(orderIDs []uint64) (err error) {
 	}
 
 	// начинаем транзакцию
-	err = d.storage.Begin(opts, func(tx models.Tx) error {
-		list, err := d.storage.GetOrdersForDelivery(tx, orderIDs)
+	err = d.storage.RunTx(context.Background(), opts, func(ctxTX context.Context) error {
+		list, err := d.storage.GetOrdersForDelivery(ctxTX, orderIDs)
 		if err != nil {
 			return err
 		}
@@ -145,7 +146,7 @@ func (d *Domain) DeliverOrders(orderIDs []uint64) (err error) {
 			list[i].ReturnBy = time.Now().UTC().Add(returnByAllowedTime)
 			list[i].Hash = hash.GenerateHash() // HASH
 
-			err = d.storage.UpdateOrder(tx, list[i])
+			err = d.storage.UpdateOrder(ctxTX, list[i])
 			if err != nil {
 				return err
 			}
