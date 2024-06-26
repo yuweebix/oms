@@ -7,6 +7,7 @@ import (
 	e "gitlab.ozon.dev/yuweebix/homework-1/internal/domain/errors"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/models"
 	"gitlab.ozon.dev/yuweebix/homework-1/pkg/hash"
+	"gitlab.ozon.dev/yuweebix/homework-1/pkg/utils"
 )
 
 const (
@@ -29,7 +30,7 @@ func (d *Domain) AcceptOrder(o *models.Order) (_ error) {
 	if packaging.WeightLimit != 0 && o.Weight > packaging.WeightLimit {
 		return e.ErrOrderTooHeavy
 	}
-	o.Cost += packaging.Cost
+	o.Cost += utils.ConvertToMicrocurrency(float64(packaging.Cost))
 
 	o.Status = models.StatusAccepted
 	o.CreatedAt = time.Now().UTC()

@@ -1,7 +1,6 @@
 package cli
 
 import (
-	"math"
 	"strconv"
 	"strings"
 	"time"
@@ -10,6 +9,7 @@ import (
 	e "gitlab.ozon.dev/yuweebix/homework-1/internal/cli/errors"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/cli/flags"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/models"
+	"gitlab.ozon.dev/yuweebix/homework-1/pkg/utils"
 )
 
 type initCommand func(*cobra.Command)
@@ -119,7 +119,7 @@ func (c *CLI) initOrdersAcceptCmd(parentCmd *cobra.Command) {
 			ID:        orderID,
 			User:      &models.User{ID: userID},
 			Expiry:    flagExpiryDate,
-			Cost:      convertToMicrocurrency(cost),
+			Cost:      utils.ConvertToMicrocurrency(cost),
 			Weight:    weight,
 			Packaging: models.PackagingType(packaging),
 		})
@@ -422,11 +422,4 @@ func stringToUint64Slice(s string) ([]uint64, error) {
 		orderIDs[i] = id
 	}
 	return orderIDs, nil
-}
-
-// convertToMicrocurrency переводит полученную валюту в формате float в bigint для бдшки
-func convertToMicrocurrency(amount float64) uint64 {
-	// 1 рубль = 1_000_000 микрорублей / 1 доллар = 1_000_000 микродолларов
-	microamount := amount * 1_000_000
-	return uint64(math.Round(microamount))
 }
