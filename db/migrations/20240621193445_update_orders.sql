@@ -1,26 +1,15 @@
 -- +goose Up
 -- +goose StatementBegin
-ALTER TABLE orders
-  ADD COLUMN cost BIGINT, -- в микрорублях
-  ADD COLUMN weight REAL,
-  ADD COLUMN packaging VARCHAR(16);
-
-UPDATE orders
-  SET
-    cost = 0,
-    weight = 0,
-    packaging = 'wrap';
-
-ALTER TABLE orders
-  ALTER COLUMN cost SET NOT NULL,
-  ALTER COLUMN weight SET NOT NULL,
-  ALTER COLUMN packaging SET NOT NULL;
+ALTER TABLE IF NOT EXISTS orders
+  ADD COLUMN IF NOT EXISTS cost BIGINT NOT NULL DEFAULT 0, -- в микрорублях
+  ADD COLUMN IF NOT EXISTS weight REAL NOT NULL DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS packaging VARCHAR(16) DEFAULT 'wrap';
 -- +goose StatementEnd
 
 -- +goose Down
 -- +goose StatementBegin
-ALTER TABLE orders
-  DROP COLUMN cost,
-  DROP COLUMN weight,
-  DROP COLUMN packaging;
+ALTER TABLE IF EXISTS orders
+  DROP COLUMN IF EXISTS cost,
+  DROP COLUMN IF EXISTS weight,
+  DROP COLUMN IF EXISTS packaging;
 -- +goose StatementEnd
