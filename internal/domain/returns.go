@@ -11,6 +11,9 @@ import (
 
 // AcceptReturn принимает возврат от клиента
 func (d *Domain) AcceptReturn(o *models.Order) (err error) {
+	// вынесем генерацию хэша за транзакцию
+	hash := hash.GenerateHash() // HASH
+
 	opts := models.TxOptions{
 		// данные обновляются, поэтому следует использовать ReapeatableRead
 		IsoLevel:   models.RepeatableRead,
@@ -41,7 +44,7 @@ func (d *Domain) AcceptReturn(o *models.Order) (err error) {
 
 		// помечаем заказ как возвращенный
 		ro.Status = models.StatusReturned
-		ro.Hash = hash.GenerateHash() // Генерация HASH
+		ro.Hash = hash
 
 		// обновляем заказ в хранилище
 		err = d.storage.UpdateOrder(ctxTX, ro)
@@ -60,20 +63,12 @@ func (d *Domain) AcceptReturn(o *models.Order) (err error) {
 
 // ListReturns выводит список возвратов с пагинацией
 func (d *Domain) ListReturns(limit uint64, offset uint64) (list []*models.Order, err error) {
-	opts := models.TxOptions{
-		// также как и при ListOrders, просто читаются данные и не важно, чтобы они точно совпадали, ведь ничего не проверяется и не изменяется
-		IsoLevel:   models.ReadUncommitted,
-		AccessMode: models.ReadOnly,
-	}
+	// можно обойтись и без эксплисивной транзакции
+	list, err = d.storage.GetReturns(context.Background(), limit, offset)
 
-	// начинаем транзакцию
-	err = d.storage.RunTx(context.Background(), opts, func(ctxTX context.Context) error {
-		list, err = d.storage.GetReturns(ctxTX, limit, offset)
-		if err != nil {
-			return err
-		}
-		return nil
-	})
+	if err != nil {
+		return nil, err
+	}
 
 	return list, err
 }

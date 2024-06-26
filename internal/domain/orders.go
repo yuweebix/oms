@@ -35,30 +35,27 @@ func (d *Domain) AcceptOrder(o *models.Order) (_ error) {
 	o.CreatedAt = time.Now().UTC()
 	o.Hash = hash.GenerateHash() // HASH
 
-	opts := models.TxOptions{
-		// RepeatableRead излишне: мы просто вставляем новый заказ, а не выполняем сложные операции
-		// ReadUncommitted недостаточно: из-за возможного грязного чтения
-		IsoLevel:   models.ReadCommitted,
-		AccessMode: models.ReadWrite,
-	}
-
-	return d.storage.RunTx(context.Background(), opts, func(ctxTX context.Context) error {
-		return d.storage.CreateOrder(ctxTX, o)
-	})
+	// можно обойтись и без эксплисивной транзакции
+	return d.storage.CreateOrder(context.Background(), o)
 }
 
 // ReturnOrder возвращает заказ курьеру
-func (d *Domain) ReturnOrder(o *models.Order) (_ error) {
+func (d *Domain) ReturnOrder(o *models.Order) (err error) {
+	// вынесем генерацию хэша за транзакцию
+	hash := hash.GenerateHash() // HASH
+
 	opts := models.TxOptions{
-		// RepeatableRead излишне: потому что читаем только одну запись и удаляем её в рамках одной транзакции
-		// ReadUncommitted недостаточно: из-за возможного грязного чтения
-		IsoLevel:   models.ReadCommitted,
+		// `Мы сначала читаем заказ из БД, потом проверяем его поля, потом удаляем.
+		// Если в ходе наших манипуляций статус поменяется конкурентной транзакцией, то при ReadCommitted мы это проигнорируем и удалим запись, хотя её статус уже не тот, что был в начале транзакции.
+		// Тут нужен RepeatableRead` -- (c) Евгений Федунин
+		// поэтому ReadCommitted не подходит
+		IsoLevel:   models.RepeatableRead,
 		AccessMode: models.ReadWrite,
 	}
 
 	// начинаем транзакцию
 	return d.storage.RunTx(context.Background(), opts, func(ctxTX context.Context) error {
-		o, err := d.storage.GetOrder(ctxTX, o)
+		o, err = d.storage.GetOrder(ctxTX, o)
 		if err != nil {
 			return err
 		}
@@ -68,7 +65,7 @@ func (d *Domain) ReturnOrder(o *models.Order) (_ error) {
 			return e.ErrOrderNotExpired
 		}
 
-		o.Hash = hash.GenerateHash() // HASH
+		o.Hash = hash
 
 		return d.storage.DeleteOrder(ctxTX, o)
 	})
@@ -76,23 +73,8 @@ func (d *Domain) ReturnOrder(o *models.Order) (_ error) {
 
 // ListOrders выводит список заказов с пагинацией, сортировкой и фильтрацией
 func (d *Domain) ListOrders(userID uint64, limit uint64, offset uint64, isStored bool) (list []*models.Order, err error) {
-	opts := models.TxOptions{
-		// вообще можно и без транзакции, ведь мы просто читаем данные,
-		// и нам даже не критично, чтобы они были актуальными, потому что ничего не изменяется и не проверяется
-		// но для некоторой "гибкости", и для того, чтобы соответствовали все функции некому "стандарту", что первый аргумент - ctxTX, оставил
-		// ReadCommitted излишне: всё сделаем по минимуму
-		IsoLevel:   models.ReadUncommitted,
-		AccessMode: models.ReadOnly,
-	}
-
-	// начинаем транзакцию
-	err = d.storage.RunTx(context.Background(), opts, func(ctxTX context.Context) error {
-		list, err = d.storage.GetOrders(ctxTX, userID, limit, offset, isStored)
-		if err != nil {
-			return err
-		}
-		return nil
-	})
+	// можно обойтись и без эксплисивной транзакции
+	list, err = d.storage.GetOrders(context.Background(), userID, limit, offset, isStored)
 
 	if err != nil {
 		return nil, err
@@ -105,6 +87,13 @@ func (d *Domain) ListOrders(userID uint64, limit uint64, offset uint64, isStored
 func (d *Domain) DeliverOrders(orderIDs []uint64) (err error) {
 	if len(orderIDs) == 0 {
 		return e.ErrEmpty
+	}
+
+	// вынесем сложную операцию за транзакцию
+	// насчёт размера можно не беспокоиться, потому что мы ассёртим, что размеры совпадают
+	hashes := make([]string, len(orderIDs))
+	for i := range hashes {
+		hashes[i] = hash.GenerateHash() // HASH
 	}
 
 	opts := models.TxOptions{
@@ -144,7 +133,7 @@ func (d *Domain) DeliverOrders(orderIDs []uint64) (err error) {
 		for i := range list {
 			list[i].Status = models.StatusDelivered
 			list[i].ReturnBy = time.Now().UTC().Add(returnByAllowedTime)
-			list[i].Hash = hash.GenerateHash() // HASH
+			list[i].Hash = hashes[i]
 
 			err = d.storage.UpdateOrder(ctxTX, list[i])
 			if err != nil {
