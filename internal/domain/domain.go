@@ -25,8 +25,8 @@ type storage interface {
 
 type threading interface {
 	// рабочие
-	AddWorkers(n int) error
-	RemoveWorkers(n int) error
+	AddWorkers(ctx context.Context, n int) error
+	RemoveWorkers(ctx context.Context, n int) error
 }
 
 // Domain представляет слой бизнес-логики приложения

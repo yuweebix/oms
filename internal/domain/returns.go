@@ -10,7 +10,7 @@ import (
 )
 
 // AcceptReturn принимает возврат от клиента
-func (d *Domain) AcceptReturn(o *models.Order) (err error) {
+func (d *Domain) AcceptReturn(ctx context.Context, o *models.Order) (err error) {
 	// вынесем генерацию хэша за транзакцию
 	hash := hash.GenerateHash() // HASH
 
@@ -21,7 +21,7 @@ func (d *Domain) AcceptReturn(o *models.Order) (err error) {
 	}
 
 	// начинаем транзакцию
-	err = d.storage.RunTx(context.Background(), opts, func(ctxTX context.Context) error {
+	err = d.storage.RunTx(ctx, opts, func(ctxTX context.Context) error {
 		ro, err := d.storage.GetOrder(ctxTX, o) // ro - return order
 		if err != nil {
 			return err
@@ -62,9 +62,9 @@ func (d *Domain) AcceptReturn(o *models.Order) (err error) {
 }
 
 // ListReturns выводит список возвратов с пагинацией
-func (d *Domain) ListReturns(limit uint64, offset uint64) (list []*models.Order, err error) {
+func (d *Domain) ListReturns(ctx context.Context, limit uint64, offset uint64) (list []*models.Order, err error) {
 	// можно обойтись и без эксплисивной транзакции
-	list, err = d.storage.GetReturns(context.Background(), limit, offset)
+	list, err = d.storage.GetReturns(ctx, limit, offset)
 
 	if err != nil {
 		return nil, err

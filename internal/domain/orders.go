@@ -15,7 +15,7 @@ const (
 )
 
 // AcceptOrder принимает заказ от курьера
-func (d *Domain) AcceptOrder(o *models.Order) (_ error) {
+func (d *Domain) AcceptOrder(ctx context.Context, o *models.Order) (_ error) {
 	// срок хранения превышен
 	if o.Expiry.Before(time.Now()) {
 		return e.ErrOrderExpired
@@ -37,11 +37,11 @@ func (d *Domain) AcceptOrder(o *models.Order) (_ error) {
 	o.Hash = hash.GenerateHash() // HASH
 
 	// можно обойтись и без эксплисивной транзакции
-	return d.storage.CreateOrder(context.Background(), o)
+	return d.storage.CreateOrder(ctx, o)
 }
 
 // ReturnOrder возвращает заказ курьеру
-func (d *Domain) ReturnOrder(o *models.Order) (err error) {
+func (d *Domain) ReturnOrder(ctx context.Context, o *models.Order) (err error) {
 	// вынесем генерацию хэша за транзакцию
 	hash := hash.GenerateHash() // HASH
 
@@ -55,7 +55,7 @@ func (d *Domain) ReturnOrder(o *models.Order) (err error) {
 	}
 
 	// начинаем транзакцию
-	return d.storage.RunTx(context.Background(), opts, func(ctxTX context.Context) error {
+	return d.storage.RunTx(ctx, opts, func(ctxTX context.Context) error {
 		o, err = d.storage.GetOrder(ctxTX, o)
 		if err != nil {
 			return err
@@ -73,9 +73,9 @@ func (d *Domain) ReturnOrder(o *models.Order) (err error) {
 }
 
 // ListOrders выводит список заказов с пагинацией, сортировкой и фильтрацией
-func (d *Domain) ListOrders(userID uint64, limit uint64, offset uint64, isStored bool) (list []*models.Order, err error) {
+func (d *Domain) ListOrders(ctx context.Context, userID uint64, limit uint64, offset uint64, isStored bool) (list []*models.Order, err error) {
 	// можно обойтись и без эксплисивной транзакции
-	list, err = d.storage.GetOrders(context.Background(), userID, limit, offset, isStored)
+	list, err = d.storage.GetOrders(ctx, userID, limit, offset, isStored)
 
 	if err != nil {
 		return nil, err
@@ -85,7 +85,7 @@ func (d *Domain) ListOrders(userID uint64, limit uint64, offset uint64, isStored
 }
 
 // DeliverOrders принимает список заказов, переводит их в форму для обработки в хранилище
-func (d *Domain) DeliverOrders(orderIDs []uint64) (err error) {
+func (d *Domain) DeliverOrders(ctx context.Context, orderIDs []uint64) (err error) {
 	if len(orderIDs) == 0 {
 		return e.ErrEmpty
 	}
@@ -104,7 +104,7 @@ func (d *Domain) DeliverOrders(orderIDs []uint64) (err error) {
 	}
 
 	// начинаем транзакцию
-	err = d.storage.RunTx(context.Background(), opts, func(ctxTX context.Context) error {
+	err = d.storage.RunTx(ctx, opts, func(ctxTX context.Context) error {
 		list, err := d.storage.GetOrdersForDelivery(ctxTX, orderIDs)
 		if err != nil {
 			return err

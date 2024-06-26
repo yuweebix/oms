@@ -115,7 +115,8 @@ func (c *CLI) initOrdersAcceptCmd(parentCmd *cobra.Command) {
 			return e.ErrDateFormatInvalid
 		}
 
-		err = c.domain.AcceptOrder(&models.Order{
+		ctx := cmd.Context()
+		err = c.domain.AcceptOrder(ctx, &models.Order{
 			ID:        orderID,
 			User:      &models.User{ID: userID},
 			Expiry:    flagExpiryDate,
@@ -165,7 +166,8 @@ func (c *CLI) initOrdersDeliverCmd(parentCmd *cobra.Command) {
 			return err
 		}
 
-		err = c.domain.DeliverOrders(orderIDs)
+		ctx := cmd.Context()
+		err = c.domain.DeliverOrders(ctx, orderIDs)
 		if err != nil {
 			return err
 		}
@@ -218,7 +220,8 @@ func (c *CLI) initOrdersListCmd(parentCmd *cobra.Command) {
 			return err
 		}
 
-		list, err := c.domain.ListOrders(userID, limit, offset, isStored)
+		ctx := cmd.Context()
+		list, err := c.domain.ListOrders(ctx, userID, limit, offset, isStored)
 		if err != nil {
 			return err
 		}
@@ -258,7 +261,8 @@ func (c *CLI) initOrdersReturnCmd(parentCmd *cobra.Command) {
 			return err
 		}
 
-		err = c.domain.ReturnOrder(&models.Order{
+		ctx := cmd.Context()
+		err = c.domain.ReturnOrder(ctx, &models.Order{
 			ID: orderID,
 		})
 
@@ -317,7 +321,8 @@ func (c *CLI) initReturnsAcceptCmd(parentCmd *cobra.Command) {
 			return err
 		}
 
-		err = c.domain.AcceptReturn(&models.Order{
+		ctx := cmd.Context()
+		err = c.domain.AcceptReturn(ctx, &models.Order{
 			ID:   orderID,
 			User: &models.User{ID: userID},
 		})
@@ -360,7 +365,8 @@ func (c *CLI) initReturnsListCmd(parentCmd *cobra.Command) {
 			return err
 		}
 
-		list, err := c.domain.ListReturns(limit, offset)
+		ctx := cmd.Context()
+		list, err := c.domain.ListReturns(ctx, limit, offset)
 		if err != nil {
 			return err
 		}
@@ -398,7 +404,8 @@ func (c *CLI) initWorkersCmd(parentCmd *cobra.Command) {
 			return err
 		}
 
-		err = c.domain.ChangeWorkersNumber(num)
+		ctx := cmd.Context()
+		err = c.domain.ChangeWorkersNumber(ctx, num)
 		if err != nil {
 			return err
 		}

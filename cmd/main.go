@@ -132,7 +132,7 @@ func main() {
 			cancel()
 			fmt.Println("\nНажмите Enter, чтобы закрыть утилиту.")
 		case args := <-commandChan:
-			wp.Enqueue(ctx, func() { c.Execute(args) }, args)
+			wp.Enqueue(ctx, func() { c.Execute(ctx, args) }, args)
 		}
 	}
 }

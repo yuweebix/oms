@@ -129,7 +129,7 @@ func (wp *WorkerPool) Enqueue(ctx context.Context, task func(), cmd []string) {
 }
 
 // AddWorkers добавляет новых воркеров в пул
-func (wp *WorkerPool) AddWorkers(n int) error {
+func (wp *WorkerPool) AddWorkers(ctx context.Context, n int) error {
 	wp.mu.Lock()
 	defer wp.mu.Unlock()
 
@@ -148,7 +148,7 @@ func (wp *WorkerPool) AddWorkers(n int) error {
 }
 
 // RemoveWorkers удаляет воркеров из пула
-func (wp *WorkerPool) RemoveWorkers(n int) error {
+func (wp *WorkerPool) RemoveWorkers(ctx context.Context, n int) error {
 	wp.mu.Lock()
 	defer wp.mu.Unlock()
 
