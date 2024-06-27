@@ -36,7 +36,7 @@ func (d *Domain) AcceptOrder(ctx context.Context, o *models.Order) (_ error) {
 	o.CreatedAt = time.Now().UTC()
 	o.Hash = hash.GenerateHash() // HASH
 
-	// можно обойтись и без эксплисивной транзакции
+	// можно обойтись и без эксплицитной транзакции, потому что постгресс за нас создаст транзакцию и перечитывать данные при создании нету смысла
 	return d.storage.CreateOrder(ctx, o)
 }
 
@@ -46,10 +46,9 @@ func (d *Domain) ReturnOrder(ctx context.Context, o *models.Order) (err error) {
 	hash := hash.GenerateHash() // HASH
 
 	opts := models.TxOptions{
-		// `Мы сначала читаем заказ из БД, потом проверяем его поля, потом удаляем.
-		// Если в ходе наших манипуляций статус поменяется конкурентной транзакцией, то при ReadCommitted мы это проигнорируем и удалим запись, хотя её статус уже не тот, что был в начале транзакции.
-		// Тут нужен RepeatableRead` -- (c) Евгений Федунин
-		// поэтому ReadCommitted не подходит
+		// допустим, мы прочитали запись до того, как в ходе конкурентной транзакции поменяли статус заказа
+		// в таком случае, ReadCommitted это не учтёт и удалит
+		// в случае же RepeatableRead такого не произойдет
 		IsoLevel:   models.RepeatableRead,
 		AccessMode: models.ReadWrite,
 	}
@@ -74,7 +73,7 @@ func (d *Domain) ReturnOrder(ctx context.Context, o *models.Order) (err error) {
 
 // ListOrders выводит список заказов с пагинацией, сортировкой и фильтрацией
 func (d *Domain) ListOrders(ctx context.Context, userID uint64, limit uint64, offset uint64, isStored bool) (list []*models.Order, err error) {
-	// можно обойтись и без эксплисивной транзакции
+	// можно обойтись и без эксплицитной транзакции, ведь мы просто читаем данные, не проверяем их и не изменяем
 	list, err = d.storage.GetOrders(ctx, userID, limit, offset, isStored)
 
 	if err != nil {
@@ -98,7 +97,8 @@ func (d *Domain) DeliverOrders(ctx context.Context, orderIDs []uint64) (err erro
 	}
 
 	opts := models.TxOptions{
-		// кмк, более критично, чтобы данные были более синхронизированы при изменении данных, а не добавления
+		// более критично, чтобы данные были более синхронизированы при их изменении
+		// подобная ситуация, что и в ReturnOrder только ещё важнее в связи с работой с множеством записей
 		IsoLevel:   models.RepeatableRead,
 		AccessMode: models.ReadWrite,
 	}

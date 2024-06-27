@@ -15,7 +15,9 @@ func (d *Domain) AcceptReturn(ctx context.Context, o *models.Order) (err error) 
 	hash := hash.GenerateHash() // HASH
 
 	opts := models.TxOptions{
-		// данные обновляются, поэтому следует использовать ReapeatableRead
+		// происходит несколько запросов к бд, надо гарантировать, что заказ полученный при GetOrder не изменился
+		// до вызова UpdateOrder другим конкурентным вызовом
+		// при ReadCommitted этой проверки не произойдет - соответственно недостаточно
 		IsoLevel:   models.RepeatableRead,
 		AccessMode: models.ReadWrite,
 	}
@@ -63,7 +65,7 @@ func (d *Domain) AcceptReturn(ctx context.Context, o *models.Order) (err error) 
 
 // ListReturns выводит список возвратов с пагинацией
 func (d *Domain) ListReturns(ctx context.Context, limit uint64, offset uint64) (list []*models.Order, err error) {
-	// можно обойтись и без эксплисивной транзакции
+	// можно обойтись и без эксплицитной транзакции, ведь мы просто читаем данные, не проверяем их и не изменяем
 	list, err = d.storage.GetReturns(ctx, limit, offset)
 
 	if err != nil {
