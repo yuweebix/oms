@@ -19,3 +19,11 @@ var (
 var (
 	ErrStatusInvalid = errors.New("status invalid")
 )
+
+var (
+	ErrPackagingInvalid = errors.New("packaging invalid")
+)
+
+var (
+	ErrOrderTooHeavy = errors.New("order is over the weight limit for the packaging")
+)

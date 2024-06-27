@@ -1,19 +1,21 @@
 package domain
 
+import "context"
+
 // рабочие
-func (s *Domain) ChangeWorkersNumber(workersNum int) error {
+func (d *Domain) ChangeWorkersNumber(ctx context.Context, workersNum int) error {
 	if workersNum > 0 {
-		return s.addWorkers(workersNum)
+		return d.addWorkers(ctx, workersNum)
 	} else if workersNum < 0 {
-		return s.removeWorkers(workersNum)
+		return d.removeWorkers(ctx, workersNum)
 	}
 	return nil
 }
 
-func (s *Domain) addWorkers(num int) error {
-	return s.threading.AddWorkers(num)
+func (d *Domain) addWorkers(ctx context.Context, num int) error {
+	return d.threading.AddWorkers(ctx, num)
 }
 
-func (s *Domain) removeWorkers(num int) error {
-	return s.threading.RemoveWorkers(num)
+func (d *Domain) removeWorkers(ctx context.Context, num int) error {
+	return d.threading.RemoveWorkers(ctx, num)
 }

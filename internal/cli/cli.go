@@ -1,27 +1,30 @@
 package cli
 
 import (
+	"context"
 	"log"
 	"os"
 	"sync"
 
+	"gitlab.ozon.dev/yuweebix/homework-1/internal/cli/flags"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/models"
+	"gitlab.ozon.dev/yuweebix/homework-1/pkg/utils"
 )
 
 // domain интерфейс необходимых CLI функций для реализации сервисом
 type domain interface {
 	// заказы
-	AcceptOrder(o *models.Order) error                                                             // логика принятия заказа от курьера
-	ReturnOrder(o *models.Order) error                                                             // логика возврата просроченного заказа курьеру
-	ListOrders(userID uint64, limit uint64, offset uint64, isStored bool) ([]*models.Order, error) // логика вывода списка заказов
-	DeliverOrders(orderIDs []uint64) error                                                         // логика выдачи заказов клиенту
+	AcceptOrder(ctx context.Context, o *models.Order) error                                                             // логика принятия заказа от курьера
+	ReturnOrder(ctx context.Context, o *models.Order) error                                                             // логика возврата просроченного заказа курьеру
+	ListOrders(ctx context.Context, userID uint64, limit uint64, offset uint64, isStored bool) ([]*models.Order, error) // логика вывода списка заказов
+	DeliverOrders(ctx context.Context, orderIDs []uint64) error                                                         // логика выдачи заказов клиенту
 
 	// возвраты
-	AcceptReturn(o *models.Order) error                               // логика принятия возврата от клиента
-	ListReturns(limit uint64, offset uint64) ([]*models.Order, error) // логика вывода возвратов
+	AcceptReturn(ctx context.Context, o *models.Order) error                               // логика принятия возврата от клиента
+	ListReturns(ctx context.Context, limit uint64, offset uint64) ([]*models.Order, error) // логика вывода возвратов
 
 	// рабочие
-	ChangeWorkersNumber(workersNum int) error // логика изменения количества рабочих горутин
+	ChangeWorkersNumber(ctx context.Context, workersNum int) error // логика изменения количества рабочих горутин
 }
 
 // CLI представляет слой командной строки приложения
@@ -32,10 +35,10 @@ type CLI struct {
 }
 
 // NewCLI конструктор с добавлением зависимостей
-func NewCLI(s domain, logFileName string) *CLI {
+func NewCLI(d domain, logFileName string) *CLI {
 	logger := createLogger(logFileName)
 	c := &CLI{
-		domain: s,
+		domain: d,
 		logger: logger,
 		mu:     &sync.Mutex{},
 	}
@@ -44,15 +47,22 @@ func NewCLI(s domain, logFileName string) *CLI {
 }
 
 // Execute выполняет команду CLI
-func (c *CLI) Execute(args []string) {
+func (c *CLI) Execute(ctx context.Context, args []string) {
 	c.mu.Lock()
 	rootCmd.SetArgs(args)
 	c.mu.Unlock()
 
-	err := rootCmd.Execute()
+	err := rootCmd.ExecuteContext(ctx)
 	if err != nil {
 		c.logger.Println(err)
 	}
+
+	// позле вызова help, нужно отдельно сбрасывать, потому что она за границами run-функций
+	c.mu.Lock()
+	if utils.ContainsHelpFlag(args) {
+		flags.ResetAllHelpFlags(rootCmd)
+	}
+	c.mu.Unlock()
 }
 
 // createLogger вспомогательная функция для открытия файла и привязки к нему логгера

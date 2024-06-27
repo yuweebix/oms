@@ -35,13 +35,25 @@ func ResetFlags(cmd *cobra.Command) {
 	})
 }
 
-// ResetAllFlags resets the flags of a command and all its children recursively
+// ResetAllFlags рекурсивно сбрасывает все флаги
 func ResetAllFlags(cmd *cobra.Command) {
-	// Reset the flags of the current command
+	// флаги команды
 	ResetFlags(cmd)
 
-	// Recursively reset the flags of the children
+	// флаги подкоманд
 	for _, child := range cmd.Commands() {
 		ResetAllFlags(child)
+	}
+}
+
+// ResetAllHelpFlags рекурсивно сбрасывает все флаги "help"
+func ResetAllHelpFlags(cmd *cobra.Command) {
+	if f := cmd.Flag("help"); f != nil {
+		f.Value.Set("false")
+		f.Changed = false
+	}
+
+	for _, child := range cmd.Commands() {
+		ResetAllHelpFlags(child)
 	}
 }

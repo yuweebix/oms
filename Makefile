@@ -9,6 +9,9 @@ build:
 migrate:
 	docker-compose --env-file $(ENV_FILE) run --rm app sh -c 'goose -dir db/migrations postgres "$(DATABASE_URL)" up'
 
+demigrate:
+	docker-compose --env-file $(ENV_FILE) run --rm app sh -c 'goose -dir db/migrations postgres "$(DATABASE_URL)" down'
+
 # ЗАПУСК
 up:
 	docker-compose --env-file $(ENV_FILE) up -d

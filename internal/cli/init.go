@@ -9,6 +9,7 @@ import (
 	e "gitlab.ozon.dev/yuweebix/homework-1/internal/cli/errors"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/cli/flags"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/models"
+	"gitlab.ozon.dev/yuweebix/homework-1/pkg/utils"
 )
 
 type initCommand func(*cobra.Command)
@@ -59,15 +60,21 @@ func (c *CLI) initOrdersAcceptCmd(parentCmd *cobra.Command) {
 	ordersAcceptCmd.Flags().Uint64P(flagOrderID.Unzip())
 	ordersAcceptCmd.Flags().Uint64P(flagUserID.Unzip())
 	ordersAcceptCmd.Flags().StringP(flagExpiry.Unzip())
+	ordersAcceptCmd.Flags().Float64P(flagCost.Unzip())
+	ordersAcceptCmd.Flags().Float64P(flagWeight.Unzip())
+	ordersAcceptCmd.Flags().StringP(flagPackaging.Unzip())
 
 	// помечаем флаги как обязательные
 	ordersAcceptCmd.MarkFlagRequired(flagOrderID.Name)
 	ordersAcceptCmd.MarkFlagRequired(flagUserID.Name)
 	ordersAcceptCmd.MarkFlagRequired(flagExpiry.Name)
+	ordersAcceptCmd.MarkFlagRequired(flagCost.Name)
+	ordersAcceptCmd.MarkFlagRequired(flagWeight.Name)
+	ordersAcceptCmd.MarkFlagRequired(flagPackaging.Name)
 
 	// функционал команды
 	ordersAcceptCmd.RunE = func(cmd *cobra.Command, args []string) (err error) {
-		orderID, userID, expiry, err := func() (orderID, userID uint64, expiry string, err error) {
+		orderID, userID, expiry, cost, weight, packaging, err := func() (orderID, userID uint64, expiry string, cost, weight float64, packaging string, err error) {
 			c.mu.Lock()
 			defer c.mu.Unlock()
 			defer flags.ResetFlags(ordersAcceptCmd)
@@ -84,6 +91,18 @@ func (c *CLI) initOrdersAcceptCmd(parentCmd *cobra.Command) {
 			if err != nil {
 				return
 			}
+			cost, err = cmd.Flags().GetFloat64(flagCost.Name)
+			if err != nil {
+				return
+			}
+			weight, err = cmd.Flags().GetFloat64(flagWeight.Name)
+			if err != nil {
+				return
+			}
+			packaging, err = cmd.Flags().GetString(flagPackaging.Name)
+			if err != nil {
+				return
+			}
 
 			return
 		}()
@@ -96,10 +115,14 @@ func (c *CLI) initOrdersAcceptCmd(parentCmd *cobra.Command) {
 			return e.ErrDateFormatInvalid
 		}
 
-		err = c.domain.AcceptOrder(&models.Order{
-			ID:     orderID,
-			User:   &models.User{ID: userID},
-			Expiry: flagExpiryDate,
+		ctx := cmd.Context()
+		err = c.domain.AcceptOrder(ctx, &models.Order{
+			ID:        orderID,
+			User:      &models.User{ID: userID},
+			Expiry:    flagExpiryDate,
+			Cost:      utils.ConvertToMicrocurrency(cost),
+			Weight:    weight,
+			Packaging: models.PackagingType(packaging),
 		})
 		if err != nil {
 			return err
@@ -143,7 +166,8 @@ func (c *CLI) initOrdersDeliverCmd(parentCmd *cobra.Command) {
 			return err
 		}
 
-		err = c.domain.DeliverOrders(orderIDs)
+		ctx := cmd.Context()
+		err = c.domain.DeliverOrders(ctx, orderIDs)
 		if err != nil {
 			return err
 		}
@@ -196,7 +220,8 @@ func (c *CLI) initOrdersListCmd(parentCmd *cobra.Command) {
 			return err
 		}
 
-		list, err := c.domain.ListOrders(userID, limit, offset, isStored)
+		ctx := cmd.Context()
+		list, err := c.domain.ListOrders(ctx, userID, limit, offset, isStored)
 		if err != nil {
 			return err
 		}
@@ -236,7 +261,8 @@ func (c *CLI) initOrdersReturnCmd(parentCmd *cobra.Command) {
 			return err
 		}
 
-		err = c.domain.ReturnOrder(&models.Order{
+		ctx := cmd.Context()
+		err = c.domain.ReturnOrder(ctx, &models.Order{
 			ID: orderID,
 		})
 
@@ -295,7 +321,8 @@ func (c *CLI) initReturnsAcceptCmd(parentCmd *cobra.Command) {
 			return err
 		}
 
-		err = c.domain.AcceptReturn(&models.Order{
+		ctx := cmd.Context()
+		err = c.domain.AcceptReturn(ctx, &models.Order{
 			ID:   orderID,
 			User: &models.User{ID: userID},
 		})
@@ -338,7 +365,8 @@ func (c *CLI) initReturnsListCmd(parentCmd *cobra.Command) {
 			return err
 		}
 
-		list, err := c.domain.ListReturns(limit, offset)
+		ctx := cmd.Context()
+		list, err := c.domain.ListReturns(ctx, limit, offset)
 		if err != nil {
 			return err
 		}
@@ -376,7 +404,8 @@ func (c *CLI) initWorkersCmd(parentCmd *cobra.Command) {
 			return err
 		}
 
-		err = c.domain.ChangeWorkersNumber(num)
+		ctx := cmd.Context()
+		err = c.domain.ChangeWorkersNumber(ctx, num)
 		if err != nil {
 			return err
 		}
