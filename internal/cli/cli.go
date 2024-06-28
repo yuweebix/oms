@@ -6,6 +6,7 @@ import (
 	"os"
 	"sync"
 
+	"github.com/spf13/cobra"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/cli/flags"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/models"
 	"gitlab.ozon.dev/yuweebix/homework-1/pkg/utils"
@@ -32,27 +33,34 @@ type CLI struct {
 	domain domain
 	logger *log.Logger
 	mu     *sync.Mutex
+	cmd    *cobra.Command
 }
 
 // NewCLI конструктор с добавлением зависимостей
-func NewCLI(d domain, logFileName string) *CLI {
+func NewCLI(d domain, logFileName string) (c *CLI, err error) {
 	logger := createLogger(logFileName)
-	c := &CLI{
+
+	c = &CLI{
 		domain: d,
 		logger: logger,
 		mu:     &sync.Mutex{},
 	}
-	c.initRootCmd()
-	return c
+
+	c.cmd, err = initRootCmd(c)
+	if err != nil {
+		return nil, err
+	}
+
+	return c, nil
 }
 
 // Execute выполняет команду CLI
 func (c *CLI) Execute(ctx context.Context, args []string) {
 	c.mu.Lock()
-	rootCmd.SetArgs(args)
+	c.cmd.SetArgs(args)
 	c.mu.Unlock()
 
-	err := rootCmd.ExecuteContext(ctx)
+	err := c.cmd.ExecuteContext(ctx)
 	if err != nil {
 		c.logger.Println(err)
 	}
@@ -60,7 +68,7 @@ func (c *CLI) Execute(ctx context.Context, args []string) {
 	// позле вызова help, нужно отдельно сбрасывать, потому что она за границами run-функций
 	c.mu.Lock()
 	if utils.ContainsHelpFlag(args) {
-		flags.ResetAllHelpFlags(rootCmd)
+		flags.ResetAllHelpFlags(c.cmd)
 	}
 	c.mu.Unlock()
 }

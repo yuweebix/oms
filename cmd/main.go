@@ -52,7 +52,10 @@ func main() {
 	defer r.Close()
 
 	d := domain.NewDomain(r, wp)
-	c := cli.NewCLI(d, logFileName)
+	c, err := cli.NewCLI(d, logFileName)
+	if err != nil {
+		log.Fatalln(err)
+	}
 
 	wp.Start()
 

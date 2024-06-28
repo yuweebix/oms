@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"github.com/spf13/cobra"
 	f "gitlab.ozon.dev/yuweebix/homework-1/internal/cli/flags"
 )
 
@@ -87,3 +88,122 @@ var (
 		Value:     0,
 	}
 )
+
+func ordersAcceptCmdSetFlags(cmd *cobra.Command) (err error) {
+	// инициализируем флаги
+	cmd.Flags().Uint64P(flagOrderID.Unzip())
+	cmd.Flags().Uint64P(flagUserID.Unzip())
+	cmd.Flags().StringP(flagExpiry.Unzip())
+	cmd.Flags().Float64P(flagCost.Unzip())
+	cmd.Flags().Float64P(flagWeight.Unzip())
+	cmd.Flags().StringP(flagPackaging.Unzip())
+
+	// помечаем флаги как обязательные
+	err = cmd.MarkFlagRequired(flagOrderID.Name)
+	if err != nil {
+		return err
+	}
+	err = cmd.MarkFlagRequired(flagUserID.Name)
+	if err != nil {
+		return err
+	}
+	err = cmd.MarkFlagRequired(flagExpiry.Name)
+	if err != nil {
+		return err
+	}
+	err = cmd.MarkFlagRequired(flagCost.Name)
+	if err != nil {
+		return err
+	}
+	err = cmd.MarkFlagRequired(flagWeight.Name)
+	if err != nil {
+		return err
+	}
+	err = cmd.MarkFlagRequired(flagPackaging.Name)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func ordersDeliverCmdSetFlags(cmd *cobra.Command) (err error) {
+	// инициализируем флаги
+	cmd.Flags().StringP(flagOrderIDs.Name, flagOrderIDs.Shorthand, "", flagOrderIDs.Usage)
+
+	// помечаем флаги как обязательные
+	err = cmd.MarkFlagRequired(flagOrderIDs.Name)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func ordersListCmdSetFlags(cmd *cobra.Command) (err error) {
+	// инициализируем флаги
+	cmd.Flags().Uint64P(flagUserID.Unzip())
+	cmd.Flags().Uint64P(flagLimit.Unzip())  // опциональный флаг
+	cmd.Flags().Uint64P(flagOffset.Unzip()) // опциональный флаг
+	cmd.Flags().BoolP(flagIsStored.Unzip()) // опциональный флаг
+
+	// помечаем флаги как обязательные
+	err = cmd.MarkFlagRequired(flagUserID.Name)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func ordersReturnCmdSetFlags(cmd *cobra.Command) (err error) {
+	// инициализируем флаги
+	cmd.Flags().Uint64P(flagOrderID.Unzip())
+
+	// помечаем флаги как обязательные
+	err = cmd.MarkFlagRequired(flagOrderID.Name)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func returnsAcceptCmdSetFlags(cmd *cobra.Command) (err error) {
+	// инициализируем флаги
+	cmd.Flags().Uint64P(flagOrderID.Unzip())
+	cmd.Flags().Uint64P(flagUserID.Unzip())
+
+	// помечаем флаги как обязательные
+	err = cmd.MarkFlagRequired(flagOrderID.Name)
+	if err != nil {
+		return err
+	}
+	err = cmd.MarkFlagRequired(flagUserID.Name)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func returnsListCmdSetFlags(cmd *cobra.Command) (_ error) {
+	// инициализируем флаги
+	cmd.Flags().Uint64P(flagLimit.Unzip())  // опциональный флаг
+	cmd.Flags().Uint64P(flagOffset.Unzip()) // опциональный флаг
+
+	return nil
+}
+
+func workersCmdSetFlags(cmd *cobra.Command) (err error) {
+	// инициализируем флаги
+	cmd.Flags().IntP(flagWorkersNum.Unzip())
+
+	// помечаем флаги как обязательные
+	err = cmd.MarkFlagRequired(flagWorkersNum.Name)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
