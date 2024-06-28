@@ -3,11 +3,11 @@ package threading
 import (
 	"context"
 	"fmt"
-	"strings"
 	"sync"
 	"sync/atomic"
 
 	e "gitlab.ozon.dev/yuweebix/homework-1/internal/threading/errors"
+	"gitlab.ozon.dev/yuweebix/homework-1/pkg/utils"
 )
 
 const (
@@ -82,7 +82,7 @@ func (wp *WorkerPool) worker() {
 		default:
 		}
 
-		isChecked := checkCmd(job.cmd)
+		isChecked := !utils.ContainsHelpFlag(job.cmd) && len(job.cmd) != 0
 		if isChecked {
 			wp.notificationChan <- fmt.Sprintf("команда %v начала исполняться", job.cmd)
 		}
@@ -129,7 +129,7 @@ func (wp *WorkerPool) Enqueue(ctx context.Context, task func(), cmd []string) {
 }
 
 // AddWorkers добавляет новых воркеров в пул
-func (wp *WorkerPool) AddWorkers(n int) error {
+func (wp *WorkerPool) AddWorkers(ctx context.Context, n int) error {
 	wp.mu.Lock()
 	defer wp.mu.Unlock()
 
@@ -148,7 +148,7 @@ func (wp *WorkerPool) AddWorkers(n int) error {
 }
 
 // RemoveWorkers удаляет воркеров из пула
-func (wp *WorkerPool) RemoveWorkers(n int) error {
+func (wp *WorkerPool) RemoveWorkers(ctx context.Context, n int) error {
 	wp.mu.Lock()
 	defer wp.mu.Unlock()
 
@@ -166,17 +166,4 @@ func (wp *WorkerPool) RemoveWorkers(n int) error {
 	wp.numWorkers -= n
 
 	return nil
-}
-
-func checkCmd(cmd []string) bool {
-	if len(cmd) == 0 {
-		return false
-	}
-	if strings.Contains(strings.Join(cmd, " "), "help") {
-		return false
-	}
-	if strings.Contains(strings.Join(cmd, " "), "-h") {
-		return false
-	}
-	return true
 }

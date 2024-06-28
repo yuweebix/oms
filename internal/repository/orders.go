@@ -1,23 +1,18 @@
 package repository
 
 import (
+	"context"
+
 	sq "github.com/Masterminds/squirrel"
 	"github.com/georgysavva/scany/v2/pgxscan"
-	"github.com/jackc/pgx/v5"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/models"
 	e "gitlab.ozon.dev/yuweebix/homework-1/internal/repository/errors"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/repository/schemas"
 )
 
 // CreateOrder добавляет заказ в бд
-func (r *Repository) CreateOrder(o *models.Order) (err error) {
-	// начинаем транзакцию
-	tx, err := r.db.BeginTx(r.ctx, pgx.TxOptions{IsoLevel: pgx.ReadCommitted})
-	if err != nil {
-		return err
-	}
-	// если закоммититься, то откатить ничего не получится
-	defer tx.Rollback(r.ctx)
+func (r *Repository) CreateOrder(ctx context.Context, o *models.Order) (err error) {
+	qr := r.GetQuerier(ctx)
 
 	// создаем sql запрос
 	query := sq.Insert(ordersTable).
@@ -31,7 +26,7 @@ func (r *Repository) CreateOrder(o *models.Order) (err error) {
 		return err
 	}
 
-	res, err := tx.Exec(r.ctx, rawQuery, args...)
+	res, err := qr.Exec(ctx, rawQuery, args...)
 	if err != nil {
 		return err
 	}
@@ -43,24 +38,12 @@ func (r *Repository) CreateOrder(o *models.Order) (err error) {
 		return e.ErrNoOrdersAffected
 	}
 
-	// коммитим
-	err = tx.Commit(r.ctx)
-	if err != nil {
-		return err
-	}
-
 	return nil
 }
 
 // DeleteOrder удаляет заказ из бд
-func (r *Repository) DeleteOrder(o *models.Order) (err error) {
-	// начинаем транзакцию
-	tx, err := r.db.BeginTx(r.ctx, pgx.TxOptions{IsoLevel: pgx.RepeatableRead})
-	if err != nil {
-		return err
-	}
-	// если закоммититься, то откатить ничего не получится
-	defer tx.Rollback(r.ctx)
+func (r *Repository) DeleteOrder(ctx context.Context, o *models.Order) (err error) {
+	qr := r.GetQuerier(ctx)
 
 	// создаем sql запрос
 	query := sq.Delete(ordersTable).
@@ -73,7 +56,7 @@ func (r *Repository) DeleteOrder(o *models.Order) (err error) {
 		return err
 	}
 
-	res, err := tx.Exec(r.ctx, rawQuery, args...)
+	res, err := qr.Exec(ctx, rawQuery, args...)
 	if err != nil {
 		return err
 	}
@@ -85,24 +68,12 @@ func (r *Repository) DeleteOrder(o *models.Order) (err error) {
 		return e.ErrNoOrdersAffected
 	}
 
-	// коммитим
-	err = tx.Commit(r.ctx)
-	if err != nil {
-		return err
-	}
-
 	return nil
 }
 
 // UpdateOrder обновляет данные заказа в бд
-func (r *Repository) UpdateOrder(o *models.Order) (err error) {
-	// начинаем транзакцию
-	tx, err := r.db.BeginTx(r.ctx, pgx.TxOptions{IsoLevel: pgx.RepeatableRead})
-	if err != nil {
-		return err
-	}
-	// если закоммититься, то откатить ничего не получится
-	defer tx.Rollback(r.ctx)
+func (r *Repository) UpdateOrder(ctx context.Context, o *models.Order) (err error) {
+	qr := r.GetQuerier(ctx)
 
 	// создаем sql запрос
 	query := sq.Update(ordersTable).
@@ -121,7 +92,7 @@ func (r *Repository) UpdateOrder(o *models.Order) (err error) {
 		return err
 	}
 
-	res, err := tx.Exec(r.ctx, rawQuery, args...)
+	res, err := qr.Exec(ctx, rawQuery, args...)
 	if err != nil {
 		return err
 	}
@@ -133,24 +104,12 @@ func (r *Repository) UpdateOrder(o *models.Order) (err error) {
 		return e.ErrNoOrdersAffected
 	}
 
-	// коммитим
-	err = tx.Commit(r.ctx)
-	if err != nil {
-		return err
-	}
-
 	return nil
 }
 
 // GetOrders возвращает список заказов клиента
-func (r *Repository) GetOrders(userID uint64, limit uint64, offset uint64, isStored bool) (list []*models.Order, err error) {
-	// начинаем транзакцию
-	tx, err := r.db.BeginTx(r.ctx, pgx.TxOptions{IsoLevel: pgx.ReadCommitted})
-	if err != nil {
-		return nil, err
-	}
-	// если закоммититься, то откатить ничего не получится
-	defer tx.Rollback(r.ctx)
+func (r *Repository) GetOrders(ctx context.Context, userID uint64, limit uint64, offset uint64, isStored bool) (list []*models.Order, err error) {
+	qr := r.GetQuerier(ctx)
 
 	// создаем sql запрос
 	query := sq.Select(ordersColumns...).
@@ -178,7 +137,7 @@ func (r *Repository) GetOrders(userID uint64, limit uint64, offset uint64, isSto
 	}
 
 	orders := []schemas.Order{}
-	err = pgxscan.Select(r.ctx, tx, &orders, rawQuery, args...)
+	err = pgxscan.Select(ctx, qr, &orders, rawQuery, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -188,24 +147,12 @@ func (r *Repository) GetOrders(userID uint64, limit uint64, offset uint64, isSto
 		list = append(list, toModelsOrder(&o))
 	}
 
-	// коммитим
-	err = tx.Commit(r.ctx)
-	if err != nil {
-		return nil, err
-	}
-
 	return list, nil
 }
 
 // GetOrdersForDelivery возвращает список заказов клиенту на выдачу
-func (r *Repository) GetOrdersForDelivery(orderIDs []uint64) (list []*models.Order, err error) {
-	// начинаем транзакцию
-	tx, err := r.db.BeginTx(r.ctx, pgx.TxOptions{IsoLevel: pgx.RepeatableRead})
-	if err != nil {
-		return nil, err
-	}
-	// если закоммититься, то откатить ничего не получится
-	defer tx.Rollback(r.ctx)
+func (r *Repository) GetOrdersForDelivery(ctx context.Context, orderIDs []uint64) (list []*models.Order, err error) {
+	qr := r.GetQuerier(ctx)
 
 	// создаем sql запрос
 	query := sq.Select(ordersColumns...).
@@ -220,7 +167,7 @@ func (r *Repository) GetOrdersForDelivery(orderIDs []uint64) (list []*models.Ord
 	}
 
 	orders := []schemas.Order{}
-	err = pgxscan.Select(r.ctx, tx, &orders, rawQuery, args...)
+	err = pgxscan.Select(ctx, qr, &orders, rawQuery, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -229,24 +176,12 @@ func (r *Repository) GetOrdersForDelivery(orderIDs []uint64) (list []*models.Ord
 		list = append(list, toModelsOrder(&o))
 	}
 
-	// коммитим
-	err = tx.Commit(r.ctx)
-	if err != nil {
-		return nil, err
-	}
-
 	return list, nil
 }
 
 // GetOrder пересылает полный объект заказа
-func (r *Repository) GetOrder(o *models.Order) (result *models.Order, err error) {
-	// начинаем транзакцию
-	tx, err := r.db.BeginTx(r.ctx, pgx.TxOptions{IsoLevel: pgx.ReadCommitted})
-	if err != nil {
-		return nil, err
-	}
-	// если закоммититься, то откатить ничего не получится
-	defer tx.Rollback(r.ctx)
+func (r *Repository) GetOrder(ctx context.Context, o *models.Order) (result *models.Order, err error) {
+	qr := r.GetQuerier(ctx)
 
 	// создаем sql запрос
 	query := sq.Select(ordersColumns...).
@@ -261,18 +196,12 @@ func (r *Repository) GetOrder(o *models.Order) (result *models.Order, err error)
 	}
 
 	order := schemas.Order{}
-	err = pgxscan.Get(r.ctx, tx, &order, rawQuery, args...)
+	err = pgxscan.Get(ctx, qr, &order, rawQuery, args...)
 	if err != nil {
 		return nil, err
 	}
 
 	result = toModelsOrder(&order)
-
-	// коммитим
-	err = tx.Commit(r.ctx)
-	if err != nil {
-		return nil, err
-	}
 
 	return result, nil
 }

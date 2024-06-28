@@ -45,12 +45,14 @@ func main() {
 		log.Fatalln(err)
 	}
 
-	repository, err := repository.NewRepository(ctx, connString)
+	r, err := repository.NewRepository(ctx, connString)
 	if err != nil {
 		log.Fatalln(err)
 	}
-	domain := domain.NewDomain(repository, wp)
-	c := cli.NewCLI(domain, logFileName)
+	defer r.Close()
+
+	d := domain.NewDomain(r, wp)
+	c := cli.NewCLI(d, logFileName)
 
 	wp.Start()
 
@@ -130,7 +132,7 @@ func main() {
 			cancel()
 			fmt.Println("\nНажмите Enter, чтобы закрыть утилиту.")
 		case args := <-commandChan:
-			wp.Enqueue(ctx, func() { c.Execute(args) }, args)
+			wp.Enqueue(ctx, func() { c.Execute(ctx, args) }, args)
 		}
 	}
 }
