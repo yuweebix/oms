@@ -1,0 +1,16 @@
+with-expecter: true
+packages:
+  gitlab.ozon.dev/yuweebix/homework-1/internal/domain:
+    config:
+      dir: mocks
+    interfaces:
+      storage:
+        config:
+          outpkg: mocks
+          filename: storage_mock.go
+          mockname: MockStorage
+      threading:
+        config:
+          outpkg: mocks
+          filename: threading_mock.go
+          mockname: MockThreading
