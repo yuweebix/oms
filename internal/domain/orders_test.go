@@ -41,20 +41,21 @@ func (s *OrdersSuite) BeforeTest(suiteName, testName string) {
 		switch testName {
 		case "TestReturnOrder_StatusReturned":
 			s.storage.EXPECT().GetOrder(mock.Anything, mock.Anything).RunAndReturn(func(ctx context.Context, o *models.Order) (*models.Order, error) {
-				o.Status = models.StatusReturned
+				o.Status = models.StatusReturned // клиент вернул -> можно вернуть курьеру
 				return o, nil
 			})
 			s.storage.EXPECT().DeleteOrder(mock.Anything, mock.Anything).Return(nil)
 
 		case "TestReturnOrder_Expired":
 			s.storage.EXPECT().GetOrder(mock.Anything, mock.Anything).RunAndReturn(func(ctx context.Context, o *models.Order) (*models.Order, error) {
-				o.Expiry = time.Now().Add(-day)
+				o.Expiry = time.Now().Add(-day) // просрочился -> можно вернуть курьеру
 				return o, nil
 			})
 			s.storage.EXPECT().DeleteOrder(mock.Anything, mock.Anything).Return(nil)
+
 		case "TestReturnOrder_NotExpired":
 			s.storage.EXPECT().GetOrder(mock.Anything, mock.Anything).RunAndReturn(func(ctx context.Context, o *models.Order) (*models.Order, error) {
-				o.Expiry = time.Now().Add(day)
+				o.Expiry = time.Now().Add(day) // не просрочился -> нельзя вернуть курьеру
 				return o, nil
 			})
 		}
@@ -78,10 +79,10 @@ func (s *OrdersAcceptSuite) TestAcceptOrder() {
 
 	// arrange
 	order := &models.Order{
-		ID:        1001,
-		User:      &models.User{ID: 123},
+		ID:        1,
+		User:      &models.User{ID: 1},
 		Expiry:    time.Now().Add(day),
-		Cost:      322,
+		Cost:      1,
 		Weight:    1,
 		Packaging: "box",
 	}
@@ -102,10 +103,10 @@ func (s *OrdersAcceptSuite) TestAcceptOrder_Expired() {
 
 	// arrange
 	order := &models.Order{
-		ID:        1002,
-		User:      &models.User{ID: 123},
+		ID:        1,
+		User:      &models.User{ID: 1},
 		Expiry:    time.Now().Add(-day), // срок хранения превышен
-		Cost:      322,
+		Cost:      1,
 		Weight:    1,
 		Packaging: "box",
 	}
@@ -123,10 +124,10 @@ func (s *OrdersAcceptSuite) TestAcceptOrder_InvalidPackaging() {
 
 	// arrange
 	order := &models.Order{
-		ID:        1003,
-		User:      &models.User{ID: 123},
+		ID:        1,
+		User:      &models.User{ID: 1},
 		Expiry:    time.Now().Add(day),
-		Cost:      322,
+		Cost:      1,
 		Weight:    1,
 		Packaging: "bucket",
 	}
@@ -144,10 +145,10 @@ func (s *OrdersAcceptSuite) TestAcceptOrder_TooHeavy() {
 
 	// arrange
 	order := &models.Order{
-		ID:        1004,
-		User:      &models.User{ID: 123},
+		ID:        1,
+		User:      &models.User{ID: 1},
 		Expiry:    time.Now().Add(day),
-		Cost:      322,
+		Cost:      1,
 		Weight:    1_000_000, // тяжело...
 		Packaging: "box",
 	}
@@ -174,7 +175,7 @@ func TestOrdersReturnSuite(t *testing.T) {
 
 func (s *OrdersReturnSuite) TestReturnOrder_StatusReturned() {
 	// arrange
-	order := &models.Order{ID: 1005}
+	order := &models.Order{ID: 1}
 
 	// act
 	err := s.domain.ReturnOrder(context.Background(), order)
@@ -185,7 +186,7 @@ func (s *OrdersReturnSuite) TestReturnOrder_StatusReturned() {
 
 func (s *OrdersReturnSuite) TestReturnOrder_Expired() {
 	// arrange
-	order := &models.Order{ID: 1006}
+	order := &models.Order{ID: 1}
 
 	// act
 	err := s.domain.ReturnOrder(context.Background(), order)
@@ -195,7 +196,7 @@ func (s *OrdersReturnSuite) TestReturnOrder_Expired() {
 }
 func (s *OrdersReturnSuite) TestReturnOrder_NotExpired() {
 	// arrange
-	order := &models.Order{ID: 1007}
+	order := &models.Order{ID: 1}
 
 	// act
 	err := s.domain.ReturnOrder(context.Background(), order)
