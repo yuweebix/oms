@@ -14,12 +14,16 @@ import (
 )
 
 const (
-	day                 = time.Hour * 24
-	returnByAllowedTime = day * 2
+	day = time.Hour * 24
 )
 
 type OrdersSuite struct {
 	suite.Suite
+}
+
+// TestOrdersSuite запускает все orders unit-тесты
+func TestOrdersSuite(t *testing.T) {
+	suite.Run(t, new(OrdersSuite))
 }
 
 func (s *OrdersSuite) SetUpTest() (_domain *domain.Domain, _storage *mocks.MockStorage, _threading *mocks.MockThreading) {
@@ -31,12 +35,7 @@ func (s *OrdersSuite) SetUpTest() (_domain *domain.Domain, _storage *mocks.MockS
 
 // orders accept tests
 
-// TestOrdersSuite запускает все orders unit-тесты
-func TestOrdersSuite(t *testing.T) {
-	suite.Run(t, new(OrdersSuite))
-}
-
-func (s *OrdersSuite) TestAcceptOrder() {
+func (s *OrdersSuite) TestAcceptOrder_Success() {
 	s.T().Parallel()
 
 	order := &models.Order{
@@ -122,7 +121,7 @@ func (s *OrdersSuite) TestAcceptOrder_TooHeavy() {
 
 // orders return tests
 
-func (s *OrdersSuite) TestReturnOrder_StatusReturned() {
+func (s *OrdersSuite) TestReturnOrder_Success_StatusReturned() {
 
 	order := &models.Order{ID: 1}
 
@@ -183,12 +182,12 @@ func (s *OrdersSuite) TestReturnOrder_NotExpired() {
 
 // orders list tests
 
-// смысла тестировать не вижу, потому что лишь можно проверить, правильно ли работает мок
-// имхо,
+// имхо, смысла тестировать не вижу, потому что только лишь можно проверить, правильно ли работает мок
+// просто тестируем, написал ли прогер if err != nil
 
-// orders deliver testsb
+// orders deliver tests
 
-func (s *OrdersSuite) TestDeliverOrders() {
+func (s *OrdersSuite) TestDeliverOrders_Success() {
 	s.T().Parallel()
 
 	orderIDs := []uint64{1, 2, 3}
