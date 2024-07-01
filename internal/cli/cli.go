@@ -55,14 +55,14 @@ func NewCLI(d domain, logFileName string) (c *CLI, err error) {
 }
 
 // Execute выполняет команду CLI
-func (c *CLI) Execute(ctx context.Context, args []string) {
+func (c *CLI) Execute(ctx context.Context, args []string) error {
 	c.mu.Lock()
 	c.cmd.SetArgs(args)
 	c.mu.Unlock()
 
 	err := c.cmd.ExecuteContext(ctx)
 	if err != nil {
-		c.logger.Println(err)
+		return err
 	}
 
 	// позле вызова help, нужно отдельно сбрасывать, потому что она за границами run-функций
@@ -71,6 +71,8 @@ func (c *CLI) Execute(ctx context.Context, args []string) {
 		flags.ResetAllHelpFlags(c.cmd)
 	}
 	c.mu.Unlock()
+
+	return nil
 }
 
 // createLogger вспомогательная функция для открытия файла и привязки к нему логгера
