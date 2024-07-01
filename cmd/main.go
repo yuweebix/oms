@@ -29,6 +29,9 @@ func main() {
 		log.Fatalf("Error loading .env file: %v", err)
 	}
 	connString := os.Getenv("DATABASE_URL")
+	if connString == "" {
+		log.Fatalf("Error reading DATABASE_URL from .env file: %v", err)
+	}
 
 	wg := sync.WaitGroup{}
 	ctx, cancel := context.WithCancel(context.Background())

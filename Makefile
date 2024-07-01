@@ -4,6 +4,10 @@ ENV_FILE := .env
 # СБОРКА
 build:
 	docker-compose build
+build-app:
+	docker-compose build app
+build-app-test:
+	docker-compose build app_test
 
 # МИГРАЦИЯ
 migrate:
@@ -71,3 +75,11 @@ shell-db-test:
 # МОКИ
 mocks:
 	mockery
+
+# ТЕСТЫ
+test-all:
+	docker exec -it $(shell docker-compose ps -q app_test) sh -c 'go test ./...'
+test-domain:
+	docker exec -it $(shell docker-compose ps -q app_test) sh -c 'go test ./internal/domain'
+test-repository:
+	docker exec -it $(shell docker-compose ps -q app_test) sh -c 'go test -cover ./internal/repository'
