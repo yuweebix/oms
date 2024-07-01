@@ -38,12 +38,16 @@ func (r *Repository) RunTx(ctx context.Context, opts models.TxOptions, fn func(c
 	ctxTX := context.WithValue(ctx, txKey, tx)
 
 	if err := fn(ctxTX); err != nil {
-		_ = tx.Rollback(ctx)
+		if err := tx.Rollback(ctx); err != nil {
+			return err
+		}
 		return err
 	}
 
 	if err := tx.Commit(ctx); err != nil {
-		_ = tx.Rollback(ctx)
+		if err := tx.Rollback(ctx); err != nil {
+			return err
+		}
 		return err
 	}
 
@@ -54,7 +58,6 @@ func (r *Repository) RunTx(ctx context.Context, opts models.TxOptions, fn func(c
 func (r *Repository) RunTxWithRollback(ctx context.Context, opts models.TxOptions, fn func(ctxTX context.Context) error) error {
 	pgxOpts := convertTxOptions(opts)
 	tx, err := r.pool.BeginTx(ctx, pgxOpts)
-	defer tx.Rollback(ctx)
 	if err != nil {
 		return err
 	}
@@ -62,6 +65,13 @@ func (r *Repository) RunTxWithRollback(ctx context.Context, opts models.TxOption
 	ctxTX := context.WithValue(ctx, txKey, tx)
 
 	if err := fn(ctxTX); err != nil {
+		if err := tx.Rollback(ctx); err != nil {
+			return err
+		}
+		return err
+	}
+
+	if err := tx.Rollback(ctx); err != nil {
 		return err
 	}
 
