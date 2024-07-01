@@ -50,6 +50,7 @@ func toModelsOrder(so *schemas.Order) *models.Order {
 		CreatedAt: so.CreatedAt,
 		Cost:      uint64(so.Cost),
 		Weight:    so.Weight,
+		Packaging: models.PackagingType(so.Packaging),
 	}
 }
 
