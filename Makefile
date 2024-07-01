@@ -6,7 +6,7 @@ build:
 	docker-compose build
 build-app:
 	docker-compose build app
-build-app-test:
+build-test:
 	docker-compose build app_test
 
 # МИГРАЦИЯ
@@ -34,7 +34,7 @@ up-app:
 up-db:
 	docker-compose --env-file $(ENV_FILE) up -d db
 up-test:
-	docker-compose --env-file $(ENV_FILE) up -d app_test db_test
+	docker-compose --env-file $(ENV_FILE) up -d app_test
 
 # ОСТАНОВКА
 down:
@@ -80,6 +80,6 @@ mocks:
 test-all:
 	docker exec -it $(shell docker-compose ps -q app_test) sh -c 'go test ./...'
 test-domain:
-	docker exec -it $(shell docker-compose ps -q app_test) sh -c 'go test ./internal/domain'
+	docker exec -it $(shell docker-compose ps -q app_test) sh -c 'go test -cover ./internal/domain'
 test-repository:
 	docker exec -it $(shell docker-compose ps -q app_test) sh -c 'go test -cover ./internal/repository'

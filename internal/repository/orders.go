@@ -77,12 +77,9 @@ func (r *Repository) UpdateOrder(ctx context.Context, o *models.Order) (err erro
 
 	// создаем sql запрос
 	query := sq.Update(ordersTable).
-		Set("user_id", o.User.ID).
-		Set("stored_until", o.Expiry).
 		Set("return_by", o.ReturnBy).
 		Set("status", o.Status).
 		Set("hash", o.Hash).
-		Set("created_at", o.CreatedAt).
 		Where(sq.Eq{"id": o.ID}).
 		PlaceholderFormat(sq.Dollar)
 
@@ -172,6 +169,7 @@ func (r *Repository) GetOrdersForDelivery(ctx context.Context, orderIDs []uint64
 		return nil, err
 	}
 
+	list = make([]*models.Order, 0, len(orders))
 	for _, o := range orders {
 		list = append(list, toModelsOrder(&o))
 	}

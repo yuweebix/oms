@@ -70,8 +70,7 @@ func (s *ReturnsSuite) TestAcceptReturn_StatusInvalid() {
 
 	err := domain.AcceptReturn(context.Background(), order)
 
-	s.Error(err)
-	s.Equal(e.ErrStatusInvalid, err)
+	s.EqualError(err, e.ErrStatusInvalid.Error())
 }
 
 func (s *ReturnsSuite) TestAcceptReturn_OrderExpired() {
@@ -89,8 +88,7 @@ func (s *ReturnsSuite) TestAcceptReturn_OrderExpired() {
 
 	err := domain.AcceptReturn(context.Background(), order)
 
-	s.Error(err)
-	s.Equal(e.ErrOrderExpired, err)
+	s.EqualError(err, e.ErrOrderExpired.Error())
 }
 
 func (s *ReturnsSuite) TestAcceptReturn_UserInvalid() {
@@ -107,8 +105,7 @@ func (s *ReturnsSuite) TestAcceptReturn_UserInvalid() {
 
 	err := domain.AcceptReturn(context.Background(), order)
 
-	s.Error(err)
-	s.Equal(e.ErrUserInvalid, err)
+	s.EqualError(err, e.ErrUserInvalid.Error())
 }
 
 // returns list tests

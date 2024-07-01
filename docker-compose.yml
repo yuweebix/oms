@@ -31,7 +31,7 @@ services:
     volumes:
       - db-data:/var/lib/postgresql/data
     networks:
-      - app-network
+      - test-network
 
   app_test:
     build:
@@ -43,7 +43,7 @@ services:
     depends_on:
       - db_test
     networks:
-      - app-network
+      - test-network
 
 volumes:
   db-data:
@@ -51,3 +51,4 @@ volumes:
 
 networks:
   app-network:
+  test-network:

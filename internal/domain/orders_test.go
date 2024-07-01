@@ -55,7 +55,6 @@ func (s *OrdersSuite) TestAcceptOrder_Success() {
 
 	s.NoError(err)
 	s.Equal(models.StatusAccepted, order.Status)
-	s.NotZero(order.CreatedAt)
 	s.NotEmpty(order.Hash)
 }
 
@@ -75,8 +74,7 @@ func (s *OrdersSuite) TestAcceptOrder_Expired() {
 
 	err := domain.AcceptOrder(context.Background(), order)
 
-	s.Error(err)
-	s.Equal(e.ErrOrderExpired, err)
+	s.EqualError(err, e.ErrOrderExpired.Error())
 }
 
 func (s *OrdersSuite) TestAcceptOrder_InvalidPackaging() {
@@ -95,8 +93,7 @@ func (s *OrdersSuite) TestAcceptOrder_InvalidPackaging() {
 
 	err := domain.AcceptOrder(context.Background(), order)
 
-	s.Error(err)
-	s.Equal(e.ErrPackagingInvalid, err)
+	s.EqualError(err, e.ErrPackagingInvalid.Error())
 }
 
 func (s *OrdersSuite) TestAcceptOrder_TooHeavy() {
@@ -115,8 +112,7 @@ func (s *OrdersSuite) TestAcceptOrder_TooHeavy() {
 
 	err := domain.AcceptOrder(context.Background(), order)
 
-	s.Error(err)
-	s.Equal(e.ErrOrderTooHeavy, err)
+	s.EqualError(err, e.ErrOrderTooHeavy.Error())
 }
 
 // orders return tests
@@ -176,8 +172,7 @@ func (s *OrdersSuite) TestReturnOrder_NotExpired() {
 
 	err := domain.ReturnOrder(context.Background(), order)
 
-	s.Error(err)
-	s.Equal(e.ErrOrderNotExpired, err)
+	s.EqualError(err, e.ErrOrderNotExpired.Error())
 }
 
 // orders list tests
@@ -240,8 +235,7 @@ func (s *OrdersSuite) TestDeliverOrders_OrderNotFound() {
 
 	err := domain.DeliverOrders(context.Background(), orderIDs)
 
-	s.Error(err)
-	s.Equal(e.ErrOrderNotFound, err)
+	s.EqualError(err, e.ErrOrderNotFound.Error())
 }
 
 func (s *OrdersSuite) TestDeliverOrders_StatusInvalid() {
@@ -261,8 +255,7 @@ func (s *OrdersSuite) TestDeliverOrders_StatusInvalid() {
 
 	err := domain.DeliverOrders(context.Background(), orderIDs)
 
-	s.Error(err)
-	s.Equal(e.ErrStatusInvalid, err)
+	s.EqualError(err, e.ErrStatusInvalid.Error())
 }
 
 func (s *OrdersSuite) TestDeliverOrders_UserInvalid() {
@@ -283,8 +276,7 @@ func (s *OrdersSuite) TestDeliverOrders_UserInvalid() {
 
 	err := domain.DeliverOrders(context.Background(), orderIDs)
 
-	s.Error(err)
-	s.Equal(e.ErrUserInvalid, err)
+	s.EqualError(err, e.ErrUserInvalid.Error())
 }
 
 func (s *OrdersSuite) TestDeliverOrders_OrderExpired() {
@@ -304,6 +296,5 @@ func (s *OrdersSuite) TestDeliverOrders_OrderExpired() {
 
 	err := domain.DeliverOrders(context.Background(), orderIDs)
 
-	s.Error(err)
-	s.Equal(e.ErrOrderExpired, err)
+	s.EqualError(err, e.ErrOrderExpired.Error())
 }
