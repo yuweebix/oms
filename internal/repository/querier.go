@@ -49,3 +49,21 @@ func (r *Repository) RunTx(ctx context.Context, opts models.TxOptions, fn func(c
 
 	return nil
 }
+
+// RunTxWithRollback используется для начала транзакции с предоставленными опциями с откатом
+func (r *Repository) RunTxWithRollback(ctx context.Context, opts models.TxOptions, fn func(ctxTX context.Context) error) error {
+	pgxOpts := convertTxOptions(opts)
+	tx, err := r.pool.BeginTx(ctx, pgxOpts)
+	defer tx.Rollback(ctx)
+	if err != nil {
+		return err
+	}
+
+	ctxTX := context.WithValue(ctx, txKey, tx)
+
+	if err := fn(ctxTX); err != nil {
+		return err
+	}
+
+	return nil
+}
