@@ -8,16 +8,16 @@ import (
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/models"
 )
 
-// Querier интерфейс, исполняющий sql запросы. В качестве возможных куриеров можно использовать пул или же например транзакцию.
-type Querier interface {
+// querier интерфейс, исполняющий sql запросы. В качестве возможных куриеров можно использовать пул или же например транзакцию.
+type querier interface {
 	Exec(ctx context.Context, sql string, arguments ...interface{}) (pgconn.CommandTag, error)
 	Query(ctx context.Context, sql string, args ...interface{}) (pgx.Rows, error)
 	QueryRow(ctx context.Context, sql string, args ...interface{}) pgx.Row
 }
 
-// GetQuerier проверяет, была ли создана транзакция и возвращает её. В противном случае возвращается пул.
-func (r *Repository) GetQuerier(ctx context.Context) Querier {
-	if tx, ok := ctx.Value(txKey).(Querier); ok && tx != nil {
+// Getquerier проверяет, была ли создана транзакция и возвращает её. В противном случае возвращается пул.
+func (r *Repository) Getquerier(ctx context.Context) querier {
+	if tx, ok := ctx.Value(txKey).(querier); ok && tx != nil {
 		return tx
 	}
 	return r.pool
