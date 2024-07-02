@@ -68,7 +68,7 @@ func (s *OrdersSuite) TestCreateOrder_Success() {
 	orderCreate := &models.Order{
 		ID:        1,
 		User:      &models.User{ID: 1},
-		Expiry:    time.Date(10000, 1, 1, 1, 1, 1, 1, time.UTC),
+		Expiry:    time.Date(10000, 0, 0, 0, 0, 0, 0, time.UTC),
 		Status:    models.StatusAccepted,
 		Hash:      "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
 		CreatedAt: now,
@@ -95,12 +95,7 @@ func (s *OrdersSuite) TestCreateOrder_Success() {
 	})
 
 	s.NoError(err)
-	s.Equal(orderCreate.ID, orderGet.ID)
-	s.Equal(orderCreate.User.ID, orderGet.User.ID)
-	s.Equal(orderCreate.Status, orderGet.Status)
-	s.Equal(orderCreate.Cost, orderGet.Cost)
-	s.Equal(orderCreate.Weight, orderGet.Weight)
-	s.Equal(orderCreate.Packaging, orderGet.Packaging)
+	s.Equal(orderCreate, orderGet)
 }
 
 // описание: пытаемся создать один и тот же заказ дважды
@@ -109,7 +104,7 @@ func (s *OrdersSuite) TestCreateOrder_AlreadyExists() {
 	order := &models.Order{
 		ID:        1,
 		User:      &models.User{ID: 1},
-		Expiry:    time.Date(10000, 1, 1, 1, 1, 1, 1, time.UTC),
+		Expiry:    time.Date(10000, 0, 0, 0, 0, 0, 0, time.UTC),
 		Status:    models.StatusAccepted,
 		Hash:      "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
 		CreatedAt: now,
@@ -205,7 +200,7 @@ func (s *OrdersSuite) TestUpdateOrder_Success() {
 	orderCreate := &models.Order{
 		ID:        1,
 		User:      &models.User{ID: 1},
-		Expiry:    time.Date(10000, 1, 1, 1, 1, 1, 1, time.UTC),
+		Expiry:    time.Date(10000, 0, 0, 0, 0, 0, 0, time.UTC),
 		Status:    models.StatusAccepted,
 		Hash:      "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
 		CreatedAt: now,
@@ -216,8 +211,8 @@ func (s *OrdersSuite) TestUpdateOrder_Success() {
 	orderUpdate := &models.Order{
 		ID:        1,
 		User:      &models.User{ID: 1},
-		Expiry:    time.Date(10000, 1, 1, 1, 1, 1, 1, time.UTC),
-		ReturnBy:  time.Date(10001, 1, 1, 1, 1, 1, 1, time.UTC),
+		Expiry:    time.Date(10000, 0, 0, 0, 0, 0, 0, time.UTC),
+		ReturnBy:  time.Date(10001, 0, 0, 0, 0, 0, 0, time.UTC),
 		Status:    models.StatusDelivered,
 		Hash:      "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
 		CreatedAt: now,
@@ -249,12 +244,7 @@ func (s *OrdersSuite) TestUpdateOrder_Success() {
 	})
 
 	s.NoError(err)
-	s.Equal(orderUpdate.ID, orderGet.ID)
-	s.Equal(orderUpdate.User.ID, orderGet.User.ID)
-	s.Equal(orderUpdate.Status, orderGet.Status)
-	s.Equal(orderUpdate.Cost, orderGet.Cost)
-	s.Equal(orderUpdate.Weight, orderGet.Weight)
-	s.Equal(orderUpdate.Packaging, orderGet.Packaging)
+	s.Equal(orderUpdate, orderGet)
 }
 
 // описание: пытаемся обновить заказ, который не существует в базе данных
@@ -263,7 +253,7 @@ func (s *OrdersSuite) TestUpdateOrder_NotExists() {
 	orderUpdate := &models.Order{
 		ID:        1,
 		User:      &models.User{ID: 1},
-		Expiry:    time.Date(10000, 1, 1, 1, 1, 1, 1, time.UTC),
+		Expiry:    time.Date(10000, 0, 0, 0, 0, 0, 0, time.UTC),
 		ReturnBy:  time.Date(10001, 1, 1, 1, 1, 1, 1, time.UTC),
 		Status:    models.StatusDelivered,
 		Hash:      "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
@@ -357,26 +347,8 @@ func (s *OrdersSuite) TestGetOrders_Standard() {
 
 	s.NoError(err)
 	s.Len(orders, 2)
-	s.Equal(orderDelivered.ID, orders[0].ID)
-	s.Equal(orderAccepted.ID, orders[1].ID)
-
-	s.Equal(orderDelivered.User.ID, orders[0].User.ID)
-	s.Equal(orderDelivered.Expiry, orders[0].Expiry)
-	s.Equal(orderDelivered.Status, orders[0].Status)
-	s.Equal(orderDelivered.Hash, orders[0].Hash)
-	s.Equal(orderDelivered.CreatedAt, orders[0].CreatedAt)
-	s.Equal(orderDelivered.Cost, orders[0].Cost)
-	s.Equal(orderDelivered.Weight, orders[0].Weight)
-	s.Equal(orderDelivered.Packaging, orders[0].Packaging)
-
-	s.Equal(orderAccepted.User.ID, orders[1].User.ID)
-	s.Equal(orderAccepted.Expiry, orders[1].Expiry)
-	s.Equal(orderAccepted.Status, orders[1].Status)
-	s.Equal(orderAccepted.Hash, orders[1].Hash)
-	s.Equal(orderAccepted.CreatedAt, orders[1].CreatedAt)
-	s.Equal(orderAccepted.Cost, orders[1].Cost)
-	s.Equal(orderAccepted.Weight, orders[1].Weight)
-	s.Equal(orderAccepted.Packaging, orders[1].Packaging)
+	s.Equal(orderDelivered, orders[0])
+	s.Equal(orderAccepted, orders[1])
 }
 
 // описание: теперь с лимитом
@@ -427,16 +399,7 @@ func (s *OrdersSuite) TestGetOrders_Limit() {
 
 	s.NoError(err)
 	s.Len(orders, 1)
-	s.Equal(orderDelivered.ID, orders[0].ID)
-
-	s.Equal(orderDelivered.User.ID, orders[0].User.ID)
-	s.Equal(orderDelivered.Expiry, orders[0].Expiry)
-	s.Equal(orderDelivered.Status, orders[0].Status)
-	s.Equal(orderDelivered.Hash, orders[0].Hash)
-	s.Equal(orderDelivered.CreatedAt, orders[0].CreatedAt)
-	s.Equal(orderDelivered.Cost, orders[0].Cost)
-	s.Equal(orderDelivered.Weight, orders[0].Weight)
-	s.Equal(orderDelivered.Packaging, orders[0].Packaging)
+	s.Equal(orderDelivered, orders[0])
 }
 
 // описание: теперь смещаем
@@ -487,16 +450,7 @@ func (s *OrdersSuite) TestGetOrders_Offset() {
 
 	s.NoError(err)
 	s.Len(orders, 1)
-	s.Equal(orderAccepted.ID, orders[0].ID)
-
-	s.Equal(orderAccepted.User.ID, orders[0].User.ID)
-	s.Equal(orderAccepted.Expiry, orders[0].Expiry)
-	s.Equal(orderAccepted.Status, orders[0].Status)
-	s.Equal(orderAccepted.Hash, orders[0].Hash)
-	s.Equal(orderAccepted.CreatedAt, orders[0].CreatedAt)
-	s.Equal(orderAccepted.Cost, orders[0].Cost)
-	s.Equal(orderAccepted.Weight, orders[0].Weight)
-	s.Equal(orderAccepted.Packaging, orders[0].Packaging)
+	s.Equal(orderAccepted, orders[0])
 }
 
 // описание: создаем два заказа и получаем только то, что хранится (StatusAccepted)
@@ -547,16 +501,7 @@ func (s *OrdersSuite) TestGetOrders_IsStored() {
 
 	s.NoError(err)
 	s.Len(orders, 1)
-	s.Equal(orderAccepted.ID, orders[0].ID)
-
-	s.Equal(orderAccepted.User.ID, orders[0].User.ID)
-	s.Equal(orderAccepted.Expiry, orders[0].Expiry)
-	s.Equal(orderAccepted.Status, orders[0].Status)
-	s.Equal(orderAccepted.Hash, orders[0].Hash)
-	s.Equal(orderAccepted.CreatedAt, orders[0].CreatedAt)
-	s.Equal(orderAccepted.Cost, orders[0].Cost)
-	s.Equal(orderAccepted.Weight, orders[0].Weight)
-	s.Equal(orderAccepted.Packaging, orders[0].Packaging)
+	s.Equal(orderAccepted, orders[0])
 }
 
 // get orders for delivery
@@ -609,8 +554,8 @@ func (s *OrdersSuite) TestGetOrdersForDelivery_BothMatching() {
 
 	s.NoError(err)
 	s.Len(orders, 2)
-	s.Equal(order1.ID, orders[0].ID)
-	s.Equal(order2.ID, orders[1].ID)
+	s.Equal(order1, orders[0])
+	s.Equal(order2, orders[1])
 }
 
 // описание: теперь пытаемся получить их по одному существующему и одному несуществующему id
@@ -661,7 +606,7 @@ func (s *OrdersSuite) TestGetOrdersForDelivery_OneMatching() {
 
 	s.NoError(err)
 	s.Len(orders, 1)
-	s.Equal(order1.ID, orders[0].ID)
+	s.Equal(order1, orders[0])
 }
 
 // описание: теперь ни одного заказа нет в бд

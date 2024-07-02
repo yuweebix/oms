@@ -27,10 +27,10 @@ var (
 	orderReturned1 = &models.Order{
 		ID:        1,
 		User:      &models.User{ID: 1},
-		Expiry:    time.Date(10000, 1, 1, 1, 1, 1, 0, time.UTC),
+		Expiry:    time.Date(10000, 0, 0, 0, 0, 0, 0, time.UTC),
 		Status:    models.StatusReturned,
 		Hash:      "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
-		ReturnBy:  time.Date(10001, 1, 1, 1, 1, 1, 0, time.UTC),
+		ReturnBy:  time.Date(10001, 0, 0, 0, 0, 0, 0, time.UTC),
 		CreatedAt: now,
 		Cost:      1,
 		Weight:    1,
@@ -39,10 +39,10 @@ var (
 	orderReturned2 = &models.Order{
 		ID:        2,
 		User:      &models.User{ID: 1},
-		Expiry:    time.Date(10000, 1, 1, 1, 1, 1, 0, time.UTC),
+		Expiry:    time.Date(10000, 0, 0, 0, 0, 0, 0, time.UTC),
 		Status:    models.StatusReturned,
 		Hash:      "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
-		ReturnBy:  time.Date(10001, 1, 1, 1, 1, 1, 0, time.UTC),
+		ReturnBy:  time.Date(10001, 0, 0, 0, 0, 0, 0, time.UTC),
 		CreatedAt: now.Add(time.Second),
 		Cost:      1,
 		Weight:    1,
@@ -51,10 +51,10 @@ var (
 	orderDelivered = &models.Order{
 		ID:        3,
 		User:      &models.User{ID: 1},
-		Expiry:    time.Date(10000, 1, 1, 1, 1, 1, 0, time.UTC),
+		Expiry:    time.Date(10000, 0, 0, 0, 0, 0, 0, time.UTC),
 		Status:    models.StatusDelivered,
 		Hash:      "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
-		ReturnBy:  time.Date(10001, 1, 1, 1, 1, 1, 0, time.UTC),
+		ReturnBy:  time.Date(10001, 0, 0, 0, 0, 0, 0, time.UTC),
 		CreatedAt: now.Add(2 * time.Second),
 		Cost:      1,
 		Weight:    1,
@@ -122,8 +122,8 @@ func (s *ReturnsSuite) TestGetReturns_20() {
 
 	s.NoError(err)
 	s.Len(orders, 2)
-	s.Equal(orderReturned1.ID, orders[0].ID)
-	s.Equal(orderReturned2.ID, orders[1].ID)
+	s.Equal(orderReturned1, orders[0])
+	s.Equal(orderReturned2, orders[1])
 }
 
 func (s *ReturnsSuite) TestGetReturns_10() {
@@ -150,10 +150,10 @@ func (s *ReturnsSuite) TestGetReturns_10() {
 		return nil
 	})
 
-	s.T().Log(orderReturned1.ID, orders[0].ID)
+	s.T().Log(orderReturned1, orders[0])
 	s.NoError(err)
 	s.Len(orders, 1)
-	s.Equal(orderReturned1.ID, orders[0].ID)
+	s.Equal(orderReturned1, orders[0])
 }
 
 func (s *ReturnsSuite) TestGetReturns_11() {
@@ -182,7 +182,7 @@ func (s *ReturnsSuite) TestGetReturns_11() {
 
 	s.NoError(err)
 	s.Len(orders, 1)
-	s.Equal(orderReturned2.ID, orders[0].ID)
+	s.Equal(orderReturned2, orders[0])
 }
 
 func (s *ReturnsSuite) TestGetReturns_00() {
