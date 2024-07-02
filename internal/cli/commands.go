@@ -58,7 +58,9 @@ func (c *CLI) workersCmd() (cmd *cobra.Command, err error) {
 Пример использования:
   workers --number 5
 	workers --number -5`,
-		RunE: c.workersCmdRunE,
+		RunE:          c.workersCmdRunE,
+		SilenceUsage:  true,
+		SilenceErrors: true,
 	}
 
 	err = workersCmdSetFlags(cmd)

@@ -73,14 +73,16 @@ shell-db-test:
 	docker exec -it $(shell docker-compose ps -q db_test) sh
 
 # МОКИ
-mocks-domain:
-	mockery --config .mockery.domain.yml
 mocks-cli:
 	mockery --config .mockery.cli.yml
+mocks-domain:
+	mockery --config .mockery.domain.yml
 
 # ТЕСТЫ
 test-all:
 	docker exec -it $(shell docker-compose ps -q app_test) sh -c 'go test ./...'
+test-cli:
+	docker exec -it $(shell docker-compose ps -q app_test) sh -c 'go test -cover ./internal/cli'
 test-domain:
 	docker exec -it $(shell docker-compose ps -q app_test) sh -c 'go test -cover ./internal/domain'
 test-repository:
