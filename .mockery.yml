@@ -2,7 +2,7 @@ with-expecter: true
 packages:
   gitlab.ozon.dev/yuweebix/homework-1/internal/domain:
     config:
-      dir: mocks
+      dir: ./internal/domain/mocks
     interfaces:
       storage:
         config:
