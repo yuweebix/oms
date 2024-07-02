@@ -73,8 +73,10 @@ shell-db-test:
 	docker exec -it $(shell docker-compose ps -q db_test) sh
 
 # МОКИ
-mocks:
-	mockery
+mocks-domain:
+	mockery --config .mockery.domain.yml
+mocks-cli:
+	mockery --config .mockery.cli.yml
 
 # ТЕСТЫ
 test-all:

@@ -1,0 +1,11 @@
+with-expecter: true
+packages:
+  gitlab.ozon.dev/yuweebix/homework-1/internal/cli:
+    config:
+      dir: ./internal/cli/mocks
+    interfaces:
+      domain:
+        config:
+          outpkg: mocks
+          filename: domain_mock.go
+          mockname: MockDomain
