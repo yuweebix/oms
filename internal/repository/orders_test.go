@@ -3,7 +3,6 @@ package repository_test
 import (
 	"context"
 	"errors"
-	"log"
 	"os"
 	"testing"
 	"time"
@@ -43,9 +42,10 @@ func (s *OrdersSuite) SetupSuite() {
 		s.FailNowf("Error loading .env file", err.Error())
 	}
 
-	connString := os.Getenv("DATABASE_TEST_URL")
+	connString := os.Getenv("DATABASE_TEST_URL") // при локальном тестировании закомментировать эту строчку
+	// connString := os.Getenv("DATABASE_LOCAL_TEST_URL") // и разкомментировать эту
 	if connString == "" {
-		log.Fatalf("Error reading environment variable DATABASE_TEST_URL")
+		s.FailNow("rror reading database url from the .env")
 	}
 
 	s.ctx = context.Background()
