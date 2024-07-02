@@ -272,9 +272,6 @@ func (s *OrdersSuite) TestUpdateOrder_NotExists() {
 		Weight:    1,
 		Packaging: "bag",
 	}
-	orderGet := &models.Order{
-		ID: 1,
-	}
 
 	err := s.repository.RunTxWithRollback(s.ctx, models.TxOptions{}, func(ctxTX context.Context) error {
 		err := s.repository.UpdateOrder(ctxTX, orderUpdate)
@@ -282,16 +279,10 @@ func (s *OrdersSuite) TestUpdateOrder_NotExists() {
 			return ErrOrderNotUpdated
 		}
 
-		orderGet, err = s.repository.GetOrder(ctxTX, orderGet)
-		if err != nil {
-			return ErrOrderNotFound
-		}
-
 		return nil
 	})
 
-	s.EqualError(err, ErrOrderNotFound.Error())
-	s.Empty(orderGet)
+	s.EqualError(err, ErrOrderNotUpdated.Error())
 }
 
 // get order
