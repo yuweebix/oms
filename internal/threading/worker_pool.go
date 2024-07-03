@@ -21,7 +21,7 @@ var (
 // job представляет работу, передаваемое в пул воркеров
 type job struct {
 	ctx  context.Context
-	task func()
+	task func() error
 	cmd  []string
 }
 
@@ -86,9 +86,15 @@ func (wp *WorkerPool) worker() {
 		if isChecked {
 			wp.notificationChan <- fmt.Sprintf("команда %v начала исполняться", job.cmd)
 		}
-		job.task()
+
+		err := job.task()
+
 		if isChecked {
-			wp.notificationChan <- fmt.Sprintf("команда %v закончила исполняться", job.cmd)
+			str := fmt.Sprintf("команда %v закончила исполняться", job.cmd)
+			if err != nil {
+				str += fmt.Sprintf("с ошибкой: %v", err)
+			}
+			wp.notificationChan <- str
 		}
 
 		numJobs.Add(-1)
@@ -114,7 +120,7 @@ func (wp *WorkerPool) Stop() {
 }
 
 // Enqueue добавляет работу в пул
-func (wp *WorkerPool) Enqueue(ctx context.Context, task func(), cmd []string) {
+func (wp *WorkerPool) Enqueue(ctx context.Context, task func() error, cmd []string) {
 	numJobs.Add(1)
 
 	job := &job{
@@ -160,8 +166,8 @@ func (wp *WorkerPool) RemoveWorkers(ctx context.Context, n int) error {
 	for i := 0; i < n; i++ {
 		// создаем контекст с отменой для завершения одного воркера
 		jobCtx, cancel := context.WithCancel(wp.ctx)
-		cancel()                           // вызываем cancel для завершения воркера
-		wp.Enqueue(jobCtx, func() {}, nil) // отправляем dummy job с cancel для завершения воркера
+		cancel()                                             // вызываем cancel для завершения воркера
+		wp.Enqueue(jobCtx, func() error { return nil }, nil) // отправляем dummy job с cancel для завершения воркера
 	}
 	wp.numWorkers -= n
 

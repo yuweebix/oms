@@ -12,7 +12,7 @@ import (
 
 // CreateOrder добавляет заказ в бд
 func (r *Repository) CreateOrder(ctx context.Context, o *models.Order) (err error) {
-	qr := r.GetQuerier(ctx)
+	qr := r.getQuerier(ctx)
 
 	// создаем sql запрос
 	query := sq.Insert(ordersTable).
@@ -43,7 +43,7 @@ func (r *Repository) CreateOrder(ctx context.Context, o *models.Order) (err erro
 
 // DeleteOrder удаляет заказ из бд
 func (r *Repository) DeleteOrder(ctx context.Context, o *models.Order) (err error) {
-	qr := r.GetQuerier(ctx)
+	qr := r.getQuerier(ctx)
 
 	// создаем sql запрос
 	query := sq.Delete(ordersTable).
@@ -73,16 +73,13 @@ func (r *Repository) DeleteOrder(ctx context.Context, o *models.Order) (err erro
 
 // UpdateOrder обновляет данные заказа в бд
 func (r *Repository) UpdateOrder(ctx context.Context, o *models.Order) (err error) {
-	qr := r.GetQuerier(ctx)
+	qr := r.getQuerier(ctx)
 
 	// создаем sql запрос
 	query := sq.Update(ordersTable).
-		Set("user_id", o.User.ID).
-		Set("stored_until", o.Expiry).
 		Set("return_by", o.ReturnBy).
 		Set("status", o.Status).
 		Set("hash", o.Hash).
-		Set("created_at", o.CreatedAt).
 		Where(sq.Eq{"id": o.ID}).
 		PlaceholderFormat(sq.Dollar)
 
@@ -109,7 +106,7 @@ func (r *Repository) UpdateOrder(ctx context.Context, o *models.Order) (err erro
 
 // GetOrders возвращает список заказов клиента
 func (r *Repository) GetOrders(ctx context.Context, userID uint64, limit uint64, offset uint64, isStored bool) (list []*models.Order, err error) {
-	qr := r.GetQuerier(ctx)
+	qr := r.getQuerier(ctx)
 
 	// создаем sql запрос
 	query := sq.Select(ordersColumns...).
@@ -152,7 +149,7 @@ func (r *Repository) GetOrders(ctx context.Context, userID uint64, limit uint64,
 
 // GetOrdersForDelivery возвращает список заказов клиенту на выдачу
 func (r *Repository) GetOrdersForDelivery(ctx context.Context, orderIDs []uint64) (list []*models.Order, err error) {
-	qr := r.GetQuerier(ctx)
+	qr := r.getQuerier(ctx)
 
 	// создаем sql запрос
 	query := sq.Select(ordersColumns...).
@@ -172,6 +169,7 @@ func (r *Repository) GetOrdersForDelivery(ctx context.Context, orderIDs []uint64
 		return nil, err
 	}
 
+	list = make([]*models.Order, 0, len(orders))
 	for _, o := range orders {
 		list = append(list, toModelsOrder(&o))
 	}
@@ -181,7 +179,7 @@ func (r *Repository) GetOrdersForDelivery(ctx context.Context, orderIDs []uint64
 
 // GetOrder пересылает полный объект заказа
 func (r *Repository) GetOrder(ctx context.Context, o *models.Order) (result *models.Order, err error) {
-	qr := r.GetQuerier(ctx)
+	qr := r.getQuerier(ctx)
 
 	// создаем sql запрос
 	query := sq.Select(ordersColumns...).
