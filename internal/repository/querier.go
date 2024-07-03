@@ -15,8 +15,8 @@ type querier interface {
 	QueryRow(ctx context.Context, sql string, args ...interface{}) pgx.Row
 }
 
-// Getquerier проверяет, была ли создана транзакция и возвращает её. В противном случае возвращается пул.
-func (r *Repository) Getquerier(ctx context.Context) querier {
+// getQuerier проверяет, была ли создана транзакция и возвращает её. В противном случае возвращается пул.
+func (r *Repository) getQuerier(ctx context.Context) querier {
 	if tx, ok := ctx.Value(txKey).(querier); ok && tx != nil {
 		return tx
 	}
@@ -48,30 +48,6 @@ func (r *Repository) RunTx(ctx context.Context, opts models.TxOptions, fn func(c
 		if err := tx.Rollback(ctx); err != nil {
 			return err
 		}
-		return err
-	}
-
-	return nil
-}
-
-// RunTxWithRollback используется для начала транзакции с предоставленными опциями с откатом
-func (r *Repository) RunTxWithRollback(ctx context.Context, opts models.TxOptions, fn func(ctxTX context.Context) error) error {
-	pgxOpts := convertTxOptions(opts)
-	tx, err := r.pool.BeginTx(ctx, pgxOpts)
-	if err != nil {
-		return err
-	}
-
-	ctxTX := context.WithValue(ctx, txKey, tx)
-
-	if err := fn(ctxTX); err != nil {
-		if err := tx.Rollback(ctx); err != nil {
-			return err
-		}
-		return err
-	}
-
-	if err := tx.Rollback(ctx); err != nil {
 		return err
 	}
 

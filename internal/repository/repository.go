@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 
+	"github.com/Masterminds/squirrel"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/models"
@@ -59,4 +60,19 @@ func convertTxOptions(opts models.TxOptions) pgx.TxOptions {
 		IsoLevel:   pgx.TxIsoLevel(opts.IsoLevel),
 		AccessMode: pgx.TxAccessMode(opts.AccessMode),
 	}
+}
+
+func (r *Repository) DeleteAllOrders(ctx context.Context) error {
+	// создаем sql запрос
+	query := squirrel.Delete(ordersTable).PlaceholderFormat(squirrel.Dollar)
+
+	// преобразуем в сырой вид
+	rawQuery, args, err := query.ToSql()
+	if err != nil {
+		return err
+	}
+
+	// выполняем запрос
+	_, err = r.pool.Exec(ctx, rawQuery, args...)
+	return err
 }
