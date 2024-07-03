@@ -1,68 +1,16 @@
 package repository_test
 
 import (
-	"context"
-	"os"
-	"testing"
 	"time"
 
-	"github.com/joho/godotenv"
-	"github.com/stretchr/testify/suite"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/models"
-	"gitlab.ozon.dev/yuweebix/homework-1/internal/repository"
 )
-
-type OrdersSuite struct {
-	suite.Suite
-	repository *repository.Repository
-	ctx        context.Context
-}
-
-var (
-	now = time.Now().UTC().Truncate(time.Second)
-)
-
-// TestOrdersSuite запускает все orders int-тесты
-func TestOrdersSuite(t *testing.T) {
-	suite.Run(t, new(OrdersSuite))
-}
-
-func (s *OrdersSuite) SetupSuite() {
-	err := godotenv.Load("../../.env")
-	if err != nil {
-		s.FailNowf("Error loading .env file", err.Error())
-	}
-
-	connString := os.Getenv("DATABASE_TEST_URL") // при локальном тестировании закомментировать эту строчку
-	// connString := os.Getenv("DATABASE_LOCAL_TEST_URL") // и разкомментировать эту
-	if connString == "" {
-		s.FailNow("Error reading database url from the .env")
-	}
-
-	s.ctx = context.Background()
-
-	s.repository, err = repository.NewRepository(s.ctx, connString)
-	if err != nil {
-		s.FailNowf("Error connecting to the database", err.Error())
-	}
-}
-
-func (s *OrdersSuite) TearDownSuite() {
-	s.repository.Close()
-}
-
-func (s *OrdersSuite) AfterTest(suiteName, testName string) {
-	err := s.repository.DeleteAllOrders(s.ctx)
-	if err != nil {
-		s.Failf("Error truncating table orders", err.Error())
-	}
-}
 
 // create order
 
 // описание: создаем заказ и затем получаем его из базы данных
 // ожидаемый результат: создание заказа проходит успешно, а поля заказов совпадают
-func (s *OrdersSuite) TestCreateOrder_Success() {
+func (s *RepositorySuite) TestCreateOrder_Success() {
 	orderCreate := &models.Order{
 		ID:        1,
 		User:      &models.User{ID: 1},
@@ -89,7 +37,7 @@ func (s *OrdersSuite) TestCreateOrder_Success() {
 
 // описание: пытаемся создать один и тот же заказ дважды
 // ожидаемый результат: первая попытка проходит успешно, а вторая - возвращает ошибку, потому что заказ уже существует
-func (s *OrdersSuite) TestCreateOrder_AlreadyExists() {
+func (s *RepositorySuite) TestCreateOrder_AlreadyExists() {
 	order := &models.Order{
 		ID:        1,
 		User:      &models.User{ID: 1},
@@ -113,7 +61,7 @@ func (s *OrdersSuite) TestCreateOrder_AlreadyExists() {
 
 // описание: создаем заказ, удаляем его и затем пытается получить его
 // ожидаемый результат: удаление заказа проходит успешно, и он больше не доступен для получения.
-func (s *OrdersSuite) TestDeleteOrder_Success() {
+func (s *RepositorySuite) TestDeleteOrder_Success() {
 	orderCreate := &models.Order{
 		ID:        1,
 		User:      &models.User{ID: 1},
@@ -142,7 +90,7 @@ func (s *OrdersSuite) TestDeleteOrder_Success() {
 
 // описание: пытаемся удалить заказ, которого нет в бд
 // ожидаемый результат: возвращается ошибка, ведь удалять нечего
-func (s *OrdersSuite) TestDeleteOrder_NotExists() {
+func (s *RepositorySuite) TestDeleteOrder_NotExists() {
 	orderGet := &models.Order{
 		ID: 1,
 	}
@@ -155,7 +103,7 @@ func (s *OrdersSuite) TestDeleteOrder_NotExists() {
 
 // описание: создаем заказ, затем обновляем его и получаем обновленный заказ
 // ожидаемый результат: обновление заказа проходит успешно и сохраняет все изменения
-func (s *OrdersSuite) TestUpdateOrder_Success() {
+func (s *RepositorySuite) TestUpdateOrder_Success() {
 	orderCreate := &models.Order{
 		ID:        1,
 		User:      &models.User{ID: 1},
@@ -197,7 +145,7 @@ func (s *OrdersSuite) TestUpdateOrder_Success() {
 
 // описание: пытаемся обновить заказ, который не существует в базе данных
 // ожидаемый результат: попытка обновления возвращает ошибку, ничего не обновляется и заказа все ещё не существует после попытки изменить данные
-func (s *OrdersSuite) TestUpdateOrder_NotExists() {
+func (s *RepositorySuite) TestUpdateOrder_NotExists() {
 	orderUpdate := &models.Order{
 		ID:        1,
 		User:      &models.User{ID: 1},
@@ -220,7 +168,7 @@ func (s *OrdersSuite) TestUpdateOrder_NotExists() {
 // описание: пытаемся получить заказ, которого нет в бд
 // ожидаемый результат: возвращается ошибка, что заказ не найден
 // P.S. успешное получение заказа через GetOrder уже описано в TestCreateOrder_Success, и имело бы идентичную логику
-func (s *OrdersSuite) TestGetOrder_NotFound() {
+func (s *RepositorySuite) TestGetOrder_NotFound() {
 	orderGet := &models.Order{
 		ID: 1,
 	}
@@ -233,7 +181,7 @@ func (s *OrdersSuite) TestGetOrder_NotFound() {
 
 // описание: создаем два заказа с разными статусами и получаем их
 // ожидаемый результат: заказы возвращаются в правильном порядке по дате создания (DESC)
-func (s *OrdersSuite) TestGetOrders_Standard() {
+func (s *RepositorySuite) TestGetOrders_Standard() {
 	orderAccepted := &models.Order{
 		ID:        1,
 		User:      &models.User{ID: 1},
@@ -274,7 +222,7 @@ func (s *OrdersSuite) TestGetOrders_Standard() {
 
 // описание: теперь с лимитом
 // ожидаемый результат: возвращается только один заказ
-func (s *OrdersSuite) TestGetOrders_Limit() {
+func (s *RepositorySuite) TestGetOrders_Limit() {
 	orderAccepted := &models.Order{
 		ID:        1,
 		User:      &models.User{ID: 1},
@@ -314,7 +262,7 @@ func (s *OrdersSuite) TestGetOrders_Limit() {
 
 // описание: теперь смещаем
 // ожидаемый результат: возвращается только второй заказ
-func (s *OrdersSuite) TestGetOrders_Offset() {
+func (s *RepositorySuite) TestGetOrders_Offset() {
 	orderAccepted := &models.Order{
 		ID:        1,
 		User:      &models.User{ID: 1},
@@ -354,7 +302,7 @@ func (s *OrdersSuite) TestGetOrders_Offset() {
 
 // описание: создаем два заказа и получаем только то, что хранится (StatusAccepted)
 // ожидаемый результат: возвращается только первый заказ, ведь второй заказ доставили
-func (s *OrdersSuite) TestGetOrders_IsStored() {
+func (s *RepositorySuite) TestGetOrders_IsStored() {
 	orderAccepted := &models.Order{
 		ID:        1,
 		User:      &models.User{ID: 1},
@@ -396,7 +344,7 @@ func (s *OrdersSuite) TestGetOrders_IsStored() {
 
 // описание: создаем два заказа и пытаемся получить их по их id
 // ожидаемый результат: оба заказа находятся и возвращаются
-func (s *OrdersSuite) TestGetOrdersForDelivery_BothMatching() {
+func (s *RepositorySuite) TestGetOrdersForDelivery_BothMatching() {
 	order1 := &models.Order{
 		ID:        1,
 		User:      &models.User{ID: 1},
@@ -437,7 +385,7 @@ func (s *OrdersSuite) TestGetOrdersForDelivery_BothMatching() {
 
 // описание: теперь пытаемся получить их по одному существующему и одному несуществующему id
 // ожидаемый результат: возвращается только один существующий заказ
-func (s *OrdersSuite) TestGetOrdersForDelivery_OneMatching() {
+func (s *RepositorySuite) TestGetOrdersForDelivery_OneMatching() {
 	order1 := &models.Order{
 		ID:        1,
 		User:      &models.User{ID: 1},
@@ -477,7 +425,7 @@ func (s *OrdersSuite) TestGetOrdersForDelivery_OneMatching() {
 
 // описание: теперь ни одного заказа нет в бд
 // ожидаемый результат: ничего не находятся
-func (s *OrdersSuite) TestGetOrdersForDelivery_NoneMatching() {
+func (s *RepositorySuite) TestGetOrdersForDelivery_NoneMatching() {
 	order1 := &models.Order{
 		ID:        1,
 		User:      &models.User{ID: 1},

@@ -19,6 +19,7 @@ services:
     stdin_open: true
     environment:
       - DATABASE_URL=${DATABASE_URL}
+      - ENVIRONMENT=docker
     depends_on:
       - db
     networks:
@@ -44,6 +45,7 @@ services:
     stdin_open: true
     environment:
       - DATABASE_TEST_URL=${DATABASE_TEST_URL}
+      - ENVIRONMENT=docker
     depends_on:
       - db_test
     networks:

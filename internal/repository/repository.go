@@ -33,6 +33,14 @@ func NewRepository(ctx context.Context, connString string) (*Repository, error) 
 		return nil, err
 	}
 
+	err = pool.AcquireFunc(ctx, func(conn *pgxpool.Conn) error {
+		return conn.Ping(ctx)
+	})
+	if err != nil {
+		pool.Close()
+		return nil, err
+	}
+
 	return &Repository{pool: pool}, nil
 }
 
