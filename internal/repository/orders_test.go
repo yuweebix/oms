@@ -2,7 +2,6 @@ package repository_test
 
 import (
 	"context"
-	"errors"
 	"os"
 	"testing"
 	"time"
@@ -11,14 +10,6 @@ import (
 	"github.com/stretchr/testify/suite"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/models"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/repository"
-)
-
-var (
-	ErrOrderNotCreated    = errors.New("could not create order")
-	ErrOrderNotFound      = errors.New("could not find order")
-	ErrOrderAlreadyExists = errors.New("order already exists")
-	ErrOrderNotDeleted    = errors.New("could not delete order")
-	ErrOrderNotUpdated    = errors.New("could not update order")
 )
 
 type OrdersSuite struct {
@@ -45,7 +36,7 @@ func (s *OrdersSuite) SetupSuite() {
 	connString := os.Getenv("DATABASE_TEST_URL") // при локальном тестировании закомментировать эту строчку
 	// connString := os.Getenv("DATABASE_LOCAL_TEST_URL") // и разкомментировать эту
 	if connString == "" {
-		s.FailNow("rror reading database url from the .env")
+		s.FailNow("Error reading database url from the .env")
 	}
 
 	s.ctx = context.Background()
@@ -60,6 +51,13 @@ func (s *OrdersSuite) TearDownSuite() {
 	s.repository.Close()
 }
 
+func (s *OrdersSuite) AfterTest(suiteName, testName string) {
+	err := s.repository.DeleteAllOrders(s.ctx)
+	if err != nil {
+		s.Failf("Error truncating table orders", err.Error())
+	}
+}
+
 // create order
 
 // описание: создаем заказ и затем получаем его из базы данных
@@ -68,7 +66,7 @@ func (s *OrdersSuite) TestCreateOrder_Success() {
 	orderCreate := &models.Order{
 		ID:        1,
 		User:      &models.User{ID: 1},
-		Expiry:    time.Date(10000, 0, 0, 0, 0, 0, 0, time.UTC),
+		Expiry:    time.Date(10000, 1, 1, 0, 0, 0, 0, time.UTC),
 		Status:    models.StatusAccepted,
 		Hash:      "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
 		CreatedAt: now,
@@ -80,21 +78,12 @@ func (s *OrdersSuite) TestCreateOrder_Success() {
 		ID: 1,
 	}
 
-	err := s.repository.RunTxWithRollback(s.ctx, models.TxOptions{}, func(ctxTX context.Context) error {
-		err := s.repository.CreateOrder(ctxTX, orderCreate)
-		if err != nil {
-			return ErrOrderNotCreated
-		}
+	err := s.repository.CreateOrder(s.ctx, orderCreate)
+	s.Require().NoError(err)
 
-		orderGet, err = s.repository.GetOrder(ctxTX, orderGet)
-		if err != nil {
-			return ErrOrderNotFound
-		}
+	orderGet, err = s.repository.GetOrder(s.ctx, orderGet)
+	s.Require().NoError(err)
 
-		return nil
-	})
-
-	s.NoError(err)
 	s.Equal(orderCreate, orderGet)
 }
 
@@ -104,7 +93,7 @@ func (s *OrdersSuite) TestCreateOrder_AlreadyExists() {
 	order := &models.Order{
 		ID:        1,
 		User:      &models.User{ID: 1},
-		Expiry:    time.Date(10000, 0, 0, 0, 0, 0, 0, time.UTC),
+		Expiry:    time.Date(10000, 1, 1, 0, 0, 0, 0, time.UTC),
 		Status:    models.StatusAccepted,
 		Hash:      "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
 		CreatedAt: now,
@@ -113,21 +102,11 @@ func (s *OrdersSuite) TestCreateOrder_AlreadyExists() {
 		Packaging: "bag",
 	}
 
-	err := s.repository.RunTxWithRollback(s.ctx, models.TxOptions{}, func(ctxTX context.Context) error {
-		err := s.repository.CreateOrder(ctxTX, order)
-		if err != nil {
-			return ErrOrderNotCreated
-		}
+	err := s.repository.CreateOrder(s.ctx, order)
+	s.Require().NoError(err)
 
-		err = s.repository.CreateOrder(ctxTX, order)
-		if err != nil {
-			return ErrOrderAlreadyExists
-		}
-
-		return nil
-	})
-
-	s.EqualError(err, ErrOrderAlreadyExists.Error())
+	err = s.repository.CreateOrder(s.ctx, order)
+	s.Error(err)
 }
 
 // delete order
@@ -138,7 +117,7 @@ func (s *OrdersSuite) TestDeleteOrder_Success() {
 	orderCreate := &models.Order{
 		ID:        1,
 		User:      &models.User{ID: 1},
-		Expiry:    time.Date(1, 1, 1, 1, 1, 1, 1, time.UTC), // уже просрочен
+		Expiry:    time.Date(1, 1, 1, 0, 0, 0, 0, time.UTC), // уже просрочен
 		Status:    models.StatusAccepted,
 		Hash:      "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
 		CreatedAt: now,
@@ -150,26 +129,14 @@ func (s *OrdersSuite) TestDeleteOrder_Success() {
 		ID: 1,
 	}
 
-	err := s.repository.RunTxWithRollback(s.ctx, models.TxOptions{}, func(ctxTX context.Context) error {
-		err := s.repository.CreateOrder(ctxTX, orderCreate)
-		if err != nil {
-			return ErrOrderNotCreated
-		}
+	err := s.repository.CreateOrder(s.ctx, orderCreate)
+	s.Require().NoError(err)
 
-		err = s.repository.DeleteOrder(ctxTX, orderGet)
-		if err != nil {
-			return ErrOrderNotDeleted
-		}
+	err = s.repository.DeleteOrder(s.ctx, orderGet)
+	s.Require().NoError(err)
 
-		orderGet, err = s.repository.GetOrder(ctxTX, orderGet)
-		if err != nil {
-			return ErrOrderNotFound
-		}
-
-		return nil
-	})
-
-	s.EqualError(err, ErrOrderNotFound.Error())
+	orderGet, err = s.repository.GetOrder(s.ctx, orderGet)
+	s.Error(err)
 	s.Empty(orderGet)
 }
 
@@ -180,16 +147,8 @@ func (s *OrdersSuite) TestDeleteOrder_NotExists() {
 		ID: 1,
 	}
 
-	err := s.repository.RunTxWithRollback(s.ctx, models.TxOptions{}, func(ctxTX context.Context) error {
-		err := s.repository.DeleteOrder(ctxTX, orderGet)
-		if err != nil {
-			return ErrOrderNotDeleted
-		}
-
-		return nil
-	})
-
-	s.EqualError(err, ErrOrderNotDeleted.Error())
+	err := s.repository.DeleteOrder(s.ctx, orderGet)
+	s.Error(err)
 }
 
 // update order
@@ -200,7 +159,7 @@ func (s *OrdersSuite) TestUpdateOrder_Success() {
 	orderCreate := &models.Order{
 		ID:        1,
 		User:      &models.User{ID: 1},
-		Expiry:    time.Date(10000, 0, 0, 0, 0, 0, 0, time.UTC),
+		Expiry:    time.Date(10000, 1, 1, 0, 0, 0, 0, time.UTC),
 		Status:    models.StatusAccepted,
 		Hash:      "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
 		CreatedAt: now,
@@ -211,8 +170,8 @@ func (s *OrdersSuite) TestUpdateOrder_Success() {
 	orderUpdate := &models.Order{
 		ID:        1,
 		User:      &models.User{ID: 1},
-		Expiry:    time.Date(10000, 0, 0, 0, 0, 0, 0, time.UTC),
-		ReturnBy:  time.Date(10001, 0, 0, 0, 0, 0, 0, time.UTC),
+		Expiry:    time.Date(10000, 1, 1, 0, 0, 0, 0, time.UTC),
+		ReturnBy:  time.Date(10001, 1, 1, 0, 0, 0, 0, time.UTC),
 		Status:    models.StatusDelivered,
 		Hash:      "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
 		CreatedAt: now,
@@ -224,26 +183,15 @@ func (s *OrdersSuite) TestUpdateOrder_Success() {
 		ID: 1,
 	}
 
-	err := s.repository.RunTxWithRollback(s.ctx, models.TxOptions{}, func(ctxTX context.Context) error {
-		err := s.repository.CreateOrder(ctxTX, orderCreate)
-		if err != nil {
-			return ErrOrderNotCreated
-		}
+	err := s.repository.CreateOrder(s.ctx, orderCreate)
+	s.Require().NoError(err)
 
-		err = s.repository.UpdateOrder(ctxTX, orderUpdate)
-		if err != nil {
-			return ErrOrderNotUpdated
-		}
+	err = s.repository.UpdateOrder(s.ctx, orderUpdate)
+	s.Require().NoError(err)
 
-		orderGet, err = s.repository.GetOrder(ctxTX, orderGet)
-		if err != nil {
-			return ErrOrderNotFound
-		}
+	orderGet, err = s.repository.GetOrder(s.ctx, orderGet)
+	s.Require().NoError(err)
 
-		return nil
-	})
-
-	s.NoError(err)
 	s.Equal(orderUpdate, orderGet)
 }
 
@@ -253,8 +201,8 @@ func (s *OrdersSuite) TestUpdateOrder_NotExists() {
 	orderUpdate := &models.Order{
 		ID:        1,
 		User:      &models.User{ID: 1},
-		Expiry:    time.Date(10000, 0, 0, 0, 0, 0, 0, time.UTC),
-		ReturnBy:  time.Date(10001, 1, 1, 1, 1, 1, 1, time.UTC),
+		Expiry:    time.Date(10000, 1, 1, 0, 0, 0, 0, time.UTC),
+		ReturnBy:  time.Date(10001, 1, 1, 0, 0, 0, 0, time.UTC),
 		Status:    models.StatusDelivered,
 		Hash:      "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
 		CreatedAt: now,
@@ -263,16 +211,8 @@ func (s *OrdersSuite) TestUpdateOrder_NotExists() {
 		Packaging: "bag",
 	}
 
-	err := s.repository.RunTxWithRollback(s.ctx, models.TxOptions{}, func(ctxTX context.Context) error {
-		err := s.repository.UpdateOrder(ctxTX, orderUpdate)
-		if err != nil {
-			return ErrOrderNotUpdated
-		}
-
-		return nil
-	})
-
-	s.EqualError(err, ErrOrderNotUpdated.Error())
+	err := s.repository.UpdateOrder(s.ctx, orderUpdate)
+	s.Error(err)
 }
 
 // get order
@@ -285,16 +225,8 @@ func (s *OrdersSuite) TestGetOrder_NotFound() {
 		ID: 1,
 	}
 
-	err := s.repository.RunTxWithRollback(s.ctx, models.TxOptions{}, func(ctxTX context.Context) error {
-		_, err := s.repository.GetOrder(ctxTX, orderGet)
-		if err != nil {
-			return ErrOrderNotFound
-		}
-
-		return nil
-	})
-
-	s.EqualError(err, ErrOrderNotFound.Error())
+	_, err := s.repository.GetOrder(s.ctx, orderGet)
+	s.Error(err)
 }
 
 // get orders
@@ -305,7 +237,7 @@ func (s *OrdersSuite) TestGetOrders_Standard() {
 	orderAccepted := &models.Order{
 		ID:        1,
 		User:      &models.User{ID: 1},
-		Expiry:    time.Date(10000, 1, 1, 1, 1, 1, 0, time.UTC),
+		Expiry:    time.Date(10000, 1, 1, 0, 0, 0, 0, time.UTC),
 		Status:    models.StatusAccepted,
 		Hash:      "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
 		CreatedAt: now,
@@ -316,8 +248,8 @@ func (s *OrdersSuite) TestGetOrders_Standard() {
 	orderDelivered := &models.Order{
 		ID:        2,
 		User:      &models.User{ID: 1},
-		Expiry:    time.Date(10000, 1, 1, 1, 1, 1, 0, time.UTC),
-		ReturnBy:  time.Date(10001, 1, 1, 1, 1, 1, 0, time.UTC),
+		Expiry:    time.Date(10000, 1, 1, 0, 0, 0, 0, time.UTC),
+		ReturnBy:  time.Date(10001, 1, 1, 0, 0, 0, 0, time.UTC),
 		Status:    models.StatusDelivered,
 		Hash:      "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
 		CreatedAt: now.Add(time.Second), // чтобы был позже чем orderAccepted
@@ -326,26 +258,15 @@ func (s *OrdersSuite) TestGetOrders_Standard() {
 		Packaging: "bag",
 	}
 
-	orders := make([]*models.Order, 0, 2)
-	err := s.repository.RunTxWithRollback(s.ctx, models.TxOptions{}, func(ctxTX context.Context) error {
-		err := s.repository.CreateOrder(ctxTX, orderAccepted)
-		if err != nil {
-			return ErrOrderNotCreated
-		}
-		err = s.repository.CreateOrder(ctxTX, orderDelivered)
-		if err != nil {
-			return ErrOrderNotCreated
-		}
+	err := s.repository.CreateOrder(s.ctx, orderAccepted)
+	s.Require().NoError(err)
 
-		orders, err = s.repository.GetOrders(ctxTX, 1, 2, 0, false)
-		if err != nil {
-			return ErrOrderNotFound
-		}
+	err = s.repository.CreateOrder(s.ctx, orderDelivered)
+	s.Require().NoError(err)
 
-		return nil
-	})
+	orders, err := s.repository.GetOrders(s.ctx, 1, 2, 0, false)
+	s.Require().NoError(err)
 
-	s.NoError(err)
 	s.Len(orders, 2)
 	s.Equal(orderDelivered, orders[0])
 	s.Equal(orderAccepted, orders[1])
@@ -357,7 +278,7 @@ func (s *OrdersSuite) TestGetOrders_Limit() {
 	orderAccepted := &models.Order{
 		ID:        1,
 		User:      &models.User{ID: 1},
-		Expiry:    time.Date(10000, 1, 1, 1, 1, 1, 0, time.UTC),
+		Expiry:    time.Date(10000, 1, 1, 0, 0, 0, 0, time.UTC),
 		Status:    models.StatusAccepted,
 		Hash:      "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
 		CreatedAt: now,
@@ -368,8 +289,8 @@ func (s *OrdersSuite) TestGetOrders_Limit() {
 	orderDelivered := &models.Order{
 		ID:        2,
 		User:      &models.User{ID: 1},
-		Expiry:    time.Date(10000, 1, 1, 1, 1, 1, 0, time.UTC),
-		ReturnBy:  time.Date(10001, 1, 1, 1, 1, 1, 0, time.UTC),
+		Expiry:    time.Date(10000, 1, 1, 0, 0, 0, 0, time.UTC),
+		ReturnBy:  time.Date(10001, 1, 1, 0, 0, 0, 0, time.UTC),
 		Status:    models.StatusDelivered,
 		Hash:      "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
 		CreatedAt: now.Add(time.Second),
@@ -378,26 +299,15 @@ func (s *OrdersSuite) TestGetOrders_Limit() {
 		Packaging: "bag",
 	}
 
-	orders := make([]*models.Order, 0, 2)
-	err := s.repository.RunTxWithRollback(s.ctx, models.TxOptions{}, func(ctxTX context.Context) error {
-		err := s.repository.CreateOrder(ctxTX, orderAccepted)
-		if err != nil {
-			return ErrOrderNotCreated
-		}
-		err = s.repository.CreateOrder(ctxTX, orderDelivered)
-		if err != nil {
-			return ErrOrderNotCreated
-		}
+	err := s.repository.CreateOrder(s.ctx, orderAccepted)
+	s.Require().NoError(err)
 
-		orders, err = s.repository.GetOrders(ctxTX, 1, 1, 0, false)
-		if err != nil {
-			return ErrOrderNotFound
-		}
+	err = s.repository.CreateOrder(s.ctx, orderDelivered)
+	s.Require().NoError(err)
 
-		return nil
-	})
+	orders, err := s.repository.GetOrders(s.ctx, 1, 1, 0, false)
+	s.Require().NoError(err)
 
-	s.NoError(err)
 	s.Len(orders, 1)
 	s.Equal(orderDelivered, orders[0])
 }
@@ -408,7 +318,7 @@ func (s *OrdersSuite) TestGetOrders_Offset() {
 	orderAccepted := &models.Order{
 		ID:        1,
 		User:      &models.User{ID: 1},
-		Expiry:    time.Date(10000, 1, 1, 1, 1, 1, 0, time.UTC),
+		Expiry:    time.Date(10000, 1, 1, 0, 0, 0, 0, time.UTC),
 		Status:    models.StatusAccepted,
 		Hash:      "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
 		CreatedAt: now,
@@ -419,8 +329,8 @@ func (s *OrdersSuite) TestGetOrders_Offset() {
 	orderDelivered := &models.Order{
 		ID:        2,
 		User:      &models.User{ID: 1},
-		Expiry:    time.Date(10000, 1, 1, 1, 1, 1, 0, time.UTC),
-		ReturnBy:  time.Date(10001, 1, 1, 1, 1, 1, 0, time.UTC),
+		Expiry:    time.Date(10000, 1, 1, 0, 0, 0, 0, time.UTC),
+		ReturnBy:  time.Date(10001, 1, 1, 0, 0, 0, 0, time.UTC),
 		Status:    models.StatusDelivered,
 		Hash:      "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
 		CreatedAt: now.Add(time.Second),
@@ -429,26 +339,15 @@ func (s *OrdersSuite) TestGetOrders_Offset() {
 		Packaging: "bag",
 	}
 
-	orders := make([]*models.Order, 0, 2)
-	err := s.repository.RunTxWithRollback(s.ctx, models.TxOptions{}, func(ctxTX context.Context) error {
-		err := s.repository.CreateOrder(ctxTX, orderAccepted)
-		if err != nil {
-			return ErrOrderNotCreated
-		}
-		err = s.repository.CreateOrder(ctxTX, orderDelivered)
-		if err != nil {
-			return ErrOrderNotCreated
-		}
+	err := s.repository.CreateOrder(s.ctx, orderAccepted)
+	s.Require().NoError(err)
 
-		orders, err = s.repository.GetOrders(ctxTX, 1, 2, 1, false)
-		if err != nil {
-			return ErrOrderNotFound
-		}
+	err = s.repository.CreateOrder(s.ctx, orderDelivered)
+	s.Require().NoError(err)
 
-		return nil
-	})
+	orders, err := s.repository.GetOrders(s.ctx, 1, 2, 1, false)
+	s.Require().NoError(err)
 
-	s.NoError(err)
 	s.Len(orders, 1)
 	s.Equal(orderAccepted, orders[0])
 }
@@ -459,7 +358,7 @@ func (s *OrdersSuite) TestGetOrders_IsStored() {
 	orderAccepted := &models.Order{
 		ID:        1,
 		User:      &models.User{ID: 1},
-		Expiry:    time.Date(10000, 1, 1, 1, 1, 1, 0, time.UTC),
+		Expiry:    time.Date(10000, 1, 1, 0, 0, 0, 0, time.UTC),
 		Status:    models.StatusAccepted,
 		Hash:      "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
 		CreatedAt: now,
@@ -470,8 +369,8 @@ func (s *OrdersSuite) TestGetOrders_IsStored() {
 	orderDelivered := &models.Order{
 		ID:        2,
 		User:      &models.User{ID: 1},
-		Expiry:    time.Date(10000, 1, 1, 1, 1, 1, 0, time.UTC),
-		ReturnBy:  time.Date(10001, 1, 1, 1, 1, 1, 0, time.UTC),
+		Expiry:    time.Date(10000, 1, 1, 0, 0, 0, 0, time.UTC),
+		ReturnBy:  time.Date(10001, 1, 1, 0, 0, 0, 0, time.UTC),
 		Status:    models.StatusDelivered,
 		Hash:      "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
 		CreatedAt: now.Add(time.Second),
@@ -480,26 +379,15 @@ func (s *OrdersSuite) TestGetOrders_IsStored() {
 		Packaging: "bag",
 	}
 
-	orders := make([]*models.Order, 0, 2)
-	err := s.repository.RunTxWithRollback(s.ctx, models.TxOptions{}, func(ctxTX context.Context) error {
-		err := s.repository.CreateOrder(ctxTX, orderAccepted)
-		if err != nil {
-			return ErrOrderNotCreated
-		}
-		err = s.repository.CreateOrder(ctxTX, orderDelivered)
-		if err != nil {
-			return ErrOrderNotCreated
-		}
+	err := s.repository.CreateOrder(s.ctx, orderAccepted)
+	s.Require().NoError(err)
 
-		orders, err = s.repository.GetOrders(ctxTX, 1, 2, 0, true)
-		if err != nil {
-			return ErrOrderNotFound
-		}
+	err = s.repository.CreateOrder(s.ctx, orderDelivered)
+	s.Require().NoError(err)
 
-		return nil
-	})
+	orders, err := s.repository.GetOrders(s.ctx, 1, 2, 0, true)
+	s.Require().NoError(err)
 
-	s.NoError(err)
 	s.Len(orders, 1)
 	s.Equal(orderAccepted, orders[0])
 }
@@ -512,7 +400,7 @@ func (s *OrdersSuite) TestGetOrdersForDelivery_BothMatching() {
 	order1 := &models.Order{
 		ID:        1,
 		User:      &models.User{ID: 1},
-		Expiry:    time.Date(10000, 1, 1, 1, 1, 1, 0, time.UTC),
+		Expiry:    time.Date(10000, 1, 1, 0, 0, 0, 0, time.UTC),
 		Status:    models.StatusAccepted,
 		Hash:      "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
 		CreatedAt: now,
@@ -523,8 +411,8 @@ func (s *OrdersSuite) TestGetOrdersForDelivery_BothMatching() {
 	order2 := &models.Order{
 		ID:        2,
 		User:      &models.User{ID: 1},
-		Expiry:    time.Date(10000, 1, 1, 1, 1, 1, 0, time.UTC),
-		ReturnBy:  time.Date(10001, 1, 1, 1, 1, 1, 0, time.UTC),
+		Expiry:    time.Date(10000, 1, 1, 0, 0, 0, 0, time.UTC),
+		ReturnBy:  time.Date(10001, 1, 1, 0, 0, 0, 0, time.UTC),
 		Status:    models.StatusDelivered,
 		Hash:      "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
 		CreatedAt: now.Add(time.Second),
@@ -533,26 +421,15 @@ func (s *OrdersSuite) TestGetOrdersForDelivery_BothMatching() {
 		Packaging: "bag",
 	}
 
-	orders := make([]*models.Order, 0, 2)
-	err := s.repository.RunTxWithRollback(s.ctx, models.TxOptions{}, func(ctxTX context.Context) error {
-		err := s.repository.CreateOrder(ctxTX, order1)
-		if err != nil {
-			return err
-		}
-		err = s.repository.CreateOrder(ctxTX, order2)
-		if err != nil {
-			return err
-		}
+	err := s.repository.CreateOrder(s.ctx, order1)
+	s.Require().NoError(err)
 
-		orders, err = s.repository.GetOrdersForDelivery(ctxTX, []uint64{1, 2})
-		if err != nil {
-			return ErrOrderNotFound
-		}
+	err = s.repository.CreateOrder(s.ctx, order2)
+	s.Require().NoError(err)
 
-		return nil
-	})
+	orders, err := s.repository.GetOrdersForDelivery(s.ctx, []uint64{1, 2})
+	s.Require().NoError(err)
 
-	s.NoError(err)
 	s.Len(orders, 2)
 	s.Equal(order1, orders[0])
 	s.Equal(order2, orders[1])
@@ -564,7 +441,7 @@ func (s *OrdersSuite) TestGetOrdersForDelivery_OneMatching() {
 	order1 := &models.Order{
 		ID:        1,
 		User:      &models.User{ID: 1},
-		Expiry:    time.Date(10000, 1, 1, 1, 1, 1, 0, time.UTC),
+		Expiry:    time.Date(10000, 1, 1, 0, 0, 0, 0, time.UTC),
 		Status:    models.StatusAccepted,
 		Hash:      "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
 		CreatedAt: now,
@@ -575,8 +452,8 @@ func (s *OrdersSuite) TestGetOrdersForDelivery_OneMatching() {
 	order2 := &models.Order{
 		ID:        2,
 		User:      &models.User{ID: 1},
-		Expiry:    time.Date(10000, 1, 1, 1, 1, 1, 0, time.UTC),
-		ReturnBy:  time.Date(10001, 1, 1, 1, 1, 1, 0, time.UTC),
+		Expiry:    time.Date(10000, 1, 1, 0, 0, 0, 0, time.UTC),
+		ReturnBy:  time.Date(10001, 1, 1, 0, 0, 0, 0, time.UTC),
 		Status:    models.StatusDelivered,
 		Hash:      "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
 		CreatedAt: now.Add(time.Second),
@@ -585,26 +462,15 @@ func (s *OrdersSuite) TestGetOrdersForDelivery_OneMatching() {
 		Packaging: "bag",
 	}
 
-	orders := make([]*models.Order, 0, 2)
-	err := s.repository.RunTxWithRollback(s.ctx, models.TxOptions{}, func(ctxTX context.Context) error {
-		err := s.repository.CreateOrder(ctxTX, order1)
-		if err != nil {
-			return err
-		}
-		err = s.repository.CreateOrder(ctxTX, order2)
-		if err != nil {
-			return err
-		}
+	err := s.repository.CreateOrder(s.ctx, order1)
+	s.Require().NoError(err)
 
-		orders, err = s.repository.GetOrdersForDelivery(ctxTX, []uint64{1, 3})
-		if err != nil {
-			return ErrOrderNotFound
-		}
+	err = s.repository.CreateOrder(s.ctx, order2)
+	s.Require().NoError(err)
 
-		return nil
-	})
+	orders, err := s.repository.GetOrdersForDelivery(s.ctx, []uint64{1, 3})
+	s.Require().NoError(err)
 
-	s.NoError(err)
 	s.Len(orders, 1)
 	s.Equal(order1, orders[0])
 }
@@ -615,7 +481,7 @@ func (s *OrdersSuite) TestGetOrdersForDelivery_NoneMatching() {
 	order1 := &models.Order{
 		ID:        1,
 		User:      &models.User{ID: 1},
-		Expiry:    time.Date(10000, 1, 1, 1, 1, 1, 0, time.UTC),
+		Expiry:    time.Date(10000, 1, 1, 0, 0, 0, 0, time.UTC),
 		Status:    models.StatusAccepted,
 		Hash:      "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
 		CreatedAt: now,
@@ -626,8 +492,8 @@ func (s *OrdersSuite) TestGetOrdersForDelivery_NoneMatching() {
 	order2 := &models.Order{
 		ID:        2,
 		User:      &models.User{ID: 1},
-		Expiry:    time.Date(10000, 1, 1, 1, 1, 1, 0, time.UTC),
-		ReturnBy:  time.Date(10001, 1, 1, 1, 1, 1, 0, time.UTC),
+		Expiry:    time.Date(10000, 1, 1, 0, 0, 0, 0, time.UTC),
+		ReturnBy:  time.Date(10001, 1, 1, 0, 0, 0, 0, time.UTC),
 		Status:    models.StatusDelivered,
 		Hash:      "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
 		CreatedAt: now.Add(time.Second),
@@ -636,25 +502,14 @@ func (s *OrdersSuite) TestGetOrdersForDelivery_NoneMatching() {
 		Packaging: "bag",
 	}
 
-	orders := make([]*models.Order, 0, 2)
-	err := s.repository.RunTxWithRollback(s.ctx, models.TxOptions{}, func(ctxTX context.Context) error {
-		err := s.repository.CreateOrder(ctxTX, order1)
-		if err != nil {
-			return err
-		}
-		err = s.repository.CreateOrder(ctxTX, order2)
-		if err != nil {
-			return err
-		}
+	err := s.repository.CreateOrder(s.ctx, order1)
+	s.Require().NoError(err)
 
-		orders, err = s.repository.GetOrdersForDelivery(ctxTX, []uint64{3, 4})
-		if err != nil {
-			return ErrOrderNotFound
-		}
+	err = s.repository.CreateOrder(s.ctx, order2)
+	s.Require().NoError(err)
 
-		return nil
-	})
+	orders, err := s.repository.GetOrdersForDelivery(s.ctx, []uint64{3, 4})
+	s.Require().NoError(err)
 
-	s.NoError(err)
 	s.Len(orders, 0)
 }
