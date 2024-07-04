@@ -11,7 +11,7 @@ import (
 
 // GetReturns возвращает список возвратов
 func (r *Repository) GetReturns(ctx context.Context, limit uint64, offset uint64) (list []*models.Order, err error) {
-	qr := r.GetQuerier(ctx)
+	qr := r.getQuerier(ctx)
 
 	// создаем sql запрос
 	query := sq.Select(ordersColumns...).

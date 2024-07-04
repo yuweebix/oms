@@ -29,6 +29,9 @@ func main() {
 		log.Fatalf("Error loading .env file: %v", err)
 	}
 	connString := os.Getenv("DATABASE_URL")
+	if connString == "" {
+		log.Fatalf("Error reading DATABASE_URL from .env file: %v", err)
+	}
 
 	wg := sync.WaitGroup{}
 	ctx, cancel := context.WithCancel(context.Background())
@@ -52,7 +55,10 @@ func main() {
 	defer r.Close()
 
 	d := domain.NewDomain(r, wp)
-	c := cli.NewCLI(d, logFileName)
+	c, err := cli.NewCLI(d, logFileName)
+	if err != nil {
+		log.Fatalln(err)
+	}
 
 	wp.Start()
 
@@ -132,7 +138,7 @@ func main() {
 			cancel()
 			fmt.Println("\nНажмите Enter, чтобы закрыть утилиту.")
 		case args := <-commandChan:
-			wp.Enqueue(ctx, func() { c.Execute(ctx, args) }, args)
+			wp.Enqueue(ctx, func() error { return c.Execute(ctx, args) }, args)
 		}
 	}
 }
