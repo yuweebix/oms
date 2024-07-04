@@ -17,7 +17,13 @@ func (c *CLI) rootCmd() (cmd *cobra.Command, err error) {
 	
 Возвраты:
   - "returns accept [flags]": Принять возврат от клиента
-  - "returns list   [flags]": Получить список возвратов`,
+  - "returns list   [flags]": Получить список возвратов
+	
+Управление горутинами:
+	- "workers [flags]": Изменить количество горутин`,
+
+		SilenceUsage:  true,
+		SilenceErrors: true,
 	}
 
 	return cmd, nil
@@ -31,6 +37,8 @@ func (c *CLI) ordersCmd() (cmd *cobra.Command, err error) {
 
 Для большей информации вызовите команду:
   orders [command] --help`,
+		SilenceUsage:  true,
+		SilenceErrors: true,
 	}
 
 	return cmd, nil
@@ -44,6 +52,8 @@ func (c *CLI) returnsCmd() (cmd *cobra.Command, err error) {
 
 Для большей информации вызовите команду:
   returns [command] --help`,
+		SilenceUsage:  true,
+		SilenceErrors: true,
 	}
 
 	return cmd, nil

@@ -17,7 +17,7 @@ type CLISuite struct {
 	suite.Suite
 }
 
-// TestOrdersSuite запускает все cli unit-тесты
+// TestCLISuite запускает все cli unit-тесты
 func TestCLISuite(t *testing.T) {
 	suite.Run(t, new(CLISuite))
 }
@@ -201,7 +201,7 @@ func (s *CLISuite) TestWorkers_NoFlagArg() {
 
 // unknow command test
 
-func (s *CLISuite) TestWorkers_UknownCommand() {
+func (s *CLISuite) TestUknownCommand() {
 	s.T().Parallel()
 
 	args := []string{"lmao"}
