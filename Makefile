@@ -27,14 +27,14 @@ create-db-test:
 	docker-compose --env-file $(ENV_FILE) run --rm db_test sh -c 'psql -h db_test -U $(POSTGRES_USER) -c "CREATE DATABASE $(POSTGRES_DB)_test;"'
 
 # ЗАПУСК
-up:
-	docker-compose --env-file $(ENV_FILE) up -d
 up-app:
 	docker-compose --env-file $(ENV_FILE) up -d app
 up-db:
 	docker-compose --env-file $(ENV_FILE) up -d db
-up-test:
+up-app-test:
 	docker-compose --env-file $(ENV_FILE) up -d app_test
+up-db-test:
+	docker-compose --env-file $(ENV_FILE) up -d db_test
 
 # ОСТАНОВКА
 down:
@@ -43,8 +43,10 @@ down-app:
 	docker-compose --env-file $(ENV_FILE) down app
 down-db:
 	docker-compose --env-file $(ENV_FILE) down db
-down-test:
-	docker-compose --env-file $(ENV_FILE) down app_test db_test
+down-app-test:
+	docker-compose --env-file $(ENV_FILE) down app_test 
+down-db-test:
+	docker-compose --env-file $(ENV_FILE) down db_test
 
 # ПРОЦЕССЫ
 cli: # утилита
