@@ -14,6 +14,7 @@ import (
 	"github.com/joho/godotenv"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/cli"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/domain"
+	"gitlab.ozon.dev/yuweebix/homework-1/internal/kafka/pub"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/repository"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/threading"
 )
@@ -55,7 +56,14 @@ func main() {
 	defer r.Close()
 
 	d := domain.NewDomain(r, wp)
-	c, err := cli.NewCLI(d, logFileName)
+
+	brokers := []string{"broker:9092"}
+	p, err := pub.NewProducer(brokers)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	c, err := cli.NewCLI(d, p, logFileName)
 	if err != nil {
 		log.Fatalln(err)
 	}

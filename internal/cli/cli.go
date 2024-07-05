@@ -5,11 +5,16 @@ import (
 	"log"
 	"os"
 	"sync"
+	"time"
 
 	"github.com/spf13/cobra"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/cli/flags"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/models"
 	"gitlab.ozon.dev/yuweebix/homework-1/pkg/utils"
+)
+
+const (
+	topic = "cli"
 )
 
 // domain интерфейс необходимых CLI функций для реализации сервисом
@@ -28,22 +33,34 @@ type domain interface {
 	ChangeWorkersNumber(ctx context.Context, workersNum int) error // логика изменения количества рабочих горутин
 }
 
+type producer interface {
+	Send(topic string, message any) error
+}
+
+type message struct {
+	CreatedAt  time.Time `json:"created_at"`
+	MethodName string    `json:"method"`
+	RawRequest string    `json:"request"`
+}
+
 // CLI представляет слой командной строки приложения
 type CLI struct {
-	domain domain
-	logger *log.Logger
-	mu     *sync.Mutex
-	cmd    *cobra.Command
+	domain   domain
+	producer producer
+	logger   *log.Logger
+	mu       *sync.Mutex
+	cmd      *cobra.Command
 }
 
 // NewCLI конструктор с добавлением зависимостей
-func NewCLI(d domain, logFileName string) (c *CLI, err error) {
+func NewCLI(d domain, p producer, logFileName string) (c *CLI, err error) {
 	logger := createLogger(logFileName)
 
 	c = &CLI{
-		domain: d,
-		logger: logger,
-		mu:     &sync.Mutex{},
+		domain:   d,
+		producer: p,
+		logger:   logger,
+		mu:       &sync.Mutex{},
 	}
 
 	c.cmd, err = initRootCmd(c)

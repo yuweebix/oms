@@ -14,7 +14,7 @@ import (
 
 // orders функционал
 
-func (c *CLI) ordersAcceptCmdRunE(cmd *cobra.Command, _ []string) (err error) {
+func (c *CLI) ordersAcceptCmdRunE(cmd *cobra.Command, args []string) (err error) {
 	orderID, userID, expiry, cost, weight, packaging, err := c.getOrdersAcceptCmdFlagValues(cmd)
 	if err != nil {
 		return err
@@ -37,6 +37,12 @@ func (c *CLI) ordersAcceptCmdRunE(cmd *cobra.Command, _ []string) (err error) {
 	if err != nil {
 		return err
 	}
+
+	c.producer.Send(topic, message{
+		CreatedAt:  time.Now(),
+		MethodName: "accept order",
+		RawRequest: strings.Join(args, " "),
+	})
 
 	c.logger.Println("Заказ принят.")
 	return nil
