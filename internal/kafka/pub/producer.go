@@ -2,16 +2,17 @@ package pub
 
 import (
 	"encoding/json"
-	"fmt"
+	"sync"
 
 	"github.com/IBM/sarama"
 )
 
 type Producer struct {
 	async sarama.AsyncProducer
+	wg    sync.WaitGroup
 }
 
-func NewProducer(brokers []string) (*Producer, error) {
+func NewProducer(brokers []string) (p *Producer, err error) {
 	config := sarama.NewConfig()
 
 	config.Producer.RequiredAcks = sarama.WaitForAll
@@ -22,7 +23,22 @@ func NewProducer(brokers []string) (*Producer, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Producer{async: producer}, nil
+
+	p = &Producer{async: producer}
+
+	go func() {
+		for range p.async.Successes() {
+			p.wg.Done()
+		}
+	}()
+
+	go func() {
+		for err := range p.async.Errors() {
+			panic(err)
+		}
+	}()
+
+	return
 }
 
 func (p *Producer) Send(topic string, message any) error {
@@ -31,18 +47,15 @@ func (p *Producer) Send(topic string, message any) error {
 		return err
 	}
 
-	fmt.Println("HERE")
+	p.wg.Add(1)
 	p.async.Input() <- msg
 
 	return nil
 }
 
 func (p *Producer) Close() error {
-	err := p.async.Close()
-	if err != nil {
-		return err
-	}
-	return nil
+	p.wg.Wait()
+	return p.async.Close()
 }
 
 func buildMessage(topic string, message any) (*sarama.ProducerMessage, error) {

@@ -1,20 +1,26 @@
 package cli
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 	e "gitlab.ozon.dev/yuweebix/homework-1/internal/cli/errors"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/cli/flags"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/models"
 	"gitlab.ozon.dev/yuweebix/homework-1/pkg/utils"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
 // orders функционал
 
 func (c *CLI) ordersAcceptCmdRunE(cmd *cobra.Command, args []string) (err error) {
+	req := getRawRequest(cmd)
+
 	orderID, userID, expiry, cost, weight, packaging, err := c.getOrdersAcceptCmdFlagValues(cmd)
 	if err != nil {
 		return err
@@ -38,17 +44,23 @@ func (c *CLI) ordersAcceptCmdRunE(cmd *cobra.Command, args []string) (err error)
 		return err
 	}
 
-	c.producer.Send(topic, message{
-		CreatedAt:  time.Now(),
-		MethodName: "accept order",
-		RawRequest: strings.Join(args, " "),
-	})
-
 	c.logger.Println("Заказ принят.")
+
+	err = c.producer.Send(topic, message{
+		CreatedAt:  time.Now().UTC(),
+		MethodName: getMethodName(cmd),
+		RawRequest: req,
+	})
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
 func (c *CLI) ordersDeliverCmdRunE(cmd *cobra.Command, _ []string) (err error) {
+	req := getRawRequest(cmd)
+
 	orderIDs, err := c.getOrdersDeliverCmdFlagValues(cmd)
 	if err != nil {
 		return err
@@ -61,10 +73,22 @@ func (c *CLI) ordersDeliverCmdRunE(cmd *cobra.Command, _ []string) (err error) {
 	}
 
 	c.logger.Println("Заказы выданы.")
+
+	err = c.producer.Send(topic, message{
+		CreatedAt:  time.Now().UTC(),
+		MethodName: getMethodName(cmd),
+		RawRequest: req,
+	})
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
 func (c *CLI) ordersListCmdRunE(cmd *cobra.Command, _ []string) (err error) {
+	req := getRawRequest(cmd)
+
 	userID, limit, offset, isStored, err := c.getOrdersListCmdFlagValues(cmd)
 	if err != nil {
 		return err
@@ -79,10 +103,22 @@ func (c *CLI) ordersListCmdRunE(cmd *cobra.Command, _ []string) (err error) {
 	for _, v := range list {
 		c.logger.Printf("Заказ: %v. Получатель: %v. Хранится до %v. Статус: %v\n", v.ID, v.User.ID, v.Expiry, getStatusMessage(v))
 	}
+
+	err = c.producer.Send(topic, message{
+		CreatedAt:  time.Now().UTC(),
+		MethodName: getMethodName(cmd),
+		RawRequest: req,
+	})
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
 func (c *CLI) ordersReturnCmdRunE(cmd *cobra.Command, _ []string) (err error) {
+	req := getRawRequest(cmd)
+
 	orderID, err := c.getOrdersReturnCmdFlagValues(cmd)
 	if err != nil {
 		return err
@@ -98,12 +134,24 @@ func (c *CLI) ordersReturnCmdRunE(cmd *cobra.Command, _ []string) (err error) {
 	}
 
 	c.logger.Println("Заказ вернут курьеру.")
+
+	err = c.producer.Send(topic, message{
+		CreatedAt:  time.Now().UTC(),
+		MethodName: getMethodName(cmd),
+		RawRequest: req,
+	})
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
 // returns функционал
 
 func (c *CLI) returnsAcceptCmdRunE(cmd *cobra.Command, _ []string) (err error) {
+	req := getRawRequest(cmd)
+
 	orderID, userID, err := c.getReturnsAcceptCmdFlagValues(cmd)
 	if err != nil {
 		return err
@@ -119,10 +167,22 @@ func (c *CLI) returnsAcceptCmdRunE(cmd *cobra.Command, _ []string) (err error) {
 	}
 
 	c.logger.Println("Заказ возвращен.")
+
+	err = c.producer.Send(topic, message{
+		CreatedAt:  time.Now().UTC(),
+		MethodName: getMethodName(cmd),
+		RawRequest: req,
+	})
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
 func (c *CLI) returnsListCmdRunE(cmd *cobra.Command, _ []string) (err error) {
+	req := getRawRequest(cmd)
+
 	limit, offset, err := c.getReturnsListCmdFlagValues(cmd)
 	if err != nil {
 		return err
@@ -137,12 +197,24 @@ func (c *CLI) returnsListCmdRunE(cmd *cobra.Command, _ []string) (err error) {
 	for _, v := range list {
 		c.logger.Printf("Возврат: %v. Получатель: %v.\n", v.ID, v.User.ID)
 	}
+
+	err = c.producer.Send(topic, message{
+		CreatedAt:  time.Now().UTC(),
+		MethodName: getMethodName(cmd),
+		RawRequest: req,
+	})
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
 // worker функционал
 
 func (c *CLI) workersCmdRunE(cmd *cobra.Command, _ []string) (err error) {
+	req := getRawRequest(cmd)
+
 	num, err := c.getWorkersCmdFlagValues(cmd)
 	if err != nil {
 		return err
@@ -155,6 +227,16 @@ func (c *CLI) workersCmdRunE(cmd *cobra.Command, _ []string) (err error) {
 	}
 
 	c.logger.Println("Количество рабочих горутин было изменено.")
+
+	err = c.producer.Send(topic, message{
+		CreatedAt:  time.Now().UTC(),
+		MethodName: getMethodName(cmd),
+		RawRequest: req,
+	})
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -322,4 +404,27 @@ func (c *CLI) getWorkersCmdFlagValues(cmd *cobra.Command) (num int, err error) {
 	}
 
 	return
+}
+
+func getRawRequest(cmd *cobra.Command) string {
+	var rawRequest strings.Builder
+	rawRequest.WriteString(cmd.CommandPath())
+
+	cmd.Flags().VisitAll(func(flag *pflag.Flag) {
+		if flag.Changed {
+			rawRequest.WriteString(fmt.Sprintf(" --%s %s", flag.Name, flag.Value))
+		}
+	})
+
+	return rawRequest.String()
+}
+
+func getMethodName(cmd *cobra.Command) string {
+	commandPath := cmd.CommandPath()
+	components := strings.Split(commandPath, " ")
+	titleCaser := cases.Title(language.Und)
+	for i := range components {
+		components[i] = titleCaser.String(components[i])
+	}
+	return strings.Join(components, "")
 }

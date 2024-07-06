@@ -57,11 +57,12 @@ func main() {
 
 	d := domain.NewDomain(r, wp)
 
-	brokers := []string{"broker:9092"}
+	brokers := []string{"broker:19092"}
 	p, err := pub.NewProducer(brokers)
 	if err != nil {
 		log.Fatalln(err)
 	}
+	defer p.Close()
 
 	c, err := cli.NewCLI(d, p, logFileName)
 	if err != nil {
