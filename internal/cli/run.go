@@ -19,15 +19,25 @@ import (
 // orders функционал
 
 func (c *CLI) ordersAcceptCmdRunE(cmd *cobra.Command, args []string) (err error) {
-	req := getRawRequest(cmd)
+	msg := message{
+		CreatedAt:  time.Now().UTC(),
+		MethodName: getMethodName(cmd),
+		RawRequest: getRawRequest(cmd),
+	}
 
 	orderID, userID, expiry, cost, weight, packaging, err := c.getOrdersAcceptCmdFlagValues(cmd)
 	if err != nil {
+		if err := c.producer.Send(topic, messageWithError{msg, err.Error()}); err != nil {
+			return err
+		}
 		return err
 	}
 
 	flagExpiryDate, err := time.Parse(time.DateOnly, expiry)
 	if err != nil {
+		if err := c.producer.Send(topic, messageWithError{msg, e.ErrDateFormatInvalid.Error()}); err != nil {
+			return err
+		}
 		return e.ErrDateFormatInvalid
 	}
 
@@ -41,16 +51,15 @@ func (c *CLI) ordersAcceptCmdRunE(cmd *cobra.Command, args []string) (err error)
 		Packaging: models.PackagingType(packaging),
 	})
 	if err != nil {
+		if err := c.producer.Send(topic, messageWithError{msg, err.Error()}); err != nil {
+			return err
+		}
 		return err
 	}
 
 	c.logger.Println("Заказ принят.")
 
-	err = c.producer.Send(topic, message{
-		CreatedAt:  time.Now().UTC(),
-		MethodName: getMethodName(cmd),
-		RawRequest: req,
-	})
+	err = c.producer.Send(topic, msg)
 	if err != nil {
 		return err
 	}
@@ -59,26 +68,32 @@ func (c *CLI) ordersAcceptCmdRunE(cmd *cobra.Command, args []string) (err error)
 }
 
 func (c *CLI) ordersDeliverCmdRunE(cmd *cobra.Command, _ []string) (err error) {
-	req := getRawRequest(cmd)
+	msg := message{
+		CreatedAt:  time.Now().UTC(),
+		MethodName: getMethodName(cmd),
+		RawRequest: getRawRequest(cmd),
+	}
 
 	orderIDs, err := c.getOrdersDeliverCmdFlagValues(cmd)
 	if err != nil {
+		if err := c.producer.Send(topic, messageWithError{msg, err.Error()}); err != nil {
+			return err
+		}
 		return err
 	}
 
 	ctx := cmd.Context()
 	err = c.domain.DeliverOrders(ctx, orderIDs)
 	if err != nil {
+		if err := c.producer.Send(topic, messageWithError{msg, err.Error()}); err != nil {
+			return err
+		}
 		return err
 	}
 
 	c.logger.Println("Заказы выданы.")
 
-	err = c.producer.Send(topic, message{
-		CreatedAt:  time.Now().UTC(),
-		MethodName: getMethodName(cmd),
-		RawRequest: req,
-	})
+	err = c.producer.Send(topic, msg)
 	if err != nil {
 		return err
 	}
@@ -87,16 +102,26 @@ func (c *CLI) ordersDeliverCmdRunE(cmd *cobra.Command, _ []string) (err error) {
 }
 
 func (c *CLI) ordersListCmdRunE(cmd *cobra.Command, _ []string) (err error) {
-	req := getRawRequest(cmd)
+	msg := message{
+		CreatedAt:  time.Now().UTC(),
+		MethodName: getMethodName(cmd),
+		RawRequest: getRawRequest(cmd),
+	}
 
 	userID, limit, offset, isStored, err := c.getOrdersListCmdFlagValues(cmd)
 	if err != nil {
+		if err := c.producer.Send(topic, messageWithError{msg, err.Error()}); err != nil {
+			return err
+		}
 		return err
 	}
 
 	ctx := cmd.Context()
 	list, err := c.domain.ListOrders(ctx, userID, limit, offset, isStored)
 	if err != nil {
+		if err := c.producer.Send(topic, messageWithError{msg, err.Error()}); err != nil {
+			return err
+		}
 		return err
 	}
 
@@ -104,11 +129,7 @@ func (c *CLI) ordersListCmdRunE(cmd *cobra.Command, _ []string) (err error) {
 		c.logger.Printf("Заказ: %v. Получатель: %v. Хранится до %v. Статус: %v\n", v.ID, v.User.ID, v.Expiry, getStatusMessage(v))
 	}
 
-	err = c.producer.Send(topic, message{
-		CreatedAt:  time.Now().UTC(),
-		MethodName: getMethodName(cmd),
-		RawRequest: req,
-	})
+	err = c.producer.Send(topic, msg)
 	if err != nil {
 		return err
 	}
@@ -117,10 +138,17 @@ func (c *CLI) ordersListCmdRunE(cmd *cobra.Command, _ []string) (err error) {
 }
 
 func (c *CLI) ordersReturnCmdRunE(cmd *cobra.Command, _ []string) (err error) {
-	req := getRawRequest(cmd)
+	msg := message{
+		CreatedAt:  time.Now().UTC(),
+		MethodName: getMethodName(cmd),
+		RawRequest: getRawRequest(cmd),
+	}
 
 	orderID, err := c.getOrdersReturnCmdFlagValues(cmd)
 	if err != nil {
+		if err := c.producer.Send(topic, messageWithError{msg, err.Error()}); err != nil {
+			return err
+		}
 		return err
 	}
 
@@ -130,16 +158,15 @@ func (c *CLI) ordersReturnCmdRunE(cmd *cobra.Command, _ []string) (err error) {
 	})
 
 	if err != nil {
+		if err := c.producer.Send(topic, messageWithError{msg, err.Error()}); err != nil {
+			return err
+		}
 		return err
 	}
 
 	c.logger.Println("Заказ вернут курьеру.")
 
-	err = c.producer.Send(topic, message{
-		CreatedAt:  time.Now().UTC(),
-		MethodName: getMethodName(cmd),
-		RawRequest: req,
-	})
+	err = c.producer.Send(topic, msg)
 	if err != nil {
 		return err
 	}
@@ -150,10 +177,17 @@ func (c *CLI) ordersReturnCmdRunE(cmd *cobra.Command, _ []string) (err error) {
 // returns функционал
 
 func (c *CLI) returnsAcceptCmdRunE(cmd *cobra.Command, _ []string) (err error) {
-	req := getRawRequest(cmd)
+	msg := message{
+		CreatedAt:  time.Now().UTC(),
+		MethodName: getMethodName(cmd),
+		RawRequest: getRawRequest(cmd),
+	}
 
 	orderID, userID, err := c.getReturnsAcceptCmdFlagValues(cmd)
 	if err != nil {
+		if err := c.producer.Send(topic, messageWithError{msg, err.Error()}); err != nil {
+			return err
+		}
 		return err
 	}
 
@@ -163,16 +197,15 @@ func (c *CLI) returnsAcceptCmdRunE(cmd *cobra.Command, _ []string) (err error) {
 		User: &models.User{ID: userID},
 	})
 	if err != nil {
+		if err := c.producer.Send(topic, messageWithError{msg, err.Error()}); err != nil {
+			return err
+		}
 		return err
 	}
 
 	c.logger.Println("Заказ возвращен.")
 
-	err = c.producer.Send(topic, message{
-		CreatedAt:  time.Now().UTC(),
-		MethodName: getMethodName(cmd),
-		RawRequest: req,
-	})
+	err = c.producer.Send(topic, msg)
 	if err != nil {
 		return err
 	}
@@ -181,16 +214,26 @@ func (c *CLI) returnsAcceptCmdRunE(cmd *cobra.Command, _ []string) (err error) {
 }
 
 func (c *CLI) returnsListCmdRunE(cmd *cobra.Command, _ []string) (err error) {
-	req := getRawRequest(cmd)
+	msg := message{
+		CreatedAt:  time.Now().UTC(),
+		MethodName: getMethodName(cmd),
+		RawRequest: getRawRequest(cmd),
+	}
 
 	limit, offset, err := c.getReturnsListCmdFlagValues(cmd)
 	if err != nil {
+		if err := c.producer.Send(topic, messageWithError{msg, err.Error()}); err != nil {
+			return err
+		}
 		return err
 	}
 
 	ctx := cmd.Context()
 	list, err := c.domain.ListReturns(ctx, limit, offset)
 	if err != nil {
+		if err := c.producer.Send(topic, messageWithError{msg, err.Error()}); err != nil {
+			return err
+		}
 		return err
 	}
 
@@ -198,11 +241,7 @@ func (c *CLI) returnsListCmdRunE(cmd *cobra.Command, _ []string) (err error) {
 		c.logger.Printf("Возврат: %v. Получатель: %v.\n", v.ID, v.User.ID)
 	}
 
-	err = c.producer.Send(topic, message{
-		CreatedAt:  time.Now().UTC(),
-		MethodName: getMethodName(cmd),
-		RawRequest: req,
-	})
+	err = c.producer.Send(topic, msg)
 	if err != nil {
 		return err
 	}
@@ -213,26 +252,32 @@ func (c *CLI) returnsListCmdRunE(cmd *cobra.Command, _ []string) (err error) {
 // worker функционал
 
 func (c *CLI) workersCmdRunE(cmd *cobra.Command, _ []string) (err error) {
-	req := getRawRequest(cmd)
+	msg := message{
+		CreatedAt:  time.Now().UTC(),
+		MethodName: getMethodName(cmd),
+		RawRequest: getRawRequest(cmd),
+	}
 
 	num, err := c.getWorkersCmdFlagValues(cmd)
 	if err != nil {
+		if err := c.producer.Send(topic, messageWithError{msg, err.Error()}); err != nil {
+			return err
+		}
 		return err
 	}
 
 	ctx := cmd.Context()
 	err = c.domain.ChangeWorkersNumber(ctx, num)
 	if err != nil {
+		if err := c.producer.Send(topic, messageWithError{msg, err.Error()}); err != nil {
+			return err
+		}
 		return err
 	}
 
 	c.logger.Println("Количество рабочих горутин было изменено.")
 
-	err = c.producer.Send(topic, message{
-		CreatedAt:  time.Now().UTC(),
-		MethodName: getMethodName(cmd),
-		RawRequest: req,
-	})
+	err = c.producer.Send(topic, msg)
 	if err != nil {
 		return err
 	}

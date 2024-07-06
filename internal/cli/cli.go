@@ -43,6 +43,11 @@ type message struct {
 	RawRequest string    `json:"request"`
 }
 
+type messageWithError struct {
+	message
+	Error string `json:"error"`
+}
+
 // CLI представляет слой командной строки приложения
 type CLI struct {
 	domain   domain
