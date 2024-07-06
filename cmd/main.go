@@ -40,6 +40,11 @@ func main() {
 		log.Fatalf("Error reading DATABASE_URL from .env file: %v", err)
 	}
 
+	outputMode := os.Getenv("OUTPUT_MODE")
+	if outputMode == "" {
+		log.Fatalf("Error reading OUTPUT_MODE from .env file: %v", err)
+	}
+
 	wg := sync.WaitGroup{}
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -48,11 +53,17 @@ func main() {
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGTERM, syscall.SIGINT)
 
-	// инициализируем пул рабочих
+	// может быть либо использован воркер пулом, либо будет принимать от консьюмера
 	notificationChan := make(chan string, 100)
-	wp, err := threading.NewWorkerPool(ctx, numWorkers, notificationChan)
+
+	// инициализируем пул рабочих
+	wp, err := threading.NewWorkerPool(ctx, numWorkers)
 	if err != nil {
 		log.Fatalln(err)
+	}
+
+	if outputMode == "worker_pool" {
+		wp.Notify(notificationChan)
 	}
 
 	r, err := repository.NewRepository(ctx, connString)
@@ -63,19 +74,23 @@ func main() {
 
 	d := domain.NewDomain(r, wp)
 
-	pub, err := pub.NewProducer(brokers)
+	producer, err := pub.NewProducer(brokers)
 	if err != nil {
 		log.Fatalln(err)
 	}
-	defer pub.Close()
+	defer producer.Close()
 
-	sub, err := sub.NewConsumer(brokers, topic, notificationChan)
-	if err != nil {
-		log.Fatalln(err)
+	// если не настроено на кафку, то не создаём консьюмера
+	consumer := &sub.Consumer{}
+	if outputMode == "kafka" {
+		consumer, err = sub.NewConsumer(brokers, topic, notificationChan)
+		if err != nil {
+			log.Fatalln(err)
+		}
+		defer consumer.Close()
 	}
-	defer sub.Close()
 
-	c, err := cli.NewCLI(d, pub, logFileName)
+	c, err := cli.NewCLI(d, producer, logFileName)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -152,6 +167,13 @@ func main() {
 		select {
 		case <-ctx.Done():
 			wp.Stop()
+			if err := producer.Close(); err != nil {
+				log.Println(err)
+			}
+			if err := consumer.Close(); err != nil {
+				log.Println(err)
+			}
+			close(notificationChan)
 			wg.Wait()
 			return
 		case <-sigs:

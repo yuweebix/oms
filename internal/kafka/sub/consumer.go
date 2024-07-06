@@ -7,7 +7,6 @@ import (
 type Consumer struct {
 	consumer    sarama.Consumer
 	messageChan chan<- string
-	partitions  []sarama.PartitionConsumer
 }
 
 // NewConsumer инициализирует нового Consumer и начинает потребление сообщений из заданного топика
@@ -46,11 +45,12 @@ func (c *Consumer) begin(topic string) error {
 			return err
 		}
 
-		c.partitions = append(c.partitions, pc) // будут нужны для закрытия
-
 		go func(pc sarama.PartitionConsumer) {
+			defer pc.Close()
 			for message := range pc.Messages() {
-				c.messageChan <- string(message.Value)
+				if c.messageChan != nil {
+					c.messageChan <- string(message.Value)
+				}
 			}
 		}(pc)
 	}
@@ -60,10 +60,5 @@ func (c *Consumer) begin(topic string) error {
 
 // Close закрывает консьюмера и его партиции
 func (c *Consumer) Close() error {
-	for _, pc := range c.partitions {
-		if err := pc.Close(); err != nil {
-			return err
-		}
-	}
 	return c.consumer.Close()
 }
