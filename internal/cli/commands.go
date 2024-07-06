@@ -62,12 +62,9 @@ func (c *CLI) returnsCmd() (cmd *cobra.Command, err error) {
 // workersCmd команда операций с рабочими
 func (c *CLI) workersCmd() (cmd *cobra.Command, err error) {
 	cmd = &cobra.Command{Use: "workers",
-		Short: "Изменить количество выполняющих команды рабочих горутин",
-		Long: `Команда "workers" изменяет количество рабочих [горутин].
-
-Пример использования:
-  workers --number 5
-	workers --number -5`,
+		Short:         "Изменить количество выполняющих команды рабочих горутин",
+		Long:          `Команда "workers" изменяет количество рабочих [горутин].`,
+		Example:       "workers --number 5",
 		RunE:          c.workersCmdRunE,
 		SilenceUsage:  true,
 		SilenceErrors: true,
@@ -89,12 +86,10 @@ func (c *CLI) ordersAcceptCmd() (cmd *cobra.Command, err error) {
 		Short: "Принять заказ от курьера",
 		Long: `Команда "accept" используется для принятия заказа от курьера. 
 
-Пример использования:
-  orders accept --order_id=420 --user_id=69 --expiry=2025-05-05 --cost=1337.69 --weight=0.69 --packaging=bag
-
 Условия:
   - Заказ не может быть принят дважды.
   - Срок хранения не может быть в прошлом.`,
+		Example:       "orders accept --cost 100 --expiry 2024-12-12 --order_id 1 --packaging bag --user_id 1 --weight 1",
 		RunE:          c.ordersAcceptCmdRunE,
 		SilenceUsage:  true,
 		SilenceErrors: true,
@@ -114,12 +109,10 @@ func (c *CLI) ordersDeliverCmd() (cmd *cobra.Command, err error) {
 		Short: "Выдать заказы клиенту",
 		Long: `Команда "deliver" используется для выдачи заказов клиенту.
 
-Пример использования:
-  orders deliver --order_ids=228,322,420
-
 Условия:
   - Все заказы должны принадлежать одному клиенту и быть приняты от курьера.
   - Срок хранения заказов должен быть больше текущей даты.`,
+		Example:       "orders deliver --order_ids 1,2",
 		RunE:          c.ordersDeliverCmdRunE,
 		SilenceUsage:  true,
 		SilenceErrors: true,
@@ -139,10 +132,8 @@ func (c *CLI) ordersListCmd() (cmd *cobra.Command, err error) {
 		Short: "Получить список заказов",
 		Long: `Команда "list" используется для получения списка заказов.
 
-Пример использования:
-  orders list --user_id=123 --limit=10 --offset=0 --is_stored=true
-
 Команда возвращает заказы клиента, которые находятся в ПВЗ, с возможностью ограничить количество возвращаемых заказов и задать смещение.`,
+		Example:       "orders list --limit 2 --user_id 1",
 		RunE:          c.ordersListCmdRunE,
 		SilenceUsage:  true,
 		SilenceErrors: true,
@@ -161,12 +152,10 @@ func (c *CLI) ordersReturnCmd() (cmd *cobra.Command, err error) {
 	cmd = &cobra.Command{Use: "return",
 		Short: "Вернуть заказ курьеру",
 		Long: `Команда "return" используется для возврата заказа курьеру.
-
-	Пример использования:
-  orders return --order_id=1337
-
+		
 Условия:
   - Заказ может быть возвращен только если истек срок хранения и он не был выдан клиенту.`,
+		Example:       "orders return --order_id 1",
 		RunE:          c.ordersReturnCmdRunE,
 		SilenceUsage:  true,
 		SilenceErrors: true,
@@ -188,12 +177,10 @@ func (c *CLI) returnsAcceptCmd() (cmd *cobra.Command, err error) {
 		Short: "Принять возврат от клиента",
 		Long: `Команда "accept" используется для принятия возврата заказа от клиента.
 
-Пример использования:
-  returns accept --order_id=420 --user_id=69
-
 Условия:
   - Возврат может быть принят в течение двух дней с момента выдачи заказа.
   - Заказ должен быть выдан из этого ПВЗ.`,
+		Example:       "returns accept --order_id 1 --user_id 1",
 		RunE:          c.returnsAcceptCmdRunE,
 		SilenceUsage:  true,
 		SilenceErrors: true,
@@ -213,10 +200,8 @@ func (c *CLI) returnsListCmd() (cmd *cobra.Command, err error) {
 		Short: "Получить список возвратов",
 		Long: `Команда "list" используется для получения списка возвратов.
 
-Пример использования:
-  returns list --limit=10 --offset=0
-
 Команда возвращает список возвратов с возможностью пагинации.`,
+		Example:       "returns list --limit 2",
 		RunE:          c.returnsListCmdRunE,
 		SilenceUsage:  true,
 		SilenceErrors: true,
