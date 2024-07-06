@@ -15,6 +15,7 @@ import (
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/cli"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/domain"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/kafka/pub"
+	"gitlab.ozon.dev/yuweebix/homework-1/internal/kafka/sub"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/repository"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/threading"
 )
@@ -22,6 +23,11 @@ import (
 const (
 	logFileName = "log.txt"
 	numWorkers  = 5 // начальное количество рабочих в пуле
+)
+
+var (
+	brokers = []string{"broker:19092"}
+	topic   = "cli"
 )
 
 func main() {
@@ -57,14 +63,19 @@ func main() {
 
 	d := domain.NewDomain(r, wp)
 
-	brokers := []string{"broker:19092"}
-	p, err := pub.NewProducer(brokers)
+	pub, err := pub.NewProducer(brokers)
 	if err != nil {
 		log.Fatalln(err)
 	}
-	defer p.Close()
+	defer pub.Close()
 
-	c, err := cli.NewCLI(d, p, logFileName)
+	sub, err := sub.NewConsumer(brokers, topic, notificationChan)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	defer sub.Close()
+
+	c, err := cli.NewCLI(d, pub, logFileName)
 	if err != nil {
 		log.Fatalln(err)
 	}

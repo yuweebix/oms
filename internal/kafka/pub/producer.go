@@ -12,11 +12,12 @@ type Producer struct {
 	wg    sync.WaitGroup
 }
 
+// NewProducer создает нового асинхронного продьюсера Kafka
 func NewProducer(brokers []string) (p *Producer, err error) {
 	config := sarama.NewConfig()
 
 	config.Producer.RequiredAcks = sarama.WaitForAll
-	config.Producer.Return.Successes = true
+	config.Producer.Return.Successes = true // без вызова Successes будет deadlock
 	config.Producer.Partitioner = sarama.NewRandomPartitioner
 
 	producer, err := sarama.NewAsyncProducer(brokers, config)
@@ -26,6 +27,7 @@ func NewProducer(brokers []string) (p *Producer, err error) {
 
 	p = &Producer{async: producer}
 
+	// проверяем на правильную работу
 	go func() {
 		for range p.async.Successes() {
 			p.wg.Done()
@@ -41,6 +43,7 @@ func NewProducer(brokers []string) (p *Producer, err error) {
 	return
 }
 
+// Send отправляет сообщение в заданный топик Kafka.
 func (p *Producer) Send(topic string, message any) error {
 	msg, err := buildMessage(topic, message)
 	if err != nil {
@@ -53,11 +56,13 @@ func (p *Producer) Send(topic string, message any) error {
 	return nil
 }
 
+// Close завершает работу продьюсера
 func (p *Producer) Close() error {
 	p.wg.Wait()
 	return p.async.Close()
 }
 
+// buildMessage переводит message в ProducerMessage
 func buildMessage(topic string, message any) (*sarama.ProducerMessage, error) {
 	jsonMessage, err := json.Marshal(message)
 	if err != nil {
