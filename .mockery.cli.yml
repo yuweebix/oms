@@ -9,3 +9,8 @@ packages:
           outpkg: mocks
           filename: domain_mock.go
           mockname: MockDomain
+      producer:
+        config:
+          outpkg: mocks
+          filename: producer_mock.go
+          mockname: MockProducer

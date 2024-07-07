@@ -1,344 +1,352 @@
 package cli_test
 
-// import (
-// 	"context"
-// 	"strings"
-// 	"testing"
+import (
+	"context"
+	"strings"
+	"testing"
 
-// 	"github.com/stretchr/testify/mock"
-// 	"github.com/stretchr/testify/suite"
-// 	"gitlab.ozon.dev/yuweebix/homework-1/internal/cli"
-// 	e "gitlab.ozon.dev/yuweebix/homework-1/internal/cli/errors"
-// 	"gitlab.ozon.dev/yuweebix/homework-1/internal/cli/mocks"
-// 	"gitlab.ozon.dev/yuweebix/homework-1/internal/models"
-// )
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/suite"
+	"gitlab.ozon.dev/yuweebix/homework-1/internal/cli"
+	e "gitlab.ozon.dev/yuweebix/homework-1/internal/cli/errors"
+	"gitlab.ozon.dev/yuweebix/homework-1/internal/cli/mocks"
+	"gitlab.ozon.dev/yuweebix/homework-1/internal/models"
+)
 
-// type CLISuite struct {
-// 	suite.Suite
-// }
+const (
+	topic = "cli"
+)
 
-// // TestCLISuite запускает все cli unit-тесты
-// func TestCLISuite(t *testing.T) {
-// 	suite.Run(t, new(CLISuite))
-// }
+type CLISuite struct {
+	suite.Suite
+}
 
-// func (s *CLISuite) SetUpTest() (_cli *cli.CLI, _domain *mocks.MockDomain) {
-// 	_domain = mocks.NewMockDomain(s.T())
-// 	_cli, err := cli.NewCLI(_domain, "log_text.txt")
-// 	if err != nil {
-// 		s.FailNowf("could not create cli", err.Error())
-// 	}
-// 	return
-// }
+// TestCLISuite запускает все cli unit-тесты
+func TestCLISuite(t *testing.T) {
+	suite.Run(t, new(CLISuite))
+}
 
-// // no args tests
+func (s *CLISuite) SetUpTest() (_cli *cli.CLI, _domain *mocks.MockDomain) {
+	_domain = mocks.NewMockDomain(s.T())
+	_producer := mocks.NewMockProducer(s.T())
 
-// func (s *CLISuite) TestOrdersAccept_NoArgs() {
-// 	s.T().Parallel()
+	_producer.EXPECT().Send(topic, mock.Anything).Return(nil).Maybe()
 
-// 	args := []string{"orders", "accept"}
+	_cli, err := cli.NewCLI(_domain, _producer, "log_text.txt")
+	if err != nil {
+		s.FailNowf("could not create cli", err.Error())
+	}
+	return
+}
 
-// 	cli, _ := s.SetUpTest()
+// no args tests
 
-// 	err := cli.Execute(context.Background(), args)
+func (s *CLISuite) TestOrdersAccept_NoArgs() {
+	s.T().Parallel()
 
-// 	s.ErrorContains(err, "required flag(s)")
-// 	s.ErrorContains(err, "not set")
-// }
+	args := []string{"orders", "accept"}
 
-// func (s *CLISuite) TestOrdersDeliver_NoArgs() {
-// 	s.T().Parallel()
+	cli, _ := s.SetUpTest()
 
-// 	args := []string{"orders", "deliver"}
+	err := cli.Execute(context.Background(), args)
 
-// 	cli, _ := s.SetUpTest()
+	s.ErrorContains(err, "required flag(s)")
+	s.ErrorContains(err, "not set")
+}
 
-// 	err := cli.Execute(context.Background(), args)
+func (s *CLISuite) TestOrdersDeliver_NoArgs() {
+	s.T().Parallel()
 
-// 	s.ErrorContains(err, "required flag(s)")
-// 	s.ErrorContains(err, "not set")
-// }
+	args := []string{"orders", "deliver"}
 
-// func (s *CLISuite) TestOrdersList_NoArgs() {
-// 	s.T().Parallel()
+	cli, _ := s.SetUpTest()
 
-// 	args := []string{"orders", "list"}
+	err := cli.Execute(context.Background(), args)
 
-// 	cli, _ := s.SetUpTest()
+	s.ErrorContains(err, "required flag(s)")
+	s.ErrorContains(err, "not set")
+}
 
-// 	err := cli.Execute(context.Background(), args)
+func (s *CLISuite) TestOrdersList_NoArgs() {
+	s.T().Parallel()
 
-// 	s.ErrorContains(err, "required flag(s)")
-// 	s.ErrorContains(err, "not set")
-// }
+	args := []string{"orders", "list"}
 
-// func (s *CLISuite) TestOrdersReturn_NoArgs() {
-// 	s.T().Parallel()
+	cli, _ := s.SetUpTest()
 
-// 	args := []string{"orders", "return"}
+	err := cli.Execute(context.Background(), args)
 
-// 	cli, _ := s.SetUpTest()
+	s.ErrorContains(err, "required flag(s)")
+	s.ErrorContains(err, "not set")
+}
 
-// 	err := cli.Execute(context.Background(), args)
+func (s *CLISuite) TestOrdersReturn_NoArgs() {
+	s.T().Parallel()
 
-// 	s.ErrorContains(err, "required flag(s)")
-// 	s.ErrorContains(err, "not set")
-// }
+	args := []string{"orders", "return"}
 
-// func (s *CLISuite) TestReturnsAccept_NoArgs() {
-// 	s.T().Parallel()
+	cli, _ := s.SetUpTest()
 
-// 	args := []string{"returns", "accept"}
+	err := cli.Execute(context.Background(), args)
 
-// 	cli, _ := s.SetUpTest()
+	s.ErrorContains(err, "required flag(s)")
+	s.ErrorContains(err, "not set")
+}
 
-// 	err := cli.Execute(context.Background(), args)
+func (s *CLISuite) TestReturnsAccept_NoArgs() {
+	s.T().Parallel()
 
-// 	s.ErrorContains(err, "required flag(s)")
-// 	s.ErrorContains(err, "not set")
-// }
+	args := []string{"returns", "accept"}
 
-// // returns list -  особый случай, когда нету обязательных флагов
+	cli, _ := s.SetUpTest()
 
-// func (s *CLISuite) TestWorkers_NoArgs() {
-// 	s.T().Parallel()
+	err := cli.Execute(context.Background(), args)
 
-// 	args := []string{"workers"}
+	s.ErrorContains(err, "required flag(s)")
+	s.ErrorContains(err, "not set")
+}
 
-// 	cli, _ := s.SetUpTest()
+// returns list -  особый случай, когда нету обязательных флагов
 
-// 	err := cli.Execute(context.Background(), args)
+func (s *CLISuite) TestWorkers_NoArgs() {
+	s.T().Parallel()
 
-// 	s.ErrorContains(err, "required flag(s)")
-// 	s.ErrorContains(err, "not set")
-// }
+	args := []string{"workers"}
 
-// // no flag arg tests
+	cli, _ := s.SetUpTest()
 
-// func (s *CLISuite) TestOrdersAccept_NoFlagArg() {
-// 	s.T().Parallel()
+	err := cli.Execute(context.Background(), args)
 
-// 	args := []string{"orders", "accept", "-o"}
+	s.ErrorContains(err, "required flag(s)")
+	s.ErrorContains(err, "not set")
+}
 
-// 	cli, _ := s.SetUpTest()
+// no flag arg tests
 
-// 	err := cli.Execute(context.Background(), args)
+func (s *CLISuite) TestOrdersAccept_NoFlagArg() {
+	s.T().Parallel()
 
-// 	s.ErrorContains(err, "flag needs an argument")
-// }
+	args := []string{"orders", "accept", "-o"}
 
-// func (s *CLISuite) TestOrdersDeliver_NoFlagArg() {
-// 	s.T().Parallel()
+	cli, _ := s.SetUpTest()
 
-// 	args := []string{"orders", "deliver", "-o"}
+	err := cli.Execute(context.Background(), args)
 
-// 	cli, _ := s.SetUpTest()
+	s.ErrorContains(err, "flag needs an argument")
+}
 
-// 	err := cli.Execute(context.Background(), args)
+func (s *CLISuite) TestOrdersDeliver_NoFlagArg() {
+	s.T().Parallel()
 
-// 	s.ErrorContains(err, "flag needs an argument")
-// }
+	args := []string{"orders", "deliver", "-o"}
 
-// func (s *CLISuite) TestOrdersList_NoFlagArg() {
-// 	s.T().Parallel()
+	cli, _ := s.SetUpTest()
 
-// 	args := []string{"orders", "list", "-u"}
+	err := cli.Execute(context.Background(), args)
 
-// 	cli, _ := s.SetUpTest()
+	s.ErrorContains(err, "flag needs an argument")
+}
 
-// 	err := cli.Execute(context.Background(), args)
+func (s *CLISuite) TestOrdersList_NoFlagArg() {
+	s.T().Parallel()
 
-// 	s.ErrorContains(err, "flag needs an argument")
-// }
+	args := []string{"orders", "list", "-u"}
 
-// func (s *CLISuite) TestOrdersReturn_NoFlagArg() {
-// 	s.T().Parallel()
+	cli, _ := s.SetUpTest()
 
-// 	args := []string{"orders", "return", "-o"}
+	err := cli.Execute(context.Background(), args)
 
-// 	cli, _ := s.SetUpTest()
+	s.ErrorContains(err, "flag needs an argument")
+}
 
-// 	err := cli.Execute(context.Background(), args)
+func (s *CLISuite) TestOrdersReturn_NoFlagArg() {
+	s.T().Parallel()
 
-// 	s.ErrorContains(err, "flag needs an argument")
-// }
+	args := []string{"orders", "return", "-o"}
 
-// func (s *CLISuite) TestReturnsAccept_NoFlagArg() {
-// 	s.T().Parallel()
+	cli, _ := s.SetUpTest()
 
-// 	args := []string{"returns", "accept", "-o"}
+	err := cli.Execute(context.Background(), args)
 
-// 	cli, _ := s.SetUpTest()
+	s.ErrorContains(err, "flag needs an argument")
+}
 
-// 	err := cli.Execute(context.Background(), args)
+func (s *CLISuite) TestReturnsAccept_NoFlagArg() {
+	s.T().Parallel()
 
-// 	s.ErrorContains(err, "flag needs an argument")
-// }
+	args := []string{"returns", "accept", "-o"}
 
-// func (s *CLISuite) TestReturnsList_NoFlagArg() {
-// 	s.T().Parallel()
+	cli, _ := s.SetUpTest()
 
-// 	args := []string{"returns", "list", "-l"}
+	err := cli.Execute(context.Background(), args)
 
-// 	cli, _ := s.SetUpTest()
+	s.ErrorContains(err, "flag needs an argument")
+}
 
-// 	err := cli.Execute(context.Background(), args)
+func (s *CLISuite) TestReturnsList_NoFlagArg() {
+	s.T().Parallel()
 
-// 	s.ErrorContains(err, "flag needs an argument")
-// }
+	args := []string{"returns", "list", "-l"}
 
-// func (s *CLISuite) TestWorkers_NoFlagArg() {
-// 	s.T().Parallel()
+	cli, _ := s.SetUpTest()
 
-// 	args := []string{"workers", "-n"}
+	err := cli.Execute(context.Background(), args)
 
-// 	cli, _ := s.SetUpTest()
+	s.ErrorContains(err, "flag needs an argument")
+}
 
-// 	err := cli.Execute(context.Background(), args)
+func (s *CLISuite) TestWorkers_NoFlagArg() {
+	s.T().Parallel()
 
-// 	s.ErrorContains(err, "flag needs an argument")
-// }
+	args := []string{"workers", "-n"}
 
-// // unknow command test
+	cli, _ := s.SetUpTest()
 
-// func (s *CLISuite) TestUknownCommand() {
-// 	s.T().Parallel()
+	err := cli.Execute(context.Background(), args)
 
-// 	args := []string{"lmao"}
+	s.ErrorContains(err, "flag needs an argument")
+}
 
-// 	cli, _ := s.SetUpTest()
+// unknow command test
 
-// 	err := cli.Execute(context.Background(), args)
+func (s *CLISuite) TestUknownCommand() {
+	s.T().Parallel()
 
-// 	s.ErrorContains(err, "unknown command")
-// }
+	args := []string{"lmao"}
 
-// // orders accept invalid date format test
+	cli, _ := s.SetUpTest()
 
-// func (s *CLISuite) TestOrdersAccept_InvalidDateFormat() {
-// 	s.T().Parallel()
+	err := cli.Execute(context.Background(), args)
 
-// 	text := "orders accept -o 1 -u 1 -e 1-1-1 -c 1 -w 1 -p bag"
-// 	text = strings.TrimSpace(text)
-// 	args := strings.Fields(text)
+	s.ErrorContains(err, "unknown command")
+}
 
-// 	cli, _ := s.SetUpTest()
+// orders accept invalid date format test
 
-// 	err := cli.Execute(context.Background(), args)
+func (s *CLISuite) TestOrdersAccept_InvalidDateFormat() {
+	s.T().Parallel()
 
-// 	s.EqualError(err, e.ErrDateFormatInvalid.Error())
-// }
+	text := "orders accept -o 1 -u 1 -e 1-1-1 -c 1 -w 1 -p bag"
+	text = strings.TrimSpace(text)
+	args := strings.Fields(text)
 
-// // successful tests
+	cli, _ := s.SetUpTest()
 
-// func (s *CLISuite) TestOrdersAccept_Success() {
-// 	s.T().Parallel()
+	err := cli.Execute(context.Background(), args)
 
-// 	text := "orders accept -o 1 -u 1 -e 1111-11-11 -c 1 -w 1 -p bag"
-// 	text = strings.TrimSpace(text)
-// 	args := strings.Fields(text)
+	s.EqualError(err, e.ErrDateFormatInvalid.Error())
+}
 
-// 	cli, domain := s.SetUpTest()
+// successful tests
 
-// 	domain.EXPECT().AcceptOrder(mock.Anything, mock.Anything).Return(nil)
-// 	err := cli.Execute(context.Background(), args)
+func (s *CLISuite) TestOrdersAccept_Success() {
+	s.T().Parallel()
 
-// 	s.NoError(err)
-// 	domain.AssertCalled(s.T(), "AcceptOrder", mock.Anything, mock.Anything)
-// }
+	text := "orders accept -o 1 -u 1 -e 1111-11-11 -c 1 -w 1 -p bag"
+	text = strings.TrimSpace(text)
+	args := strings.Fields(text)
 
-// func (s *CLISuite) TestOrdersDeliver_Success() {
-// 	s.T().Parallel()
+	cli, domain := s.SetUpTest()
 
-// 	text := "orders deliver -o 1,2,3"
-// 	text = strings.TrimSpace(text)
-// 	args := strings.Fields(text)
+	domain.EXPECT().AcceptOrder(mock.Anything, mock.Anything).Return(nil)
+	err := cli.Execute(context.Background(), args)
 
-// 	cli, domain := s.SetUpTest()
+	s.NoError(err)
+	domain.AssertCalled(s.T(), "AcceptOrder", mock.Anything, mock.Anything)
+}
 
-// 	domain.EXPECT().DeliverOrders(mock.Anything, mock.Anything).Return(nil)
-// 	err := cli.Execute(context.Background(), args)
+func (s *CLISuite) TestOrdersDeliver_Success() {
+	s.T().Parallel()
 
-// 	s.NoError(err)
-// 	domain.AssertCalled(s.T(), "DeliverOrders", mock.Anything, mock.Anything)
-// }
+	text := "orders deliver -o 1,2,3"
+	text = strings.TrimSpace(text)
+	args := strings.Fields(text)
 
-// func (s *CLISuite) TestOrdersList_Success() {
-// 	s.T().Parallel()
+	cli, domain := s.SetUpTest()
 
-// 	text := "orders list -u 1"
-// 	text = strings.TrimSpace(text)
-// 	args := strings.Fields(text)
+	domain.EXPECT().DeliverOrders(mock.Anything, mock.Anything).Return(nil)
+	err := cli.Execute(context.Background(), args)
 
-// 	cli, domain := s.SetUpTest()
+	s.NoError(err)
+	domain.AssertCalled(s.T(), "DeliverOrders", mock.Anything, mock.Anything)
+}
 
-// 	domain.EXPECT().ListOrders(mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]*models.Order{}, nil)
-// 	err := cli.Execute(context.Background(), args)
+func (s *CLISuite) TestOrdersList_Success() {
+	s.T().Parallel()
 
-// 	s.NoError(err)
-// 	domain.AssertCalled(s.T(), "ListOrders", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything)
-// }
+	text := "orders list -u 1"
+	text = strings.TrimSpace(text)
+	args := strings.Fields(text)
 
-// func (s *CLISuite) TestOrdersReturn_Success() {
-// 	s.T().Parallel()
+	cli, domain := s.SetUpTest()
 
-// 	text := "orders return -o 1"
-// 	text = strings.TrimSpace(text)
-// 	args := strings.Fields(text)
+	domain.EXPECT().ListOrders(mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]*models.Order{}, nil)
+	err := cli.Execute(context.Background(), args)
 
-// 	cli, domain := s.SetUpTest()
+	s.NoError(err)
+	domain.AssertCalled(s.T(), "ListOrders", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+}
 
-// 	domain.EXPECT().ReturnOrder(mock.Anything, mock.Anything).Return(nil)
-// 	err := cli.Execute(context.Background(), args)
+func (s *CLISuite) TestOrdersReturn_Success() {
+	s.T().Parallel()
 
-// 	s.NoError(err)
-// 	domain.AssertCalled(s.T(), "ReturnOrder", mock.Anything, mock.Anything)
-// }
+	text := "orders return -o 1"
+	text = strings.TrimSpace(text)
+	args := strings.Fields(text)
 
-// func (s *CLISuite) TestReturnsAccept_Success() {
-// 	s.T().Parallel()
+	cli, domain := s.SetUpTest()
 
-// 	text := "returns accept -o 1 -u 1"
-// 	text = strings.TrimSpace(text)
-// 	args := strings.Fields(text)
+	domain.EXPECT().ReturnOrder(mock.Anything, mock.Anything).Return(nil)
+	err := cli.Execute(context.Background(), args)
 
-// 	cli, domain := s.SetUpTest()
+	s.NoError(err)
+	domain.AssertCalled(s.T(), "ReturnOrder", mock.Anything, mock.Anything)
+}
 
-// 	domain.EXPECT().AcceptReturn(mock.Anything, mock.Anything).Return(nil)
-// 	err := cli.Execute(context.Background(), args)
+func (s *CLISuite) TestReturnsAccept_Success() {
+	s.T().Parallel()
 
-// 	s.NoError(err)
-// 	domain.AssertCalled(s.T(), "AcceptReturn", mock.Anything, mock.Anything)
-// }
+	text := "returns accept -o 1 -u 1"
+	text = strings.TrimSpace(text)
+	args := strings.Fields(text)
 
-// func (s *CLISuite) TestReturnsList_Success() {
-// 	s.T().Parallel()
+	cli, domain := s.SetUpTest()
 
-// 	text := "returns list"
-// 	text = strings.TrimSpace(text)
-// 	args := strings.Fields(text)
+	domain.EXPECT().AcceptReturn(mock.Anything, mock.Anything).Return(nil)
+	err := cli.Execute(context.Background(), args)
 
-// 	cli, domain := s.SetUpTest()
+	s.NoError(err)
+	domain.AssertCalled(s.T(), "AcceptReturn", mock.Anything, mock.Anything)
+}
 
-// 	domain.EXPECT().ListReturns(mock.Anything, mock.Anything, mock.Anything).Return([]*models.Order{}, nil)
-// 	err := cli.Execute(context.Background(), args)
+func (s *CLISuite) TestReturnsList_Success() {
+	s.T().Parallel()
 
-// 	s.NoError(err)
-// 	domain.AssertCalled(s.T(), "ListReturns", mock.Anything, mock.Anything, mock.Anything)
-// }
+	text := "returns list"
+	text = strings.TrimSpace(text)
+	args := strings.Fields(text)
 
-// func (s *CLISuite) TestWorkers_Success() {
-// 	s.T().Parallel()
+	cli, domain := s.SetUpTest()
 
-// 	text := "workers -n 5"
-// 	text = strings.TrimSpace(text)
-// 	args := strings.Fields(text)
+	domain.EXPECT().ListReturns(mock.Anything, mock.Anything, mock.Anything).Return([]*models.Order{}, nil)
+	err := cli.Execute(context.Background(), args)
 
-// 	cli, domain := s.SetUpTest()
+	s.NoError(err)
+	domain.AssertCalled(s.T(), "ListReturns", mock.Anything, mock.Anything, mock.Anything)
+}
 
-// 	domain.EXPECT().ChangeWorkersNumber(mock.Anything, mock.Anything).Return(nil)
-// 	err := cli.Execute(context.Background(), args)
+func (s *CLISuite) TestWorkers_Success() {
+	s.T().Parallel()
 
-// 	s.NoError(err)
-// 	domain.AssertCalled(s.T(), "ChangeWorkersNumber", mock.Anything, mock.Anything)
-// }
+	text := "workers -n 5"
+	text = strings.TrimSpace(text)
+	args := strings.Fields(text)
+
+	cli, domain := s.SetUpTest()
+
+	domain.EXPECT().ChangeWorkersNumber(mock.Anything, mock.Anything).Return(nil)
+	err := cli.Execute(context.Background(), args)
+
+	s.NoError(err)
+	domain.AssertCalled(s.T(), "ChangeWorkersNumber", mock.Anything, mock.Anything)
+}
