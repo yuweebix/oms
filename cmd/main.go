@@ -56,7 +56,7 @@ func main() {
 	// может быть либо использован воркер пулом, либо будет принимать от консьюмера
 	notificationChan := make(chan string, 100)
 
-	// инициализируем пул рабочих
+	// воркер пул
 	wp, err := threading.NewWorkerPool(ctx, numWorkers)
 	if err != nil {
 		log.Fatalln(err)
@@ -66,30 +66,33 @@ func main() {
 		wp.Notify(notificationChan)
 	}
 
+	// бд
 	r, err := repository.NewRepository(ctx, connString)
 	if err != nil {
 		log.Fatalln(err)
 	}
 	defer r.Close()
 
+	// сервис
 	d := domain.NewDomain(r, wp)
 
-	producer, err := pub.NewProducer(brokers)
+	// kafka продьюсер
+	producer, err := pub.NewProducer(brokers) // не забыть закрыть при graceful shutdown
 	if err != nil {
 		log.Fatalln(err)
 	}
-	defer producer.Close()
 
 	// если не настроено на кафку, то не создаём консьюмера
 	consumer := &sub.Consumer{}
 	if outputMode == "kafka" {
-		consumer, err = sub.NewConsumer(brokers, topic, notificationChan)
+		consumer, err = sub.NewConsumer(brokers)
 		if err != nil {
 			log.Fatalln(err)
 		}
-		defer consumer.Close()
+		consumer.Start(topic, notificationChan) // не забыть закрыть при graceful shutdown
 	}
 
+	// утилита
 	c, err := cli.NewCLI(d, producer, logFileName)
 	if err != nil {
 		log.Fatalln(err)
@@ -170,8 +173,13 @@ func main() {
 			if err := producer.Close(); err != nil {
 				log.Println(err)
 			}
-			if err := consumer.Close(); err != nil {
-				log.Println(err)
+			if outputMode == "kafka" { // только закрываем в случае, если создаем
+				if err := consumer.Stop(); err != nil {
+					log.Println(err)
+				}
+				if err := consumer.Close(); err != nil {
+					log.Println(err)
+				}
 			}
 			close(notificationChan)
 			wg.Wait()

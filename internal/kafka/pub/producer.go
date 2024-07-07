@@ -2,14 +2,12 @@ package pub
 
 import (
 	"encoding/json"
-	"sync"
 
 	"github.com/IBM/sarama"
 )
 
 type Producer struct {
 	async sarama.AsyncProducer
-	wg    sync.WaitGroup
 }
 
 // NewProducer создает нового асинхронного продьюсера Kafka
@@ -17,7 +15,8 @@ func NewProducer(brokers []string) (p *Producer, err error) {
 	config := sarama.NewConfig()
 
 	config.Producer.RequiredAcks = sarama.WaitForAll
-	config.Producer.Return.Successes = true // без вызова Successes будет deadlock
+	config.Producer.Return.Successes = true // "If Return.Successes is true, you MUST read from this channel or the Producer will deadlock."
+	config.Producer.Return.Errors = true
 	config.Producer.Partitioner = sarama.NewRandomPartitioner
 
 	producer, err := sarama.NewAsyncProducer(brokers, config)
@@ -25,22 +24,7 @@ func NewProducer(brokers []string) (p *Producer, err error) {
 		return nil, err
 	}
 
-	p = &Producer{async: producer}
-
-	// проверяем на правильную работу
-	go func() {
-		for range p.async.Successes() {
-			p.wg.Done()
-		}
-	}()
-
-	go func() {
-		for err := range p.async.Errors() {
-			panic(err)
-		}
-	}()
-
-	return
+	return &Producer{async: producer}, nil
 }
 
 // Send отправляет сообщение в заданный топик Kafka.
@@ -50,15 +34,20 @@ func (p *Producer) Send(topic string, message any) error {
 		return err
 	}
 
-	p.wg.Add(1)
 	p.async.Input() <- msg
+
+	// "It is suggested that you send and read messages together in a single select statement."
+	select {
+	case <-p.async.Successes(): // дефолтный случай: всё получилось, и мы смогли отослать сообщение
+	case err := <-p.async.Errors(): // всё плохо :(
+		return err
+	}
 
 	return nil
 }
 
 // Close завершает работу продьюсера
 func (p *Producer) Close() error {
-	p.wg.Wait()
 	return p.async.Close()
 }
 

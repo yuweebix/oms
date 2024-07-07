@@ -52,7 +52,7 @@ func NewWorkerPool(ctx context.Context, numWorkers int) (*WorkerPool, error) {
 	}, nil
 }
 
-// Notify
+// Notify записывает уведомления о статусе выполнения задач горутинами
 func (wp *WorkerPool) Notify(notificationChan chan string) {
 	wp.notificationChan = notificationChan
 }

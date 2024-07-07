@@ -1,16 +1,19 @@
 package sub
 
 import (
+	"errors"
+	"strings"
+
 	"github.com/IBM/sarama"
 )
 
 type Consumer struct {
-	consumer    sarama.Consumer
-	messageChan chan<- string
+	consumer   sarama.Consumer
+	partitions []sarama.PartitionConsumer
 }
 
-// NewConsumer инициализирует нового Consumer и начинает потребление сообщений из заданного топика
-func NewConsumer(brokers []string, topic string, messageChan chan<- string) (c *Consumer, err error) {
+// NewConsumer инициализирует нового Consumer
+func NewConsumer(brokers []string) (c *Consumer, err error) {
 	config := sarama.NewConfig()
 	config.Consumer.Offsets.Initial = sarama.OffsetNewest
 
@@ -19,21 +22,11 @@ func NewConsumer(brokers []string, topic string, messageChan chan<- string) (c *
 		return nil, err
 	}
 
-	c = &Consumer{
-		consumer:    consumer,
-		messageChan: messageChan,
-	}
-
-	err = c.begin(topic)
-	if err != nil {
-		return nil, err
-	}
-
-	return
+	return &Consumer{consumer: consumer}, nil
 }
 
-// begin начинает потребление сообщений из всех партиций топика и отправляет их в messageChan
-func (c *Consumer) begin(topic string) error {
+// Start начинает потребление сообщений из всех партиций топика и отправляет их в messageChan
+func (c *Consumer) Start(topic string, messageChan chan<- string) error {
 	partitions, err := c.consumer.Partitions(topic)
 	if err != nil {
 		return err
@@ -45,11 +38,13 @@ func (c *Consumer) begin(topic string) error {
 			return err
 		}
 
+		c.partitions = append(c.partitions, pc) // потом нужно будет для остановки
+
+		// Messages канал закроется при остановке -> горутина завершится
 		go func(pc sarama.PartitionConsumer) {
-			defer pc.Close()
-			for message := range pc.Messages() {
-				if c.messageChan != nil {
-					c.messageChan <- string(message.Value)
+			for msg := range pc.Messages() {
+				if messageChan != nil {
+					messageChan <- string(msg.Value)
 				}
 			}
 		}(pc)
@@ -58,7 +53,25 @@ func (c *Consumer) begin(topic string) error {
 	return nil
 }
 
-// Close закрывает консьюмера и его партиции
+// Stop закрывает все партиции и возвращает общую ошибку, если какие-то партиции не удалось закрыть
+func (c *Consumer) Stop() error {
+	var errMsgs []string
+
+	// по-партиционно закрывает и собираем ошибки
+	for _, pc := range c.partitions {
+		if err := pc.Close(); err != nil {
+			errMsgs = append(errMsgs, err.Error())
+		}
+	}
+
+	if len(errMsgs) > 0 {
+		return errors.New(strings.Join(errMsgs, "; "))
+	}
+
+	return nil
+}
+
+// Close закрывает консьюмера
 func (c *Consumer) Close() error {
 	return c.consumer.Close()
 }
