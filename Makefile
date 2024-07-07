@@ -82,10 +82,10 @@ mocks-domain:
 
 # ТЕСТЫ
 test-all:
-	docker exec -it $(shell docker-compose ps -q app_test) sh -c 'go test ./...'
+	docker exec -it $(shell docker-compose ps -q app_test) sh -c 'go test ./tests/...'
 test-cli:
-	docker exec -it $(shell docker-compose ps -q app_test) sh -c 'go test -cover ./internal/cli'
+	docker exec -it $(shell docker-compose ps -q app_test) sh -c 'go test ./tests/cli'
 test-domain:
-	docker exec -it $(shell docker-compose ps -q app_test) sh -c 'go test -cover ./internal/domain'
+	docker exec -it $(shell docker-compose ps -q app_test) sh -c 'go test ./tests/domain'
 test-repository:
-	docker exec -it $(shell docker-compose ps -q app_test) sh -c 'go test -cover ./internal/repository'
+	docker exec -it $(shell docker-compose ps -q app_test) sh -c 'go test ./tests/repository'
