@@ -5,7 +5,6 @@ import (
 	"log"
 	"os"
 	"sync"
-	"time"
 
 	"github.com/spf13/cobra"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/cli/flags"
@@ -35,17 +34,6 @@ type domain interface {
 
 type producer interface {
 	Send(topic string, message any) error
-}
-
-type message struct {
-	CreatedAt  time.Time `json:"created_at"`
-	MethodName string    `json:"method"`
-	RawRequest string    `json:"request"`
-}
-
-type messageWithError struct {
-	message
-	Error string `json:"error"`
 }
 
 // CLI представляет слой командной строки приложения

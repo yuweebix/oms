@@ -19,7 +19,7 @@ import (
 // orders функционал
 
 func (c *CLI) ordersAcceptCmdRunE(cmd *cobra.Command, args []string) (err error) {
-	msg := message{
+	msg := models.Message{
 		CreatedAt:  time.Now().UTC(),
 		MethodName: getMethodName(cmd),
 		RawRequest: getRawRequest(cmd),
@@ -27,7 +27,7 @@ func (c *CLI) ordersAcceptCmdRunE(cmd *cobra.Command, args []string) (err error)
 
 	orderID, userID, expiry, cost, weight, packaging, err := c.getOrdersAcceptCmdFlagValues(cmd)
 	if err != nil {
-		if err := c.producer.Send(topic, messageWithError{msg, err.Error()}); err != nil {
+		if err := c.producer.Send(topic, models.MessageWithError{msg, err.Error()}); err != nil {
 			return err
 		}
 		return err
@@ -35,7 +35,7 @@ func (c *CLI) ordersAcceptCmdRunE(cmd *cobra.Command, args []string) (err error)
 
 	flagExpiryDate, err := time.Parse(time.DateOnly, expiry)
 	if err != nil {
-		if err := c.producer.Send(topic, messageWithError{msg, e.ErrDateFormatInvalid.Error()}); err != nil {
+		if err := c.producer.Send(topic, models.MessageWithError{msg, e.ErrDateFormatInvalid.Error()}); err != nil {
 			return err
 		}
 		return e.ErrDateFormatInvalid
@@ -51,7 +51,7 @@ func (c *CLI) ordersAcceptCmdRunE(cmd *cobra.Command, args []string) (err error)
 		Packaging: models.PackagingType(packaging),
 	})
 	if err != nil {
-		if err := c.producer.Send(topic, messageWithError{msg, err.Error()}); err != nil {
+		if err := c.producer.Send(topic, models.MessageWithError{msg, err.Error()}); err != nil {
 			return err
 		}
 		return err
@@ -68,7 +68,7 @@ func (c *CLI) ordersAcceptCmdRunE(cmd *cobra.Command, args []string) (err error)
 }
 
 func (c *CLI) ordersDeliverCmdRunE(cmd *cobra.Command, _ []string) (err error) {
-	msg := message{
+	msg := models.Message{
 		CreatedAt:  time.Now().UTC(),
 		MethodName: getMethodName(cmd),
 		RawRequest: getRawRequest(cmd),
@@ -76,7 +76,7 @@ func (c *CLI) ordersDeliverCmdRunE(cmd *cobra.Command, _ []string) (err error) {
 
 	orderIDs, err := c.getOrdersDeliverCmdFlagValues(cmd)
 	if err != nil {
-		if err := c.producer.Send(topic, messageWithError{msg, err.Error()}); err != nil {
+		if err := c.producer.Send(topic, models.MessageWithError{msg, err.Error()}); err != nil {
 			return err
 		}
 		return err
@@ -85,7 +85,7 @@ func (c *CLI) ordersDeliverCmdRunE(cmd *cobra.Command, _ []string) (err error) {
 	ctx := cmd.Context()
 	err = c.domain.DeliverOrders(ctx, orderIDs)
 	if err != nil {
-		if err := c.producer.Send(topic, messageWithError{msg, err.Error()}); err != nil {
+		if err := c.producer.Send(topic, models.MessageWithError{msg, err.Error()}); err != nil {
 			return err
 		}
 		return err
@@ -102,7 +102,7 @@ func (c *CLI) ordersDeliverCmdRunE(cmd *cobra.Command, _ []string) (err error) {
 }
 
 func (c *CLI) ordersListCmdRunE(cmd *cobra.Command, _ []string) (err error) {
-	msg := message{
+	msg := models.Message{
 		CreatedAt:  time.Now().UTC(),
 		MethodName: getMethodName(cmd),
 		RawRequest: getRawRequest(cmd),
@@ -110,7 +110,7 @@ func (c *CLI) ordersListCmdRunE(cmd *cobra.Command, _ []string) (err error) {
 
 	userID, limit, offset, isStored, err := c.getOrdersListCmdFlagValues(cmd)
 	if err != nil {
-		if err := c.producer.Send(topic, messageWithError{msg, err.Error()}); err != nil {
+		if err := c.producer.Send(topic, models.MessageWithError{msg, err.Error()}); err != nil {
 			return err
 		}
 		return err
@@ -119,7 +119,7 @@ func (c *CLI) ordersListCmdRunE(cmd *cobra.Command, _ []string) (err error) {
 	ctx := cmd.Context()
 	list, err := c.domain.ListOrders(ctx, userID, limit, offset, isStored)
 	if err != nil {
-		if err := c.producer.Send(topic, messageWithError{msg, err.Error()}); err != nil {
+		if err := c.producer.Send(topic, models.MessageWithError{msg, err.Error()}); err != nil {
 			return err
 		}
 		return err
@@ -138,7 +138,7 @@ func (c *CLI) ordersListCmdRunE(cmd *cobra.Command, _ []string) (err error) {
 }
 
 func (c *CLI) ordersReturnCmdRunE(cmd *cobra.Command, _ []string) (err error) {
-	msg := message{
+	msg := models.Message{
 		CreatedAt:  time.Now().UTC(),
 		MethodName: getMethodName(cmd),
 		RawRequest: getRawRequest(cmd),
@@ -146,7 +146,7 @@ func (c *CLI) ordersReturnCmdRunE(cmd *cobra.Command, _ []string) (err error) {
 
 	orderID, err := c.getOrdersReturnCmdFlagValues(cmd)
 	if err != nil {
-		if err := c.producer.Send(topic, messageWithError{msg, err.Error()}); err != nil {
+		if err := c.producer.Send(topic, models.MessageWithError{msg, err.Error()}); err != nil {
 			return err
 		}
 		return err
@@ -158,7 +158,7 @@ func (c *CLI) ordersReturnCmdRunE(cmd *cobra.Command, _ []string) (err error) {
 	})
 
 	if err != nil {
-		if err := c.producer.Send(topic, messageWithError{msg, err.Error()}); err != nil {
+		if err := c.producer.Send(topic, models.MessageWithError{msg, err.Error()}); err != nil {
 			return err
 		}
 		return err
@@ -177,7 +177,7 @@ func (c *CLI) ordersReturnCmdRunE(cmd *cobra.Command, _ []string) (err error) {
 // returns функционал
 
 func (c *CLI) returnsAcceptCmdRunE(cmd *cobra.Command, _ []string) (err error) {
-	msg := message{
+	msg := models.Message{
 		CreatedAt:  time.Now().UTC(),
 		MethodName: getMethodName(cmd),
 		RawRequest: getRawRequest(cmd),
@@ -185,7 +185,7 @@ func (c *CLI) returnsAcceptCmdRunE(cmd *cobra.Command, _ []string) (err error) {
 
 	orderID, userID, err := c.getReturnsAcceptCmdFlagValues(cmd)
 	if err != nil {
-		if err := c.producer.Send(topic, messageWithError{msg, err.Error()}); err != nil {
+		if err := c.producer.Send(topic, models.MessageWithError{msg, err.Error()}); err != nil {
 			return err
 		}
 		return err
@@ -197,7 +197,7 @@ func (c *CLI) returnsAcceptCmdRunE(cmd *cobra.Command, _ []string) (err error) {
 		User: &models.User{ID: userID},
 	})
 	if err != nil {
-		if err := c.producer.Send(topic, messageWithError{msg, err.Error()}); err != nil {
+		if err := c.producer.Send(topic, models.MessageWithError{msg, err.Error()}); err != nil {
 			return err
 		}
 		return err
@@ -214,7 +214,7 @@ func (c *CLI) returnsAcceptCmdRunE(cmd *cobra.Command, _ []string) (err error) {
 }
 
 func (c *CLI) returnsListCmdRunE(cmd *cobra.Command, _ []string) (err error) {
-	msg := message{
+	msg := models.Message{
 		CreatedAt:  time.Now().UTC(),
 		MethodName: getMethodName(cmd),
 		RawRequest: getRawRequest(cmd),
@@ -222,7 +222,7 @@ func (c *CLI) returnsListCmdRunE(cmd *cobra.Command, _ []string) (err error) {
 
 	limit, offset, err := c.getReturnsListCmdFlagValues(cmd)
 	if err != nil {
-		if err := c.producer.Send(topic, messageWithError{msg, err.Error()}); err != nil {
+		if err := c.producer.Send(topic, models.MessageWithError{msg, err.Error()}); err != nil {
 			return err
 		}
 		return err
@@ -231,7 +231,7 @@ func (c *CLI) returnsListCmdRunE(cmd *cobra.Command, _ []string) (err error) {
 	ctx := cmd.Context()
 	list, err := c.domain.ListReturns(ctx, limit, offset)
 	if err != nil {
-		if err := c.producer.Send(topic, messageWithError{msg, err.Error()}); err != nil {
+		if err := c.producer.Send(topic, models.MessageWithError{msg, err.Error()}); err != nil {
 			return err
 		}
 		return err
@@ -252,7 +252,7 @@ func (c *CLI) returnsListCmdRunE(cmd *cobra.Command, _ []string) (err error) {
 // worker функционал
 
 func (c *CLI) workersCmdRunE(cmd *cobra.Command, _ []string) (err error) {
-	msg := message{
+	msg := models.Message{
 		CreatedAt:  time.Now().UTC(),
 		MethodName: getMethodName(cmd),
 		RawRequest: getRawRequest(cmd),
@@ -260,7 +260,7 @@ func (c *CLI) workersCmdRunE(cmd *cobra.Command, _ []string) (err error) {
 
 	num, err := c.getWorkersCmdFlagValues(cmd)
 	if err != nil {
-		if err := c.producer.Send(topic, messageWithError{msg, err.Error()}); err != nil {
+		if err := c.producer.Send(topic, models.MessageWithError{msg, err.Error()}); err != nil {
 			return err
 		}
 		return err
@@ -269,7 +269,7 @@ func (c *CLI) workersCmdRunE(cmd *cobra.Command, _ []string) (err error) {
 	ctx := cmd.Context()
 	err = c.domain.ChangeWorkersNumber(ctx, num)
 	if err != nil {
-		if err := c.producer.Send(topic, messageWithError{msg, err.Error()}); err != nil {
+		if err := c.producer.Send(topic, models.MessageWithError{msg, err.Error()}); err != nil {
 			return err
 		}
 		return err
