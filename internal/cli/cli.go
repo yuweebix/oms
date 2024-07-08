@@ -12,10 +12,6 @@ import (
 	"gitlab.ozon.dev/yuweebix/homework-1/pkg/utils"
 )
 
-const (
-	topic = "cli"
-)
-
 // domain интерфейс необходимых CLI функций для реализации сервисом
 type domain interface {
 	// заказы
@@ -33,7 +29,7 @@ type domain interface {
 }
 
 type producer interface {
-	Send(topic string, message any) error
+	Send(message any) error
 }
 
 // CLI представляет слой командной строки приложения

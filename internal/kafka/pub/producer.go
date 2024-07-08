@@ -7,39 +7,36 @@ import (
 )
 
 type Producer struct {
-	async sarama.AsyncProducer
+	sync  sarama.SyncProducer
+	topic string
 }
 
-// NewProducer создает нового асинхронного продьюсера Kafka
-func NewProducer(brokers []string) (p *Producer, err error) {
+// NewProducer создает нового синхронного продьюсера Kafka
+func NewProducer(brokers []string, topic string) (p *Producer, err error) {
 	config := sarama.NewConfig()
 
 	config.Producer.RequiredAcks = sarama.WaitForAll
-	config.Producer.Return.Successes = true // "If Return.Successes is true, you MUST read from this channel or the Producer will deadlock."
+	config.Producer.Return.Successes = true
 	config.Producer.Return.Errors = true
 	config.Producer.Partitioner = sarama.NewRandomPartitioner
 
-	producer, err := sarama.NewAsyncProducer(brokers, config)
+	producer, err := sarama.NewSyncProducer(brokers, config)
 	if err != nil {
 		return nil, err
 	}
 
-	return &Producer{async: producer}, nil
+	return &Producer{sync: producer, topic: topic}, nil
 }
 
 // Send отправляет сообщение в заданный топик Kafka.
-func (p *Producer) Send(topic string, message any) error {
-	msg, err := buildMessage(topic, message)
+func (p *Producer) Send(message any) error {
+	msg, err := buildMessage(p.topic, message)
 	if err != nil {
 		return err
 	}
 
-	p.async.Input() <- msg
-
-	// "It is suggested that you send and read messages together in a single select statement."
-	select {
-	case <-p.async.Successes(): // дефолтный случай: всё получилось, и мы смогли отослать сообщение
-	case err := <-p.async.Errors(): // всё плохо :(
+	_, _, err = p.sync.SendMessage(msg)
+	if err != nil {
 		return err
 	}
 
@@ -48,7 +45,7 @@ func (p *Producer) Send(topic string, message any) error {
 
 // Close завершает работу продьюсера
 func (p *Producer) Close() error {
-	return p.async.Close()
+	return p.sync.Close()
 }
 
 // buildMessage переводит message в ProducerMessage

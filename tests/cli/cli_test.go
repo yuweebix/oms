@@ -13,10 +13,6 @@ import (
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/models"
 )
 
-const (
-	topic = "cli"
-)
-
 type CLISuite struct {
 	suite.Suite
 }
@@ -30,7 +26,7 @@ func (s *CLISuite) SetUpTest() (_cli *cli.CLI, _domain *mocks.MockDomain) {
 	_domain = mocks.NewMockDomain(s.T())
 	_producer := mocks.NewMockProducer(s.T())
 
-	_producer.EXPECT().Send(topic, mock.Anything).Return(nil).Maybe()
+	_producer.EXPECT().Send(mock.Anything).Return(nil).Maybe()
 
 	_cli, err := cli.NewCLI(_domain, _producer, "log_text.txt")
 	if err != nil {

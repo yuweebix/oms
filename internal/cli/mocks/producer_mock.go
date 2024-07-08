@@ -17,17 +17,17 @@ func (_m *MockProducer) EXPECT() *MockProducer_Expecter {
 	return &MockProducer_Expecter{mock: &_m.Mock}
 }
 
-// Send provides a mock function with given fields: topic, message
-func (_m *MockProducer) Send(topic string, message interface{}) error {
-	ret := _m.Called(topic, message)
+// Send provides a mock function with given fields: message
+func (_m *MockProducer) Send(message interface{}) error {
+	ret := _m.Called(message)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Send")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(string, interface{}) error); ok {
-		r0 = rf(topic, message)
+	if rf, ok := ret.Get(0).(func(interface{}) error); ok {
+		r0 = rf(message)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -41,15 +41,14 @@ type MockProducer_Send_Call struct {
 }
 
 // Send is a helper method to define mock.On call
-//   - topic string
 //   - message interface{}
-func (_e *MockProducer_Expecter) Send(topic interface{}, message interface{}) *MockProducer_Send_Call {
-	return &MockProducer_Send_Call{Call: _e.mock.On("Send", topic, message)}
+func (_e *MockProducer_Expecter) Send(message interface{}) *MockProducer_Send_Call {
+	return &MockProducer_Send_Call{Call: _e.mock.On("Send", message)}
 }
 
-func (_c *MockProducer_Send_Call) Run(run func(topic string, message interface{})) *MockProducer_Send_Call {
+func (_c *MockProducer_Send_Call) Run(run func(message interface{})) *MockProducer_Send_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(string), args[1].(interface{}))
+		run(args[0].(interface{}))
 	})
 	return _c
 }
@@ -59,7 +58,7 @@ func (_c *MockProducer_Send_Call) Return(_a0 error) *MockProducer_Send_Call {
 	return _c
 }
 
-func (_c *MockProducer_Send_Call) RunAndReturn(run func(string, interface{}) error) *MockProducer_Send_Call {
+func (_c *MockProducer_Send_Call) RunAndReturn(run func(interface{}) error) *MockProducer_Send_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -77,7 +77,7 @@ func main() {
 	d := domain.NewDomain(r, wp)
 
 	// kafka продьюсер
-	producer, err := pub.NewProducer(brokers) // не забыть закрыть при graceful shutdown
+	producer, err := pub.NewProducer(brokers, topic) // не забыть закрыть при graceful shutdown
 	if err != nil {
 		log.Fatalln(err)
 	}
