@@ -15,7 +15,7 @@ import (
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/cli"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/domain"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/kafka/pub"
-	"gitlab.ozon.dev/yuweebix/homework-1/internal/kafka/sub"
+	cg "gitlab.ozon.dev/yuweebix/homework-1/internal/kafka/sub/group"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/repository"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/threading"
 )
@@ -82,14 +82,16 @@ func main() {
 		log.Fatalln(err)
 	}
 
-	// если не настроено на кафку, то не создаём консьюмера
-	consumer := &sub.Consumer{}
+	var group *cg.Group
 	if outputMode == "kafka" {
-		consumer, err = sub.NewConsumer(brokers)
+		group, err = cg.NewConsumerGroup(brokers, []string{topic}, "groupID", notificationChan)
 		if err != nil {
 			log.Fatalln(err)
 		}
-		consumer.Start(topic, notificationChan) // не забыть закрыть при graceful shutdown
+
+		if err := group.Start(ctx, []string{topic}); err != nil {
+			log.Fatalln(err)
+		}
 	}
 
 	// утилита
@@ -173,13 +175,8 @@ func main() {
 			if err := producer.Close(); err != nil {
 				log.Println(err)
 			}
-			if outputMode == "kafka" { // только закрываем в случае, если создаем
-				if err := consumer.Stop(); err != nil {
-					log.Println(err)
-				}
-				if err := consumer.Close(); err != nil {
-					log.Println(err)
-				}
+			if outputMode == "kafka" {
+				group.Stop()
 			}
 			close(notificationChan)
 			wg.Wait()
