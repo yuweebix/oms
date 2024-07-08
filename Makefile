@@ -35,6 +35,10 @@ up-app-test:
 	docker-compose --env-file $(ENV_FILE) up -d app_test
 up-db-test:
 	docker-compose --env-file $(ENV_FILE) up -d db_test
+up-broker:
+	docker-compose --env-file $(ENV_FILE) up -d broker
+up-broker-test:
+	docker-compose --env-file $(ENV_FILE) up -d broker_test
 
 # ОСТАНОВКА
 down:
@@ -47,6 +51,10 @@ down-app-test:
 	docker-compose --env-file $(ENV_FILE) down app_test 
 down-db-test:
 	docker-compose --env-file $(ENV_FILE) down db_test
+down-broker:
+	docker-compose --env-file $(ENV_FILE) down broker
+down-broker-test:
+	docker-compose --env-file $(ENV_FILE) down broker_test
 
 # ПРОЦЕССЫ
 cli: # утилита
@@ -73,6 +81,10 @@ shell-app-test:
 	docker exec -it $(shell docker-compose ps -q app_test) sh
 shell-db-test:
 	docker exec -it $(shell docker-compose ps -q db_test) sh
+shell-broker:
+	docker exec -it $(shell docker-compose ps -q broker) sh
+shell-broker-test:
+	docker exec -it $(shell docker-compose ps -q broker_test) sh
 
 # МОКИ
 mocks-cli:
@@ -89,3 +101,5 @@ test-domain:
 	docker exec -it $(shell docker-compose ps -q app_test) sh -c 'go test ./tests/domain'
 test-repository:
 	docker exec -it $(shell docker-compose ps -q app_test) sh -c 'go test ./tests/repository'
+test-kafka:
+	docker exec -it $(shell docker-compose ps -q app_test) sh -c 'go test ./tests/kafka'
