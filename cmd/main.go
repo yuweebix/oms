@@ -26,8 +26,7 @@ const (
 )
 
 var (
-	brokers = []string{"broker:19092"}
-	topic   = "cli"
+	topic = "cli"
 )
 
 func main() {
@@ -44,6 +43,12 @@ func main() {
 	if outputMode == "" {
 		log.Fatalf("Error reading OUTPUT_MODE from .env file: %v", err)
 	}
+
+	brokersStr := os.Getenv("BROKERS")
+	if brokersStr == "" {
+		log.Fatalf("Error reading BROKERS from .env file: %v", err)
+	}
+	brokers := strings.Split(brokersStr, ",")
 
 	wg := sync.WaitGroup{}
 	ctx, cancel := context.WithCancel(context.Background())
@@ -84,7 +89,7 @@ func main() {
 
 	var group *cg.Group
 	if outputMode == "kafka" {
-		group, err = cg.NewConsumerGroup(brokers, []string{topic}, "groupID", notificationChan)
+		group, err = cg.NewConsumerGroup(brokers, []string{topic}, "cliID", notificationChan)
 		if err != nil {
 			log.Fatalln(err)
 		}
@@ -176,7 +181,9 @@ func main() {
 				log.Println(err)
 			}
 			if outputMode == "kafka" {
-				group.Stop()
+				if err := group.Stop(); err != nil {
+					log.Println(err)
+				}
 			}
 			close(notificationChan)
 			wg.Wait()

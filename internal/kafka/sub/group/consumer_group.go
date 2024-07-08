@@ -60,13 +60,12 @@ func (group *Group) Start(ctx context.Context, topics []string) error {
 		}
 	}()
 
+	<-group.ready
 	return nil
 }
 
 // Stop останавливает работу группы
 func (group *Group) Stop() error {
-	<-group.ready
-
 	group.wg.Wait()
 	if err := group.client.Close(); err != nil {
 		return err
