@@ -9,6 +9,12 @@ build-app:
 build-test:
 	docker-compose build app_test
 
+# NETWORK
+create-app-network:
+	docker network create app-network
+create-test-network:
+	docker network create test-network
+
 # МИГРАЦИЯ
 migrate:
 	docker-compose --env-file $(ENV_FILE) run --rm app sh -c 'goose -dir db/migrations postgres "$(DATABASE_URL)" up'
@@ -68,9 +74,9 @@ sql-test: # sql-клиент для тестов
 	docker exec -it $(shell docker-compose ps -q db_test) sh -c 'psql -U $(POSTGRES_USER) -d $(POSTGRES_DB)_test'
 
 log: # логгер
-	docker exec -it $(shell docker-compose ps -q app) tail -f ./log.txt
+	-docker exec -it $(shell docker-compose ps -q app) tail -f ./log.txt
 log-test: # логгер для тестов
-	docker exec -it $(shell docker-compose ps -q app_test) tail -f ./log.txt
+	-docker exec -it $(shell docker-compose ps -q app_test) tail -f ./log.txt
 
 # SHELL
 shell-app:
@@ -103,3 +109,11 @@ test-repository:
 	docker exec -it $(shell docker-compose ps -q app_test) sh -c 'go test ./tests/repository'
 test-kafka:
 	docker exec -it $(shell docker-compose ps -q app_test) sh -c 'go test ./tests/kafka'
+
+# ЛОКАЛЬНЫЕ ТЕСТЫ
+test-local:
+	go test ./tests/... -v
+test-unit-local:
+	go test ./tests/cli -v && go test ./tests/domain -v
+test-int-local:
+	go test ./tests/repository -v && go test ./tests/kafka -v
