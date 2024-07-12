@@ -1,89 +1,81 @@
+include .bin-deps.mk
 include .env
-ENV_FILE := .env
 
 # СБОРКА
-build:
+build: .bin-deps # если уже существет network, то проигнорим ошибку
+	-docker network create app-network 2>/dev/null || true 
 	docker-compose build
-build-app:
-	docker-compose build app
-build-test:
-	docker-compose build app_test
 
 # МИГРАЦИЯ
-migrate:
-	docker-compose --env-file $(ENV_FILE) run --rm app sh -c 'goose -dir db/migrations postgres "$(DATABASE_URL)" up'
-migrate-test:
-	docker-compose --env-file $(ENV_FILE) run --rm app_test sh -c 'goose -dir db/migrations postgres "$(DATABASE_TEST_URL)" up'
+migrate: up-db
+	$(GOOSE) -dir db/migrations postgres "$(DATABASE_LOCAL_URL)" up
+migrate-test: up-db-test
+	$(GOOSE) -dir db/migrations postgres "$(DATABASE_LOCAL_TEST_URL)" up
 
-demigrate:
-	docker-compose --env-file $(ENV_FILE) run --rm app sh -c 'goose -dir db/migrations postgres "$(DATABASE_URL)" down'
-demigrate-test:
-	docker-compose --env-file $(ENV_FILE) run --rm app_test sh -c 'goose -dir db/migrations postgres "$(DATABASE_TEST_URL)" down'
-
-# БД
-create-db:
-	docker-compose --env-file $(ENV_FILE) run --rm db sh -c 'psql -h db -U $(POSTGRES_USER) -c "CREATE DATABASE $(POSTGRES_DB);"'
-create-db-test:
-	docker-compose --env-file $(ENV_FILE) run --rm db_test sh -c 'psql -h db_test -U $(POSTGRES_USER) -c "CREATE DATABASE $(POSTGRES_DB)_test;"'
+demigrate: up-db
+	$(GOOSE) -dir db/migrations postgres "$(DATABASE_LOCAL_URL)" down
+demigrate-test: up-db-test
+	$(GOOSE) -dir db/migrations postgres "$(DATABASE_LOCAL_TEST_URL)" down
 
 # ЗАПУСК
-up:
-	docker-compose --env-file $(ENV_FILE) up -d
 up-app:
-	docker-compose --env-file $(ENV_FILE) up -d app
+	docker-compose --env-file .env up -d app
 up-db:
-	docker-compose --env-file $(ENV_FILE) up -d db
-up-test:
-	docker-compose --env-file $(ENV_FILE) up -d app_test
+	docker-compose --env-file .env up -d db
+up-db-test:
+	docker-compose --env-file .env up -d db_test
+up-broker:
+	docker-compose --env-file .env up -d broker
+up-broker-test:
+	docker-compose --env-file .env up -d broker_test
 
 # ОСТАНОВКА
 down:
-	docker-compose --env-file $(ENV_FILE) down
+	docker-compose --env-file .env down
 down-app:
-	docker-compose --env-file $(ENV_FILE) down app
+	docker-compose --env-file .env down app
 down-db:
-	docker-compose --env-file $(ENV_FILE) down db
-down-test:
-	docker-compose --env-file $(ENV_FILE) down app_test db_test
+	docker-compose --env-file .env down db
+down-db-test:
+	docker-compose --env-file .env down db_test
+down-broker:
+	docker-compose --env-file .env down broker
+down-broker-test:
+	docker-compose --env-file .env down broker_test
 
 # ПРОЦЕССЫ
-cli: # утилита
-	docker exec -it $(shell docker-compose ps -q app) sh -c './main'
-cli-test: # утилита тестов
-	docker exec -it $(shell docker-compose ps -q app_test) sh -c './main'
+cli: up-app # утилита
+	docker exec -it app sh -c './main'
 
-sql: # sql-клиент
-	docker exec -it $(shell docker-compose ps -q db) sh -c 'psql -U $(POSTGRES_USER) -d $(POSTGRES_DB)'
-sql-test: # sql-клиент для тестов
-	docker exec -it $(shell docker-compose ps -q db_test) sh -c 'psql -U $(POSTGRES_USER) -d $(POSTGRES_DB)_test'
+sql: up-db # sql-клиент
+	docker exec -it db sh -c 'psql -U $(POSTGRES_USER) -d $(POSTGRES_DB)'
+sql-test: up-db-test # sql-клиент для тестов
+	docker exec -it db_test sh -c 'psql -U $(POSTGRES_USER) -d $(POSTGRES_DB)_test'
 
-log: # логгер
-	docker exec -it $(shell docker-compose ps -q app) tail -f ./log.txt
-log-test: # логгер для тестов
-	docker exec -it $(shell docker-compose ps -q app_test) tail -f ./log.txt
+log: up-app # логгер
+	-docker exec -it app tail -f ./log.txt
 
 # SHELL
-shell-app:
-	docker exec -it $(shell docker-compose ps -q app) sh
-shell-db:
-	docker exec -it $(shell docker-compose ps -q db) sh
-shell-app-test:
-	docker exec -it $(shell docker-compose ps -q app_test) sh
-shell-db-test:
-	docker exec -it $(shell docker-compose ps -q db_test) sh
+shell-app: up-app
+	docker exec -it app sh
+shell-db: up-db
+	docker exec -it db sh
+shell-db-test: up-db-test
+	docker exec -it db_test sh
+shell-broker: up-broker
+	docker exec -it broker sh
+shell-broker-test: up-broker-test
+	docker exec -it broker_test sh
 
 # МОКИ
-mocks-cli:
-	mockery --config .mockery.cli.yml
-mocks-domain:
-	mockery --config .mockery.domain.yml
+mocks:
+	$(MOCKERY) --config .mockery.yml
 
 # ТЕСТЫ
-test-all:
-	docker exec -it $(shell docker-compose ps -q app_test) sh -c 'go test ./...'
-test-cli:
-	docker exec -it $(shell docker-compose ps -q app_test) sh -c 'go test -cover ./internal/cli'
-test-domain:
-	docker exec -it $(shell docker-compose ps -q app_test) sh -c 'go test -cover ./internal/domain'
-test-repository:
-	docker exec -it $(shell docker-compose ps -q app_test) sh -c 'go test -cover ./internal/repository'
+tests: up-db-test up-broker-test
+	go test ./tests/... -v
+tests-unit:
+	go test ./tests/unit/... -v
+	rm ./tests/unit/cli/log_text.txt
+tests-int: up-db-test up-broker-test
+	go test ./tests/int/... -v 

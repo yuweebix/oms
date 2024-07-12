@@ -9,8 +9,8 @@ import (
 	"github.com/stretchr/testify/suite"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/domain"
 	e "gitlab.ozon.dev/yuweebix/homework-1/internal/domain/errors"
-	"gitlab.ozon.dev/yuweebix/homework-1/internal/domain/mocks"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/models"
+	mocks "gitlab.ozon.dev/yuweebix/homework-1/mocks/domain"
 )
 
 const (

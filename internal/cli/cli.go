@@ -28,22 +28,28 @@ type domain interface {
 	ChangeWorkersNumber(ctx context.Context, workersNum int) error // логика изменения количества рабочих горутин
 }
 
+type producer interface {
+	Send(message any) error
+}
+
 // CLI представляет слой командной строки приложения
 type CLI struct {
-	domain domain
-	logger *log.Logger
-	mu     *sync.Mutex
-	cmd    *cobra.Command
+	domain   domain
+	producer producer
+	logger   *log.Logger
+	mu       *sync.Mutex
+	cmd      *cobra.Command
 }
 
 // NewCLI конструктор с добавлением зависимостей
-func NewCLI(d domain, logFileName string) (c *CLI, err error) {
+func NewCLI(d domain, p producer, logFileName string) (c *CLI, err error) {
 	logger := createLogger(logFileName)
 
 	c = &CLI{
-		domain: d,
-		logger: logger,
-		mu:     &sync.Mutex{},
+		domain:   d,
+		producer: p,
+		logger:   logger,
+		mu:       &sync.Mutex{},
 	}
 
 	c.cmd, err = initRootCmd(c)

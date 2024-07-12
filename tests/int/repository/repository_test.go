@@ -27,7 +27,7 @@ func TestRepositorySuite(t *testing.T) {
 }
 
 func (s *RepositorySuite) SetupSuite() {
-	err := godotenv.Load("../../.env")
+	err := godotenv.Load("../../../.env")
 	if err != nil {
 		s.FailNowf("Error loading .env file", err.Error())
 	}
