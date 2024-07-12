@@ -69,8 +69,7 @@ shell-broker-test: up-broker-test
 
 # МОКИ
 mocks:
-	$(MOCKERY) --config .mockery.cli.yml
-	$(MOCKERY) --config .mockery.domain.yml
+	$(MOCKERY) --config .mockery.yml
 
 # ТЕСТЫ
 tests: up-db-test up-broker-test
