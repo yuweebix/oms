@@ -76,5 +76,6 @@ tests: up-db-test up-broker-test
 	go test ./tests/... -v
 tests-unit:
 	go test ./tests/unit/... -v
+	rm ./tests/unit/cli/log_text.txt
 tests-int: up-db-test up-broker-test
 	go test ./tests/int/... -v 
