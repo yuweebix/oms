@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/domain"
-	"gitlab.ozon.dev/yuweebix/homework-1/internal/domain/mocks"
+	mocks "gitlab.ozon.dev/yuweebix/homework-1/mocks/domain"
 )
 
 type WorkersSuite struct {

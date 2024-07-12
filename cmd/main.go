@@ -14,6 +14,8 @@ import (
 	"github.com/joho/godotenv"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/cli"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/domain"
+	"gitlab.ozon.dev/yuweebix/homework-1/internal/kafka/pub"
+	cg "gitlab.ozon.dev/yuweebix/homework-1/internal/kafka/sub/group"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/repository"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/threading"
 )
@@ -21,6 +23,10 @@ import (
 const (
 	logFileName = "log.txt"
 	numWorkers  = 5 // начальное количество рабочих в пуле
+)
+
+var (
+	topic = "cli"
 )
 
 func main() {
@@ -33,6 +39,17 @@ func main() {
 		log.Fatalf("Error reading DATABASE_URL from .env file: %v", err)
 	}
 
+	outputMode := os.Getenv("OUTPUT_MODE")
+	if outputMode == "" {
+		log.Fatalf("Error reading OUTPUT_MODE from .env file: %v", err)
+	}
+
+	brokersStr := os.Getenv("BROKERS")
+	if brokersStr == "" {
+		log.Fatalf("Error reading BROKERS from .env file: %v", err)
+	}
+	brokers := strings.Split(brokersStr, ",")
+
 	wg := sync.WaitGroup{}
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -41,21 +58,49 @@ func main() {
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGTERM, syscall.SIGINT)
 
-	// инициализируем пул рабочих
+	// может быть либо использован воркер пулом, либо будет принимать от консьюмера
 	notificationChan := make(chan string, 100)
-	wp, err := threading.NewWorkerPool(ctx, numWorkers, notificationChan)
+
+	// воркер пул
+	wp, err := threading.NewWorkerPool(ctx, numWorkers)
 	if err != nil {
 		log.Fatalln(err)
 	}
 
+	if outputMode == "worker_pool" {
+		wp.Notify(notificationChan)
+	}
+
+	// бд
 	r, err := repository.NewRepository(ctx, connString)
 	if err != nil {
 		log.Fatalln(err)
 	}
 	defer r.Close()
 
+	// сервис
 	d := domain.NewDomain(r, wp)
-	c, err := cli.NewCLI(d, logFileName)
+
+	// kafka продьюсер
+	producer, err := pub.NewProducer(brokers, topic) // не забыть закрыть при graceful shutdown
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	var group *cg.Group
+	if outputMode == "kafka" {
+		group, err = cg.NewConsumerGroup(brokers, []string{topic}, "cliID", notificationChan)
+		if err != nil {
+			log.Fatalln(err)
+		}
+
+		if err := group.Start(ctx, []string{topic}); err != nil {
+			log.Fatalln(err)
+		}
+	}
+
+	// утилита
+	c, err := cli.NewCLI(d, producer, logFileName)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -132,6 +177,15 @@ func main() {
 		select {
 		case <-ctx.Done():
 			wp.Stop()
+			if err := producer.Close(); err != nil {
+				log.Println(err)
+			}
+			if outputMode == "kafka" {
+				if err := group.Stop(); err != nil {
+					log.Println(err)
+				}
+			}
+			close(notificationChan)
 			wg.Wait()
 			return
 		case <-sigs:

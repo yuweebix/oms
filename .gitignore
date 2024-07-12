@@ -1,4 +1,1 @@
-.gitignore
-.vscode
-orders.json
-log.txt
+bin/

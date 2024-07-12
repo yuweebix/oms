@@ -37,7 +37,7 @@ type WorkerPool struct {
 }
 
 // NewWorkerPool создает новый пул воркеров с заданным количеством воркеров и контекстом
-func NewWorkerPool(ctx context.Context, numWorkers int, notificationChan chan string) (*WorkerPool, error) {
+func NewWorkerPool(ctx context.Context, numWorkers int) (*WorkerPool, error) {
 	// слишком много воркеров
 	if numWorkers > maxGoroutines {
 		return nil, e.ErrGoroutinesNumExceeded
@@ -45,12 +45,16 @@ func NewWorkerPool(ctx context.Context, numWorkers int, notificationChan chan st
 
 	ctx, cancel := context.WithCancel(ctx)
 	return &WorkerPool{
-		ctx:              ctx,
-		cancel:           cancel,
-		pool:             &sync.Pool{},
-		notificationChan: notificationChan,
-		numWorkers:       numWorkers,
+		ctx:        ctx,
+		cancel:     cancel,
+		pool:       &sync.Pool{},
+		numWorkers: numWorkers,
 	}, nil
+}
+
+// Notify записывает уведомления о статусе выполнения задач горутинами
+func (wp *WorkerPool) Notify(notificationChan chan string) {
+	wp.notificationChan = notificationChan
 }
 
 // worker представляет собой функцию для выполнения заданий воркерами
@@ -83,13 +87,13 @@ func (wp *WorkerPool) worker() {
 		}
 
 		isChecked := !utils.ContainsHelpFlag(job.cmd) && len(job.cmd) != 0
-		if isChecked {
+		if wp.notificationChan != nil && isChecked {
 			wp.notificationChan <- fmt.Sprintf("команда %v начала исполняться", job.cmd)
 		}
 
 		err := job.task()
 
-		if isChecked {
+		if wp.notificationChan != nil && isChecked {
 			str := fmt.Sprintf("команда %v закончила исполняться", job.cmd)
 			if err != nil {
 				str += fmt.Sprintf("с ошибкой: %v", err)
@@ -116,7 +120,6 @@ func (wp *WorkerPool) Start() {
 func (wp *WorkerPool) Stop() {
 	wp.cancel()
 	wp.wg.Wait()
-	close(wp.notificationChan)
 }
 
 // Enqueue добавляет работу в пул

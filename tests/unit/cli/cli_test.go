@@ -9,22 +9,26 @@ import (
 	"github.com/stretchr/testify/suite"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/cli"
 	e "gitlab.ozon.dev/yuweebix/homework-1/internal/cli/errors"
-	"gitlab.ozon.dev/yuweebix/homework-1/internal/cli/mocks"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/models"
+	mocks "gitlab.ozon.dev/yuweebix/homework-1/mocks/cli"
 )
 
 type CLISuite struct {
 	suite.Suite
 }
 
-// TestOrdersSuite запускает все cli unit-тесты
+// TestCLISuite запускает все cli unit-тесты
 func TestCLISuite(t *testing.T) {
 	suite.Run(t, new(CLISuite))
 }
 
 func (s *CLISuite) SetUpTest() (_cli *cli.CLI, _domain *mocks.MockDomain) {
 	_domain = mocks.NewMockDomain(s.T())
-	_cli, err := cli.NewCLI(_domain, "log_text.txt")
+	_producer := mocks.NewMockProducer(s.T())
+
+	_producer.EXPECT().Send(mock.Anything).Return(nil).Maybe()
+
+	_cli, err := cli.NewCLI(_domain, _producer, "log_text.txt")
 	if err != nil {
 		s.FailNowf("could not create cli", err.Error())
 	}
@@ -201,7 +205,7 @@ func (s *CLISuite) TestWorkers_NoFlagArg() {
 
 // unknow command test
 
-func (s *CLISuite) TestWorkers_UknownCommand() {
+func (s *CLISuite) TestUknownCommand() {
 	s.T().Parallel()
 
 	args := []string{"lmao"}
