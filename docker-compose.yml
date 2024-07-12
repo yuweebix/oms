@@ -71,8 +71,6 @@ services:
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
       KAFKA_LOG_DIRS: '/tmp/kraft-combined-logs'
-    networks:
-      - test-network
 
   db_test:
     image: postgres:16
@@ -82,24 +80,8 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}_test
     volumes:
       - db-test-data:/var/lib/postgresql/data
-    networks:
-      - test-network
     ports:
       - "5433:5432"
-
-  app_test:
-    build:
-      context: .
-      dockerfile: test.Dockerfile
-    stdin_open: true
-    environment:
-      - DATABASE_TEST_URL=${DATABASE_TEST_URL}
-      - ENVIRONMENT=docker
-    depends_on:
-      - broker_test
-      - db_test
-    networks:
-      - test-network
 
 volumes:
   db-data:

@@ -9,8 +9,8 @@ import (
 	"github.com/stretchr/testify/suite"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/cli"
 	e "gitlab.ozon.dev/yuweebix/homework-1/internal/cli/errors"
-	"gitlab.ozon.dev/yuweebix/homework-1/internal/cli/mocks"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/models"
+	mocks "gitlab.ozon.dev/yuweebix/homework-1/mocks/cli"
 )
 
 type CLISuite struct {
