@@ -25,6 +25,8 @@ services:
 
   db:
     image: postgres:16
+    hostname: db
+    container_name: db
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -39,7 +41,9 @@ services:
   app:
     build:
       context: .
-      dockerfile: app.Dockerfile
+      dockerfile: Dockerfile
+    hostname: app
+    container_name: app
     stdin_open: true
     environment:
       - DATABASE_URL=${DATABASE_URL}
@@ -74,6 +78,8 @@ services:
 
   db_test:
     image: postgres:16
+    hostname: db_test
+    container_name: db_test
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -87,7 +93,5 @@ volumes:
   db-data:
   db-test-data:
 
-
 networks:
   app-network:
-  test-network:
