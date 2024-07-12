@@ -1,8 +1,10 @@
 include .bin-deps.mk
+include .vendor-proto.mk
 include .env
 
 # СБОРКА
-build: .bin-deps # если уже существет network, то проигнорим ошибку
+build: .bin-deps generate
+# если уже существет network, то проигнорим ошибку
 	-docker network create app-network 2>/dev/null || true 
 	docker-compose build
 
@@ -79,3 +81,6 @@ tests-unit:
 	rm ./tests/unit/cli/log_text.txt
 tests-int: up-db-test up-broker-test
 	go test ./tests/int/... -v 
+
+# gRPC
+generate: .vendor-proto .bin-protoc-deps
