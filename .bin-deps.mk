@@ -27,4 +27,4 @@ PROTOC_ZIP:=$(CURDIR)/protoc-27.2-linux-x86_64.zip
 .protoc:
 	curl -Lo $(PROTOC_ZIP) $(PROTOC_URL)
 	unzip -o $(PROTOC_ZIP)
-	rm -fr $(PROTOC_ZIP) readme.txt include/
+	rm -fr $(PROTOC_ZIP) readme.txt

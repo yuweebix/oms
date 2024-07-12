@@ -7,7 +7,7 @@ RUN apk add --no-cache postgresql-client
 COPY . .
 
 RUN rm Dockerfile docker-compose.yml Makefile example.txt README.md
-RUN rm -fr bin/ /vendor.proto db/ docs/ mocks/ tests/
+RUN rm -fr bin/ include/ vendor.proto/ db/ docs/ mocks/ tests/
 
 RUN go mod download
 

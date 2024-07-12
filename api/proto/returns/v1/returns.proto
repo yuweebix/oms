@@ -1,0 +1,74 @@
+syntax = "proto3";
+
+package orders;
+
+option go_package = "gitlab.ozon.dev/yuweebix/homework-1/pkg/grpc/returns;returns";
+
+import "google/protobuf/timestamp.proto";
+import "google/api/annotations.proto";
+import "google/api/field_behavior.proto";
+import "protoc-gen-openapiv2/options/annotations.proto";
+import "validate/validate.proto";
+
+service Returns {
+  // Accept принимает возврат от клиента
+  rpc Accept(AcceptRequest) returns (AcceptResponse) {
+    option (google.api.http) = {
+      post: "/v1/returns/accept"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Принять возврат от клиента"
+      description: "Используется для принятия возврата заказа от клиента. Возврат может быть принят в течение двух дней с момента выдачи заказа. Заказ должен быть выдан из этого ПВЗ."
+    };
+  }
+
+  // List получает список возвратов
+  rpc List(ListRequest) returns (ListResponse) {
+    option (google.api.http) = {
+      get: "/v1/returns/list"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Получить список возвратов"
+      description: "Используется для получения списка возвратов. Команда возвращает список возвратов с возможностью пагинации."
+    };
+  }
+}
+
+message AcceptRequest {
+  uint64 order_id = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (validate.rules).uint64.gt = 0
+  ];
+  uint64 user_id = 2 [
+    (google.api.field_behavior) = REQUIRED,  
+    (validate.rules).uint64.gt = 0
+  ];
+}
+
+message AcceptResponse {}
+
+message ListRequest {
+  uint64 limit = 1 [
+    (validate.rules).uint64.gte = 0
+  ];
+  uint64 offset = 2 [
+    (validate.rules).uint64.gte = 0
+  ];
+}
+
+message ListResponse {
+  message Order {
+    uint64 order_id = 1;
+    uint64 user_id = 2;
+    google.protobuf.Timestamp expiry = 3;
+    google.protobuf.Timestamp return_by = 4;
+    string status = 5;
+    string hash = 6;
+    google.protobuf.Timestamp created_at = 7;
+    float cost = 8;
+    float weight = 9;
+    string packaging = 10;
+  }
+
+  repeated Order orders = 1;
+}

@@ -83,4 +83,28 @@ tests-int: up-db-test up-broker-test
 	go test ./tests/int/... -v 
 
 # gRPC
-generate: .vendor-proto .bin-protoc-deps
+generate: .vendor-proto .bin-protoc-deps generate-no-deps
+
+generate-no-deps:
+	mkdir -p gen/orders/v1/proto
+	mkdir -p gen/orders/v1/swagger
+	mkdir -p gen/returns/v1/proto
+	mkdir -p gen/returns/v1/swagger
+	$(PROTOC) -I api/proto/orders/v1 \
+		-I vendor.proto \
+		api/proto/orders/v1/orders.proto \
+		--plugin=protoc-gen-go=$(PROTOC_GEN_GO) --go_out=./gen/orders/v1/proto --go_opt=paths=source_relative \
+		--plugin=protoc-gen-go-grpc=$(PROTOC_GEN_GO_GRPC) --go-grpc_out=./gen/orders/v1/proto --go-grpc_opt=paths=source_relative \
+		--plugin=protoc-gen-grpc-gateway=$(PROTOC_GEN_GRPC_GATEWAY) --grpc-gateway_out=./gen/orders/v1/proto --grpc-gateway_opt=paths=source_relative --grpc-gateway_opt=generate_unbound_methods=true \
+		--plugin=protoc-gen-openapiv2=$(PROTOC_GEN_OPENAPI) --openapiv2_out=./gen/orders/v1/swagger \
+		--plugin=protoc-gen-validate=$(PROTOC_GEN_VALIDATE) --validate_out=lang=go,paths=source_relative:./gen/orders/v1/proto \
+		--experimental_allow_proto3_optional=true
+	$(PROTOC) -I api/proto/returns/v1 \
+		-I vendor.proto \
+		api/proto/returns/v1/returns.proto \
+		--plugin=protoc-gen-go=$(PROTOC_GEN_GO) --go_out=./gen/returns/v1/proto --go_opt=paths=source_relative \
+		--plugin=protoc-gen-go-grpc=$(PROTOC_GEN_GO_GRPC) --go-grpc_out=./gen/returns/v1/proto --go-grpc_opt=paths=source_relative \
+		--plugin=protoc-gen-grpc-gateway=$(PROTOC_GEN_GRPC_GATEWAY) --grpc-gateway_out=./gen/returns/v1/proto --grpc-gateway_opt=paths=source_relative --grpc-gateway_opt=generate_unbound_methods=true \
+		--plugin=protoc-gen-openapiv2=$(PROTOC_GEN_OPENAPI) --openapiv2_out=./gen/returns/v1/swagger \
+		--plugin=protoc-gen-validate=$(PROTOC_GEN_VALIDATE) --validate_out=lang=go,paths=source_relative:./gen/returns/v1/proto \
+		--experimental_allow_proto3_optional=true
