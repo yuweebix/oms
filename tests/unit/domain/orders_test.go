@@ -29,7 +29,7 @@ func TestOrdersSuite(t *testing.T) {
 func (s *OrdersSuite) SetUpTest() (_domain *domain.Domain, _storage *mocks.MockStorage, _threading *mocks.MockThreading) {
 	_storage = mocks.NewMockStorage(s.T())
 	_threading = mocks.NewMockThreading(s.T())
-	_domain = domain.NewDomain(_storage, _threading)
+	_domain = domain.NewDomain(_storage)
 	return
 }
 

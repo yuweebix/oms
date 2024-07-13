@@ -23,19 +23,12 @@ type storage interface {
 	RunTx(ctx context.Context, opts models.TxOptions, fn func(ctxTX context.Context) error) error
 }
 
-type threading interface {
-	// рабочие
-	AddWorkers(ctx context.Context, n int) error
-	RemoveWorkers(ctx context.Context, n int) error
-}
-
 // Domain представляет слой бизнес-логики приложения
 type Domain struct {
-	storage   storage
-	threading threading
+	storage storage
 }
 
 // NewDomain конструктор с добавлением зависимостей
-func NewDomain(s storage, m threading) *Domain {
-	return &Domain{storage: s, threading: m}
+func NewDomain(s storage) *Domain {
+	return &Domain{storage: s}
 }
