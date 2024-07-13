@@ -46,7 +46,7 @@ down-broker-test:
 	docker-compose --env-file .env down broker_test
 
 # ПРОЦЕССЫ
-server: up-server # сервер
+server: up-app # сервер
 	docker exec -it app sh -c './main'
 
 sql: up-db # sql-клиент
