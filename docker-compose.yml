@@ -54,8 +54,8 @@ services:
     networks:
       - app-network
     ports:
-      - "32269:32269"
-      - "42069:42069"
+      - "32269:32269" # grpc
+      - "42069:42069" # http
 
   broker_test:
     image: apache/kafka:3.7.1

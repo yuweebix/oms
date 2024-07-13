@@ -28,9 +28,6 @@ import (
 )
 
 const (
-	grpcPort = ":32269"
-	httpPort = ":42069"
-
 	topic   = "api"
 	groupID = "apiID"
 )
@@ -45,6 +42,7 @@ func main() {
 	if err != nil {
 		log.Fatalln(err)
 	}
+
 	connString := os.Getenv("DATABASE_URL")
 	if connString == "" {
 		log.Fatalln("Error reading DATABASE_URL from .env file")
@@ -55,6 +53,15 @@ func main() {
 		log.Fatalln("Error reading BROKERS from .env file")
 	}
 	brokers := strings.Split(brokersStr, ",")
+
+	grpcPort := os.Getenv("GRPC_PORT")
+	if grpcPort == "" {
+		log.Fatalln("Error reading GRPC_PORT from .env file")
+	}
+	httpPort := os.Getenv("HTTP_PORT")
+	if httpPort == "" {
+		log.Fatalln("Error reading HTTP_PORT from .env file")
+	}
 
 	// вг - для горутин + контекст
 	wg := sync.WaitGroup{}
@@ -153,6 +160,7 @@ func main() {
 	for {
 		select {
 		case <-ctx.Done():
+			grpcServer.GracefulStop()
 			if err := producer.Close(); err != nil {
 				log.Println(err)
 			}
