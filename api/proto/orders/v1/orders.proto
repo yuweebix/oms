@@ -48,7 +48,7 @@ service Orders {
   // ReturnOrder возвращает заказ курьеру
   rpc ReturnOrder(ReturnOrderRequest) returns (ReturnOrderResponse) {
     option (google.api.http) = {
-      post: "/v1/orders/return"
+      delete: "/v1/orders/return"
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "Вернуть заказ курьеру"
