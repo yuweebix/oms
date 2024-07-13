@@ -1,8 +1,42 @@
-orders accept -u 1 -e 2024-12-12 -p bag -w 1 -c 100 -o 1
-orders accept -u 1 -e 2024-12-12 -p bag -w 1 -c 100 -o 2
-orders deliver -o 1,2
-orders list -u 1 -l 2
-returns accept -o 1 -u 1
-returns list -l 2
-orders list -u 1 -i true -l 2
-orders return -o 1
+orders.Orders/AcceptOrder:
+{
+    "cost": 100,
+    "expiry": {
+        "nanos": 0,
+        "seconds": "100000000000"
+    },
+    "order_id": "2",
+    "packaging": "bag",
+    "user_id": "1",
+    "weight": 1
+}
+
+orders.Orders/DeliverOrders:
+{
+    "order_ids": [
+        "1",
+        "2"
+    ]
+}
+
+orders.Orders/ListOrders:
+{
+    "limit": "2",
+    "user_id": "1"
+}
+
+orders.Orders/ReturnOrder:
+{
+    "order_id": "2"
+}
+
+returns.Returns/AcceptReturn
+{
+    "order_id": "2",
+    "user_id": "1"
+}
+
+returns.Returns/ListReturns
+{
+    "limit": "2"
+}

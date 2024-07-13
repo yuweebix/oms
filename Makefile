@@ -2,8 +2,11 @@ include .bin-deps.mk
 include .vendor-proto.mk
 include .env
 
+# ЗАВИСИМОСТИ
+deps: .bin-deps .bin-protoc-deps
+
 # СБОРКА
-build: .bin-deps generate
+build:
 # если уже существет network, то проигнорим ошибку
 	-docker network create app-network 2>/dev/null || true 
 	docker-compose build
@@ -67,19 +70,19 @@ shell-broker-test: up-broker-test
 	docker exec -it broker_test sh
 
 # МОКИ
-mocks: .bin-deps
+mocks:
 	$(MOCKERY) --config .mockery.yml
 
 # ТЕСТЫ
-tests: .bin-deps up-db-test up-broker-test
+tests: up-db-test up-broker-test
 	go test ./tests/... -v
-tests-unit: .bin-deps
+tests-unit:
 	go test ./tests/unit/... -v
-tests-int: .bin-deps up-db-test up-broker-test
+tests-int: up-db-test up-broker-test
 	go test ./tests/int/... -v 
 
 # gRPC
-generate: .vendor-proto .bin-protoc-deps generate-no-deps
+generate: .vendor-proto generate-no-deps
 
 generate-no-deps:
 	mkdir -p gen/orders/v1/proto
