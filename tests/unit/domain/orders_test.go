@@ -2,40 +2,16 @@ package domain_test
 
 import (
 	"context"
-	"testing"
 	"time"
 
 	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/suite"
-	"gitlab.ozon.dev/yuweebix/homework-1/internal/domain"
 	e "gitlab.ozon.dev/yuweebix/homework-1/internal/domain/errors"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/models"
-	mocks "gitlab.ozon.dev/yuweebix/homework-1/mocks/domain"
 )
-
-const (
-	day = time.Hour * 24
-)
-
-type OrdersSuite struct {
-	suite.Suite
-}
-
-// TestOrdersSuite запускает все orders unit-тесты
-func TestOrdersSuite(t *testing.T) {
-	suite.Run(t, new(OrdersSuite))
-}
-
-func (s *OrdersSuite) SetUpTest() (_domain *domain.Domain, _storage *mocks.MockStorage, _threading *mocks.MockThreading) {
-	_storage = mocks.NewMockStorage(s.T())
-	_threading = mocks.NewMockThreading(s.T())
-	_domain = domain.NewDomain(_storage)
-	return
-}
 
 // orders accept tests
 
-func (s *OrdersSuite) TestAcceptOrder_Success() {
+func (s *DomainSuite) TestAcceptOrder_Success() {
 	s.T().Parallel()
 
 	order := &models.Order{
@@ -47,7 +23,7 @@ func (s *OrdersSuite) TestAcceptOrder_Success() {
 		Packaging: "box",
 	}
 
-	domain, storage, _ := s.SetUpTest()
+	domain, storage := s.SetUpTest()
 
 	storage.EXPECT().CreateOrder(mock.Anything, mock.Anything).Return(nil)
 
@@ -58,7 +34,7 @@ func (s *OrdersSuite) TestAcceptOrder_Success() {
 	s.NotEmpty(order.Hash)
 }
 
-func (s *OrdersSuite) TestAcceptOrder_Expired() {
+func (s *DomainSuite) TestAcceptOrder_Expired() {
 	s.T().Parallel()
 
 	order := &models.Order{
@@ -70,14 +46,14 @@ func (s *OrdersSuite) TestAcceptOrder_Expired() {
 		Packaging: "box",
 	}
 
-	domain, _, _ := s.SetUpTest()
+	domain, _ := s.SetUpTest()
 
 	err := domain.AcceptOrder(context.Background(), order)
 
 	s.EqualError(err, e.ErrOrderExpired.Error())
 }
 
-func (s *OrdersSuite) TestAcceptOrder_InvalidPackaging() {
+func (s *DomainSuite) TestAcceptOrder_InvalidPackaging() {
 	s.T().Parallel()
 
 	order := &models.Order{
@@ -89,14 +65,14 @@ func (s *OrdersSuite) TestAcceptOrder_InvalidPackaging() {
 		Packaging: "bucket", // https://www.youtube.com/watch?v=L8FmQoSFys0
 	}
 
-	domain, _, _ := s.SetUpTest()
+	domain, _ := s.SetUpTest()
 
 	err := domain.AcceptOrder(context.Background(), order)
 
 	s.EqualError(err, e.ErrPackagingInvalid.Error())
 }
 
-func (s *OrdersSuite) TestAcceptOrder_TooHeavy() {
+func (s *DomainSuite) TestAcceptOrder_TooHeavy() {
 	s.T().Parallel()
 
 	order := &models.Order{
@@ -108,7 +84,7 @@ func (s *OrdersSuite) TestAcceptOrder_TooHeavy() {
 		Packaging: "box",
 	}
 
-	domain, _, _ := s.SetUpTest()
+	domain, _ := s.SetUpTest()
 
 	err := domain.AcceptOrder(context.Background(), order)
 
@@ -117,11 +93,11 @@ func (s *OrdersSuite) TestAcceptOrder_TooHeavy() {
 
 // orders return tests
 
-func (s *OrdersSuite) TestReturnOrder_Success_StatusReturned() {
+func (s *DomainSuite) TestReturnOrder_Success_StatusReturned() {
 
 	order := &models.Order{ID: 1}
 
-	domain, storage, _ := s.SetUpTest()
+	domain, storage := s.SetUpTest()
 
 	storage.EXPECT().RunTx(mock.Anything, mock.Anything, mock.Anything).RunAndReturn(func(ctx context.Context, opts models.TxOptions, fn func(context.Context) error) error {
 		return fn(ctx)
@@ -137,11 +113,11 @@ func (s *OrdersSuite) TestReturnOrder_Success_StatusReturned() {
 	s.NoError(err)
 }
 
-func (s *OrdersSuite) TestReturnOrder_Expired() {
+func (s *DomainSuite) TestReturnOrder_Expired() {
 
 	order := &models.Order{ID: 1}
 
-	domain, storage, _ := s.SetUpTest()
+	domain, storage := s.SetUpTest()
 
 	storage.EXPECT().RunTx(mock.Anything, mock.Anything, mock.Anything).RunAndReturn(func(ctx context.Context, opts models.TxOptions, fn func(context.Context) error) error {
 		return fn(ctx)
@@ -156,11 +132,11 @@ func (s *OrdersSuite) TestReturnOrder_Expired() {
 
 	s.NoError(err)
 }
-func (s *OrdersSuite) TestReturnOrder_NotExpired() {
+func (s *DomainSuite) TestReturnOrder_NotExpired() {
 
 	order := &models.Order{ID: 1}
 
-	domain, storage, _ := s.SetUpTest()
+	domain, storage := s.SetUpTest()
 
 	storage.EXPECT().RunTx(mock.Anything, mock.Anything, mock.Anything).RunAndReturn(func(ctx context.Context, opts models.TxOptions, fn func(context.Context) error) error {
 		return fn(ctx)
@@ -182,7 +158,7 @@ func (s *OrdersSuite) TestReturnOrder_NotExpired() {
 
 // orders deliver tests
 
-func (s *OrdersSuite) TestDeliverOrders_Success() {
+func (s *DomainSuite) TestDeliverOrders_Success() {
 	s.T().Parallel()
 
 	orderIDs := []uint64{1, 2, 3}
@@ -192,7 +168,7 @@ func (s *OrdersSuite) TestDeliverOrders_Success() {
 		{ID: 3, Status: models.StatusAccepted, User: &models.User{ID: 1}, Expiry: time.Now().Add(day)}, // срок хранения не превышен
 	}
 
-	domain, storage, _ := s.SetUpTest()
+	domain, storage := s.SetUpTest()
 
 	storage.EXPECT().RunTx(mock.Anything, mock.Anything, mock.Anything).RunAndReturn(func(ctx context.Context, opts models.TxOptions, fn func(context.Context) error) error {
 		return fn(ctx)
@@ -210,10 +186,10 @@ func (s *OrdersSuite) TestDeliverOrders_Success() {
 	}
 }
 
-func (s *OrdersSuite) TestDeliverOrders_EmptyOrderIDs() {
+func (s *DomainSuite) TestDeliverOrders_EmptyOrderIDs() {
 	s.T().Parallel()
 
-	domain, _, _ := s.SetUpTest()
+	domain, _ := s.SetUpTest()
 
 	err := domain.DeliverOrders(context.Background(), []uint64{}) // пусто...
 
@@ -221,12 +197,12 @@ func (s *OrdersSuite) TestDeliverOrders_EmptyOrderIDs() {
 	s.Equal(e.ErrEmpty, err)
 }
 
-func (s *OrdersSuite) TestDeliverOrders_OrderNotFound() {
+func (s *DomainSuite) TestDeliverOrders_OrderNotFound() {
 	s.T().Parallel()
 
 	orderIDs := []uint64{1, 2, 3}
 
-	domain, storage, _ := s.SetUpTest()
+	domain, storage := s.SetUpTest()
 
 	storage.EXPECT().RunTx(mock.Anything, mock.Anything, mock.Anything).RunAndReturn(func(ctx context.Context, opts models.TxOptions, fn func(context.Context) error) error {
 		return fn(ctx)
@@ -238,7 +214,7 @@ func (s *OrdersSuite) TestDeliverOrders_OrderNotFound() {
 	s.EqualError(err, e.ErrOrderNotFound.Error())
 }
 
-func (s *OrdersSuite) TestDeliverOrders_StatusInvalid() {
+func (s *DomainSuite) TestDeliverOrders_StatusInvalid() {
 	s.T().Parallel()
 
 	orderIDs := []uint64{1}
@@ -246,7 +222,7 @@ func (s *OrdersSuite) TestDeliverOrders_StatusInvalid() {
 		{ID: 1, Status: models.StatusReturned, User: &models.User{ID: 1}, Expiry: time.Now().Add(day)}, // статус не тот
 	}
 
-	domain, storage, _ := s.SetUpTest()
+	domain, storage := s.SetUpTest()
 
 	storage.EXPECT().RunTx(mock.Anything, mock.Anything, mock.Anything).RunAndReturn(func(ctx context.Context, opts models.TxOptions, fn func(context.Context) error) error {
 		return fn(ctx)
@@ -258,7 +234,7 @@ func (s *OrdersSuite) TestDeliverOrders_StatusInvalid() {
 	s.EqualError(err, e.ErrStatusInvalid.Error())
 }
 
-func (s *OrdersSuite) TestDeliverOrders_UserInvalid() {
+func (s *DomainSuite) TestDeliverOrders_UserInvalid() {
 	s.T().Parallel()
 
 	orderIDs := []uint64{1, 2}
@@ -267,7 +243,7 @@ func (s *OrdersSuite) TestDeliverOrders_UserInvalid() {
 		{ID: 2, Status: models.StatusAccepted, User: &models.User{ID: 2}, Expiry: time.Now().Add(day)}, // а мы можем только заказы одному передать
 	}
 
-	domain, storage, _ := s.SetUpTest()
+	domain, storage := s.SetUpTest()
 
 	storage.EXPECT().RunTx(mock.Anything, mock.Anything, mock.Anything).RunAndReturn(func(ctx context.Context, opts models.TxOptions, fn func(context.Context) error) error {
 		return fn(ctx)
@@ -279,7 +255,7 @@ func (s *OrdersSuite) TestDeliverOrders_UserInvalid() {
 	s.EqualError(err, e.ErrUserInvalid.Error())
 }
 
-func (s *OrdersSuite) TestDeliverOrders_OrderExpired() {
+func (s *DomainSuite) TestDeliverOrders_OrderExpired() {
 	s.T().Parallel()
 
 	orderIDs := []uint64{1}
@@ -287,7 +263,7 @@ func (s *OrdersSuite) TestDeliverOrders_OrderExpired() {
 		{ID: 1, Status: models.StatusAccepted, User: &models.User{ID: 1}, Expiry: time.Now().Add(-day)}, // срок превышен
 	}
 
-	domain, storage, _ := s.SetUpTest()
+	domain, storage := s.SetUpTest()
 
 	storage.EXPECT().RunTx(mock.Anything, mock.Anything, mock.Anything).RunAndReturn(func(ctx context.Context, opts models.TxOptions, fn func(context.Context) error) error {
 		return fn(ctx)
