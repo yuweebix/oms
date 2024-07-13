@@ -25,7 +25,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/ordersAcceptResponse"
+              "$ref": "#/definitions/returnsAcceptReturnResponse"
             }
           },
           "default": {
@@ -65,7 +65,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/ordersListResponse"
+              "$ref": "#/definitions/returnsListReturnsResponse"
             }
           },
           "default": {
@@ -98,7 +98,7 @@
     }
   },
   "definitions": {
-    "ListResponseOrder": {
+    "ListReturnsResponseOrder": {
       "type": "object",
       "properties": {
         "orderId": {
@@ -140,21 +140,6 @@
         }
       }
     },
-    "ordersAcceptResponse": {
-      "type": "object"
-    },
-    "ordersListResponse": {
-      "type": "object",
-      "properties": {
-        "orders": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "$ref": "#/definitions/ListResponseOrder"
-          }
-        }
-      }
-    },
     "protobufAny": {
       "type": "object",
       "properties": {
@@ -163,6 +148,21 @@
         }
       },
       "additionalProperties": {}
+    },
+    "returnsAcceptReturnResponse": {
+      "type": "object"
+    },
+    "returnsListReturnsResponse": {
+      "type": "object",
+      "properties": {
+        "orders": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/ListReturnsResponseOrder"
+          }
+        }
+      }
     },
     "rpcStatus": {
       "type": "object",

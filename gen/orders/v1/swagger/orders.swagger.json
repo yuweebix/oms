@@ -25,7 +25,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/ordersAcceptResponse"
+              "$ref": "#/definitions/ordersAcceptOrderResponse"
             }
           },
           "default": {
@@ -92,7 +92,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/ordersDeliverResponse"
+              "$ref": "#/definitions/ordersDeliverOrdersResponse"
             }
           },
           "default": {
@@ -129,7 +129,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/ordersListResponse"
+              "$ref": "#/definitions/ordersListOrdersResponse"
             }
           },
           "default": {
@@ -182,7 +182,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/ordersReturnResponse"
+              "$ref": "#/definitions/ordersReturnOrderResponse"
             }
           },
           "default": {
@@ -208,7 +208,7 @@
     }
   },
   "definitions": {
-    "ListResponseOrder": {
+    "ListOrdersResponseOrder": {
       "type": "object",
       "properties": {
         "orderId": {
@@ -250,25 +250,25 @@
         }
       }
     },
-    "ordersAcceptResponse": {
+    "ordersAcceptOrderResponse": {
       "type": "object"
     },
-    "ordersDeliverResponse": {
+    "ordersDeliverOrdersResponse": {
       "type": "object"
     },
-    "ordersListResponse": {
+    "ordersListOrdersResponse": {
       "type": "object",
       "properties": {
         "orders": {
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/ListResponseOrder"
+            "$ref": "#/definitions/ListOrdersResponseOrder"
           }
         }
       }
     },
-    "ordersReturnResponse": {
+    "ordersReturnOrderResponse": {
       "type": "object"
     },
     "protobufAny": {

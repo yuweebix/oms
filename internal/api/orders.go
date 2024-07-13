@@ -12,7 +12,7 @@ import (
 )
 
 // AcceptOrder реализует метод /v1/orders/accept
-func (api *API) AcceptOrder(ctx context.Context, req *orders.AcceptRequest) (resp *orders.AcceptResponse, err error) {
+func (api *API) AcceptOrder(ctx context.Context, req *orders.AcceptOrderRequest) (resp *orders.AcceptOrderResponse, err error) {
 	// составляем сообщения, что пойдет в брокер
 	msg, err := getMessage(ctx, req.ProtoReflect())
 	if err != nil {
@@ -53,11 +53,11 @@ func (api *API) AcceptOrder(ctx context.Context, req *orders.AcceptRequest) (res
 		return nil, status.Error((codes.Internal), err.Error())
 	}
 
-	return &orders.AcceptResponse{}, nil
+	return &orders.AcceptOrderResponse{}, nil
 }
 
 // DeliverOrders реализует метод /v1/orders/deliver
-func (api *API) DeliverOrders(ctx context.Context, req *orders.DeliverRequest) (resp *orders.DeliverResponse, err error) {
+func (api *API) DeliverOrders(ctx context.Context, req *orders.DeliverOrdersRequest) (resp *orders.DeliverOrdersResponse, err error) {
 	// составляем сообщения, что пойдет в брокер
 	msg, err := getMessage(ctx, req.ProtoReflect())
 	if err != nil {
@@ -91,11 +91,11 @@ func (api *API) DeliverOrders(ctx context.Context, req *orders.DeliverRequest) (
 		return nil, status.Error((codes.Internal), err.Error())
 	}
 
-	return &orders.DeliverResponse{}, nil
+	return &orders.DeliverOrdersResponse{}, nil
 }
 
 // ListOrders реализует метод /v1/orders/list
-func (api *API) ListOrders(ctx context.Context, req *orders.ListRequest) (resp *orders.ListResponse, err error) {
+func (api *API) ListOrders(ctx context.Context, req *orders.ListOrdersRequest) (resp *orders.ListOrdersResponse, err error) {
 	// составляем сообщения, что пойдет в брокер
 	msg, err := getMessage(ctx, req.ProtoReflect())
 	if err != nil {
@@ -130,9 +130,9 @@ func (api *API) ListOrders(ctx context.Context, req *orders.ListRequest) (resp *
 	}
 
 	// переведём в вид респоса
-	listResp := make([]*orders.ListResponse_Order, 0, len(list))
+	listResp := make([]*orders.ListOrdersResponse_Order, 0, len(list))
 	for _, m := range list {
-		listResp = append(listResp, &orders.ListResponse_Order{
+		listResp = append(listResp, &orders.ListOrdersResponse_Order{
 			OrderId:   m.ID,
 			UserId:    m.User.ID,
 			Expiry:    timestamppb.New(m.Expiry),
@@ -152,13 +152,13 @@ func (api *API) ListOrders(ctx context.Context, req *orders.ListRequest) (resp *
 		return nil, status.Error((codes.Internal), err.Error())
 	}
 
-	return &orders.ListResponse{
+	return &orders.ListOrdersResponse{
 		Orders: listResp,
 	}, nil
 }
 
 // ReturnOrder реализует метод /v1/orders/return
-func (api *API) ReturnOrder(ctx context.Context, req *orders.ReturnRequest) (resp *orders.ReturnResponse, err error) {
+func (api *API) ReturnOrder(ctx context.Context, req *orders.ReturnOrderRequest) (resp *orders.ReturnOrderResponse, err error) {
 	// составляем сообщения, что пойдет в брокер
 	msg, err := getMessage(ctx, req.ProtoReflect())
 	if err != nil {
@@ -192,5 +192,5 @@ func (api *API) ReturnOrder(ctx context.Context, req *orders.ReturnRequest) (res
 		return nil, status.Error((codes.Internal), err.Error())
 	}
 
-	return &orders.ReturnResponse{}, nil
+	return &orders.ReturnOrderResponse{}, nil
 }

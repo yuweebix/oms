@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package orders;
+package returns;
 
 option go_package = "gitlab.ozon.dev/yuweebix/homework-1/pkg/grpc/returns;returns";
 
@@ -12,7 +12,7 @@ import "validate/validate.proto";
 
 service Returns {
   // AcceptReturn принимает возврат от клиента
-  rpc AcceptReturn(AcceptRequest) returns (AcceptResponse) {
+  rpc AcceptReturn(AcceptReturnRequest) returns (AcceptReturnResponse) {
     option (google.api.http) = {
       post: "/v1/returns/accept"
     };
@@ -23,7 +23,7 @@ service Returns {
   }
 
   // ListReturns получает список возвратов
-  rpc ListReturns(ListRequest) returns (ListResponse) {
+  rpc ListReturns(ListReturnsRequest) returns (ListReturnsResponse) {
     option (google.api.http) = {
       get: "/v1/returns/list"
     };
@@ -34,7 +34,7 @@ service Returns {
   }
 }
 
-message AcceptRequest {
+message AcceptReturnRequest {
   uint64 order_id = 1 [
     (google.api.field_behavior) = REQUIRED,
     (validate.rules).uint64.gt = 0
@@ -45,9 +45,9 @@ message AcceptRequest {
   ];
 }
 
-message AcceptResponse {}
+message AcceptReturnResponse {}
 
-message ListRequest {
+message ListReturnsRequest {
   uint64 limit = 1 [
     (validate.rules).uint64.gte = 0
   ];
@@ -56,7 +56,7 @@ message ListRequest {
   ];
 }
 
-message ListResponse {
+message ListReturnsResponse {
   message Order {
     uint64 order_id = 1;
     uint64 user_id = 2;

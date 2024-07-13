@@ -36,7 +36,7 @@ var (
 )
 
 func request_Orders_AcceptOrder_0(ctx context.Context, marshaler runtime.Marshaler, client OrdersClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq AcceptRequest
+	var protoReq AcceptOrderRequest
 	var metadata runtime.ServerMetadata
 
 	if err := req.ParseForm(); err != nil {
@@ -52,7 +52,7 @@ func request_Orders_AcceptOrder_0(ctx context.Context, marshaler runtime.Marshal
 }
 
 func local_request_Orders_AcceptOrder_0(ctx context.Context, marshaler runtime.Marshaler, server OrdersServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq AcceptRequest
+	var protoReq AcceptOrderRequest
 	var metadata runtime.ServerMetadata
 
 	if err := req.ParseForm(); err != nil {
@@ -72,7 +72,7 @@ var (
 )
 
 func request_Orders_DeliverOrders_0(ctx context.Context, marshaler runtime.Marshaler, client OrdersClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq DeliverRequest
+	var protoReq DeliverOrdersRequest
 	var metadata runtime.ServerMetadata
 
 	if err := req.ParseForm(); err != nil {
@@ -88,7 +88,7 @@ func request_Orders_DeliverOrders_0(ctx context.Context, marshaler runtime.Marsh
 }
 
 func local_request_Orders_DeliverOrders_0(ctx context.Context, marshaler runtime.Marshaler, server OrdersServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq DeliverRequest
+	var protoReq DeliverOrdersRequest
 	var metadata runtime.ServerMetadata
 
 	if err := req.ParseForm(); err != nil {
@@ -108,7 +108,7 @@ var (
 )
 
 func request_Orders_ListOrders_0(ctx context.Context, marshaler runtime.Marshaler, client OrdersClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq ListRequest
+	var protoReq ListOrdersRequest
 	var metadata runtime.ServerMetadata
 
 	if err := req.ParseForm(); err != nil {
@@ -124,7 +124,7 @@ func request_Orders_ListOrders_0(ctx context.Context, marshaler runtime.Marshale
 }
 
 func local_request_Orders_ListOrders_0(ctx context.Context, marshaler runtime.Marshaler, server OrdersServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq ListRequest
+	var protoReq ListOrdersRequest
 	var metadata runtime.ServerMetadata
 
 	if err := req.ParseForm(); err != nil {
@@ -144,7 +144,7 @@ var (
 )
 
 func request_Orders_ReturnOrder_0(ctx context.Context, marshaler runtime.Marshaler, client OrdersClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq ReturnRequest
+	var protoReq ReturnOrderRequest
 	var metadata runtime.ServerMetadata
 
 	if err := req.ParseForm(); err != nil {
@@ -160,7 +160,7 @@ func request_Orders_ReturnOrder_0(ctx context.Context, marshaler runtime.Marshal
 }
 
 func local_request_Orders_ReturnOrder_0(ctx context.Context, marshaler runtime.Marshaler, server OrdersServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq ReturnRequest
+	var protoReq ReturnOrderRequest
 	var metadata runtime.ServerMetadata
 
 	if err := req.ParseForm(); err != nil {

@@ -36,7 +36,7 @@ var (
 )
 
 func request_Returns_AcceptReturn_0(ctx context.Context, marshaler runtime.Marshaler, client ReturnsClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq AcceptRequest
+	var protoReq AcceptReturnRequest
 	var metadata runtime.ServerMetadata
 
 	if err := req.ParseForm(); err != nil {
@@ -52,7 +52,7 @@ func request_Returns_AcceptReturn_0(ctx context.Context, marshaler runtime.Marsh
 }
 
 func local_request_Returns_AcceptReturn_0(ctx context.Context, marshaler runtime.Marshaler, server ReturnsServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq AcceptRequest
+	var protoReq AcceptReturnRequest
 	var metadata runtime.ServerMetadata
 
 	if err := req.ParseForm(); err != nil {
@@ -72,7 +72,7 @@ var (
 )
 
 func request_Returns_ListReturns_0(ctx context.Context, marshaler runtime.Marshaler, client ReturnsClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq ListRequest
+	var protoReq ListReturnsRequest
 	var metadata runtime.ServerMetadata
 
 	if err := req.ParseForm(); err != nil {
@@ -88,7 +88,7 @@ func request_Returns_ListReturns_0(ctx context.Context, marshaler runtime.Marsha
 }
 
 func local_request_Returns_ListReturns_0(ctx context.Context, marshaler runtime.Marshaler, server ReturnsServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq ListRequest
+	var protoReq ListReturnsRequest
 	var metadata runtime.ServerMetadata
 
 	if err := req.ParseForm(); err != nil {
@@ -117,7 +117,7 @@ func RegisterReturnsHandlerServer(ctx context.Context, mux *runtime.ServeMux, se
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/orders.Returns/AcceptReturn", runtime.WithHTTPPathPattern("/v1/returns/accept"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/returns.Returns/AcceptReturn", runtime.WithHTTPPathPattern("/v1/returns/accept"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -142,7 +142,7 @@ func RegisterReturnsHandlerServer(ctx context.Context, mux *runtime.ServeMux, se
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/orders.Returns/ListReturns", runtime.WithHTTPPathPattern("/v1/returns/list"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/returns.Returns/ListReturns", runtime.WithHTTPPathPattern("/v1/returns/list"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -206,7 +206,7 @@ func RegisterReturnsHandlerClient(ctx context.Context, mux *runtime.ServeMux, cl
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/orders.Returns/AcceptReturn", runtime.WithHTTPPathPattern("/v1/returns/accept"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/returns.Returns/AcceptReturn", runtime.WithHTTPPathPattern("/v1/returns/accept"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -228,7 +228,7 @@ func RegisterReturnsHandlerClient(ctx context.Context, mux *runtime.ServeMux, cl
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/orders.Returns/ListReturns", runtime.WithHTTPPathPattern("/v1/returns/list"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/returns.Returns/ListReturns", runtime.WithHTTPPathPattern("/v1/returns/list"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return

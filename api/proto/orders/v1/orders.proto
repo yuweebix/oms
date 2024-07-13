@@ -12,7 +12,7 @@ import "validate/validate.proto";
 
 service Orders {
   // AcceptOrder принимает заказ от курьера
-  rpc AcceptOrder(AcceptRequest) returns (AcceptResponse) {
+  rpc AcceptOrder(AcceptOrderRequest) returns (AcceptOrderResponse) {
     option (google.api.http) = {
       post: "/v1/orders/accept"
     };
@@ -24,7 +24,7 @@ service Orders {
   }
 
   // DeliverOrders выдаёт заказы клиенту
-  rpc DeliverOrders(DeliverRequest) returns (DeliverResponse) {
+  rpc DeliverOrders(DeliverOrdersRequest) returns (DeliverOrdersResponse) {
     option (google.api.http) = {
       post: "/v1/orders/deliver"
     };
@@ -35,7 +35,7 @@ service Orders {
   }
 
   // ListOrders получает список заказов
-  rpc ListOrders(ListRequest) returns (ListResponse) {
+  rpc ListOrders(ListOrdersRequest) returns (ListOrdersResponse) {
     option (google.api.http) = {
       get: "/v1/orders/list"
     };
@@ -46,7 +46,7 @@ service Orders {
   }
 
   // ReturnOrder возвращает заказ курьеру
-  rpc ReturnOrder(ReturnRequest) returns (ReturnResponse) {
+  rpc ReturnOrder(ReturnOrderRequest) returns (ReturnOrderResponse) {
     option (google.api.http) = {
       post: "/v1/orders/return"
     };
@@ -57,7 +57,7 @@ service Orders {
   }
 }
 
-message AcceptRequest {
+message AcceptOrderRequest {
   uint64 order_id = 1 [
     (google.api.field_behavior) = REQUIRED,
     (validate.rules).uint64.gt = 0
@@ -80,22 +80,22 @@ message AcceptRequest {
   ];
   string packaging = 6 [
     (google.api.field_behavior) = REQUIRED,
-    (validate.rules).string.in = "bag,wrap,box"
+    (validate.rules).string = {in: ["bag", "wrap", "box"]}
   ];
 }
 
-message AcceptResponse {}
+message AcceptOrderResponse {}
 
-message DeliverRequest {
+message DeliverOrdersRequest {
   repeated uint64 order_ids = 1 [
     (google.api.field_behavior) = REQUIRED,
     (validate.rules).repeated.min_items = 1
   ];
 }
 
-message DeliverResponse {}
+message DeliverOrdersResponse {}
 
-message ListRequest {
+message ListOrdersRequest {
   uint64 user_id = 1 [
     (google.api.field_behavior) = REQUIRED,
     (validate.rules).uint64.gt = 0
@@ -109,7 +109,7 @@ message ListRequest {
   bool is_stored = 4;
 }
 
-message ListResponse {
+message ListOrdersResponse {
   message Order {
     uint64 order_id = 1;
     uint64 user_id = 2;
@@ -126,11 +126,11 @@ message ListResponse {
   repeated Order orders = 1;
 }
 
-message ReturnRequest {
+message ReturnOrderRequest {
   uint64 order_id = 1 [
     (google.api.field_behavior) = REQUIRED,  
     (validate.rules).uint64.gt = 0
   ];
 }
 
-message ReturnResponse {}
+message ReturnOrderResponse {}

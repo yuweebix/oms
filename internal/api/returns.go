@@ -12,7 +12,7 @@ import (
 )
 
 // AcceptReturn реализует метод /v1/returns/accept
-func (api *API) AcceptReturn(ctx context.Context, req *returns.AcceptRequest) (resp *returns.AcceptResponse, err error) {
+func (api *API) AcceptReturn(ctx context.Context, req *returns.AcceptReturnRequest) (resp *returns.AcceptReturnResponse, err error) {
 	// составляем сообщения, что пойдет в брокер
 	msg, err := getMessage(ctx, req.ProtoReflect())
 	if err != nil {
@@ -49,11 +49,11 @@ func (api *API) AcceptReturn(ctx context.Context, req *returns.AcceptRequest) (r
 		return nil, status.Error((codes.Internal), err.Error())
 	}
 
-	return &returns.AcceptResponse{}, nil
+	return &returns.AcceptReturnResponse{}, nil
 }
 
 // ListReturn реализует метод /v1/returns/accept
-func (api *API) ListReturns(ctx context.Context, req *returns.ListRequest) (resp *returns.ListResponse, err error) {
+func (api *API) ListReturns(ctx context.Context, req *returns.ListReturnsRequest) (resp *returns.ListReturnsResponse, err error) {
 	// составляем сообщения, что пойдет в брокер
 	msg, err := getMessage(ctx, req.ProtoReflect())
 	if err != nil {
@@ -82,9 +82,9 @@ func (api *API) ListReturns(ctx context.Context, req *returns.ListRequest) (resp
 	}
 
 	// переведём в вид респоса
-	listResp := make([]*returns.ListResponse_Order, 0, len(list))
+	listResp := make([]*returns.ListReturnsResponse_Order, 0, len(list))
 	for _, m := range list {
-		listResp = append(listResp, &returns.ListResponse_Order{
+		listResp = append(listResp, &returns.ListReturnsResponse_Order{
 			OrderId:   m.ID,
 			UserId:    m.User.ID,
 			Expiry:    timestamppb.New(m.Expiry),
@@ -104,5 +104,5 @@ func (api *API) ListReturns(ctx context.Context, req *returns.ListRequest) (resp
 		return nil, status.Error((codes.Internal), err.Error())
 	}
 
-	return &returns.ListResponse{Orders: listResp}, nil
+	return &returns.ListReturnsResponse{Orders: listResp}, nil
 }
