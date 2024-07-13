@@ -67,15 +67,15 @@ shell-broker-test: up-broker-test
 	docker exec -it broker_test sh
 
 # МОКИ
-mocks:
+mocks: .bin-deps
 	$(MOCKERY) --config .mockery.yml
 
 # ТЕСТЫ
-tests: up-db-test up-broker-test
+tests: .bin-deps up-db-test up-broker-test
 	go test ./tests/... -v
-tests-unit:
+tests-unit: .bin-deps
 	go test ./tests/unit/... -v
-tests-int: up-db-test up-broker-test
+tests-int: .bin-deps up-db-test up-broker-test
 	go test ./tests/int/... -v 
 
 # gRPC
