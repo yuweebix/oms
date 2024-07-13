@@ -11,4 +11,4 @@ RUN rm -fr bin/ include/ vendor.proto/ db/ docs/ mocks/ tests/
 
 RUN go mod download
 
-RUN CGO_ENABLED=0 GOOS=linux go build -o main ./cmd/main.go
+RUN CGO_ENABLED=0 GOOS=linux go build -o main ./cmd/server/main.go

@@ -53,6 +53,9 @@ services:
       - db
     networks:
       - app-network
+    ports:
+      - "32269:32269"
+      - "42069:42069"
 
   broker_test:
     image: apache/kafka:3.7.1

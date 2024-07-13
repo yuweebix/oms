@@ -46,16 +46,13 @@ down-broker-test:
 	docker-compose --env-file .env down broker_test
 
 # ПРОЦЕССЫ
-cli: up-app # утилита
+server: up-server # сервер
 	docker exec -it app sh -c './main'
 
 sql: up-db # sql-клиент
 	docker exec -it db sh -c 'psql -U $(POSTGRES_USER) -d $(POSTGRES_DB)'
 sql-test: up-db-test # sql-клиент для тестов
 	docker exec -it db_test sh -c 'psql -U $(POSTGRES_USER) -d $(POSTGRES_DB)_test'
-
-log: up-app # логгер
-	-docker exec -it app tail -f ./log.txt
 
 # SHELL
 shell-app: up-app
@@ -78,7 +75,6 @@ tests: up-db-test up-broker-test
 	go test ./tests/... -v
 tests-unit:
 	go test ./tests/unit/... -v
-	rm ./tests/unit/cli/log_text.txt
 tests-int: up-db-test up-broker-test
 	go test ./tests/int/... -v 
 
