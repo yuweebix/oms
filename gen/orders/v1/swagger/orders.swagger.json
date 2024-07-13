@@ -62,14 +62,14 @@
             "in": "query",
             "required": true,
             "type": "number",
-            "format": "float"
+            "format": "double"
           },
           {
             "name": "weight",
             "in": "query",
             "required": true,
             "type": "number",
-            "format": "float"
+            "format": "double"
           },
           {
             "name": "packaging",
@@ -87,7 +87,7 @@
       "post": {
         "summary": "Выдать заказы клиенту",
         "description": "Используется для выдачи заказов клиенту. Все заказы должны принадлежать одному клиенту и быть приняты от курьера. Срок хранения заказов должен быть больше текущей даты.",
-        "operationId": "Orders_Deliver",
+        "operationId": "Orders_DeliverOrders",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -124,7 +124,7 @@
       "get": {
         "summary": "Получить список заказов",
         "description": "Используется для получения списка заказов. Команда возвращает заказы клиента, которые находятся в ПВЗ, с возможностью ограничить количество возвращаемых заказов и задать смещение.",
-        "operationId": "Orders_List",
+        "operationId": "Orders_ListOrders",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -177,7 +177,7 @@
       "post": {
         "summary": "Вернуть заказ курьеру",
         "description": "Используется для возврата заказа курьеру. Заказ может быть возвращен только если истек срок хранения и он не был выдан клиенту.",
-        "operationId": "Orders_Return",
+        "operationId": "Orders_ReturnOrder",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -239,11 +239,11 @@
         },
         "cost": {
           "type": "number",
-          "format": "float"
+          "format": "double"
         },
         "weight": {
           "type": "number",
-          "format": "float"
+          "format": "double"
         },
         "packaging": {
           "type": "string"

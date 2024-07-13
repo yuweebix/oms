@@ -20,7 +20,7 @@
       "post": {
         "summary": "Принять возврат от клиента",
         "description": "Используется для принятия возврата заказа от клиента. Возврат может быть принят в течение двух дней с момента выдачи заказа. Заказ должен быть выдан из этого ПВЗ.",
-        "operationId": "Returns_Accept",
+        "operationId": "Returns_AcceptReturn",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -60,7 +60,7 @@
       "get": {
         "summary": "Получить список возвратов",
         "description": "Используется для получения списка возвратов. Команда возвращает список возвратов с возможностью пагинации.",
-        "operationId": "Returns_List",
+        "operationId": "Returns_ListReturns",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -129,11 +129,11 @@
         },
         "cost": {
           "type": "number",
-          "format": "float"
+          "format": "double"
         },
         "weight": {
           "type": "number",
-          "format": "float"
+          "format": "double"
         },
         "packaging": {
           "type": "string"

@@ -32,73 +32,73 @@ var _ = utilities.NewDoubleArray
 var _ = metadata.Join
 
 var (
-	filter_Returns_Accept_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
+	filter_Returns_AcceptReturn_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
 )
 
-func request_Returns_Accept_0(ctx context.Context, marshaler runtime.Marshaler, client ReturnsClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func request_Returns_AcceptReturn_0(ctx context.Context, marshaler runtime.Marshaler, client ReturnsClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq AcceptRequest
 	var metadata runtime.ServerMetadata
 
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_Returns_Accept_0); err != nil {
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_Returns_AcceptReturn_0); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
-	msg, err := client.Accept(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	msg, err := client.AcceptReturn(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
 
 }
 
-func local_request_Returns_Accept_0(ctx context.Context, marshaler runtime.Marshaler, server ReturnsServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func local_request_Returns_AcceptReturn_0(ctx context.Context, marshaler runtime.Marshaler, server ReturnsServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq AcceptRequest
 	var metadata runtime.ServerMetadata
 
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_Returns_Accept_0); err != nil {
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_Returns_AcceptReturn_0); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
-	msg, err := server.Accept(ctx, &protoReq)
+	msg, err := server.AcceptReturn(ctx, &protoReq)
 	return msg, metadata, err
 
 }
 
 var (
-	filter_Returns_List_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
+	filter_Returns_ListReturns_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
 )
 
-func request_Returns_List_0(ctx context.Context, marshaler runtime.Marshaler, client ReturnsClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func request_Returns_ListReturns_0(ctx context.Context, marshaler runtime.Marshaler, client ReturnsClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq ListRequest
 	var metadata runtime.ServerMetadata
 
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_Returns_List_0); err != nil {
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_Returns_ListReturns_0); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
-	msg, err := client.List(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	msg, err := client.ListReturns(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
 
 }
 
-func local_request_Returns_List_0(ctx context.Context, marshaler runtime.Marshaler, server ReturnsServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func local_request_Returns_ListReturns_0(ctx context.Context, marshaler runtime.Marshaler, server ReturnsServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq ListRequest
 	var metadata runtime.ServerMetadata
 
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_Returns_List_0); err != nil {
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_Returns_ListReturns_0); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
-	msg, err := server.List(ctx, &protoReq)
+	msg, err := server.ListReturns(ctx, &protoReq)
 	return msg, metadata, err
 
 }
@@ -109,7 +109,7 @@ func local_request_Returns_List_0(ctx context.Context, marshaler runtime.Marshal
 // Note that using this registration option will cause many gRPC library features to stop working. Consider using RegisterReturnsHandlerFromEndpoint instead.
 func RegisterReturnsHandlerServer(ctx context.Context, mux *runtime.ServeMux, server ReturnsServer) error {
 
-	mux.Handle("POST", pattern_Returns_Accept_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_Returns_AcceptReturn_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
@@ -117,12 +117,12 @@ func RegisterReturnsHandlerServer(ctx context.Context, mux *runtime.ServeMux, se
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/orders.Returns/Accept", runtime.WithHTTPPathPattern("/v1/returns/accept"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/orders.Returns/AcceptReturn", runtime.WithHTTPPathPattern("/v1/returns/accept"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_Returns_Accept_0(annotatedContext, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_Returns_AcceptReturn_0(annotatedContext, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {
@@ -130,11 +130,11 @@ func RegisterReturnsHandlerServer(ctx context.Context, mux *runtime.ServeMux, se
 			return
 		}
 
-		forward_Returns_Accept_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_Returns_AcceptReturn_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("GET", pattern_Returns_List_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_Returns_ListReturns_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
@@ -142,12 +142,12 @@ func RegisterReturnsHandlerServer(ctx context.Context, mux *runtime.ServeMux, se
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/orders.Returns/List", runtime.WithHTTPPathPattern("/v1/returns/list"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/orders.Returns/ListReturns", runtime.WithHTTPPathPattern("/v1/returns/list"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_Returns_List_0(annotatedContext, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_Returns_ListReturns_0(annotatedContext, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {
@@ -155,7 +155,7 @@ func RegisterReturnsHandlerServer(ctx context.Context, mux *runtime.ServeMux, se
 			return
 		}
 
-		forward_Returns_List_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_Returns_ListReturns_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -200,47 +200,47 @@ func RegisterReturnsHandler(ctx context.Context, mux *runtime.ServeMux, conn *gr
 // "ReturnsClient" to call the correct interceptors.
 func RegisterReturnsHandlerClient(ctx context.Context, mux *runtime.ServeMux, client ReturnsClient) error {
 
-	mux.Handle("POST", pattern_Returns_Accept_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_Returns_AcceptReturn_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/orders.Returns/Accept", runtime.WithHTTPPathPattern("/v1/returns/accept"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/orders.Returns/AcceptReturn", runtime.WithHTTPPathPattern("/v1/returns/accept"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_Returns_Accept_0(annotatedContext, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_Returns_AcceptReturn_0(annotatedContext, inboundMarshaler, client, req, pathParams)
 		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_Returns_Accept_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_Returns_AcceptReturn_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("GET", pattern_Returns_List_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_Returns_ListReturns_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/orders.Returns/List", runtime.WithHTTPPathPattern("/v1/returns/list"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/orders.Returns/ListReturns", runtime.WithHTTPPathPattern("/v1/returns/list"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_Returns_List_0(annotatedContext, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_Returns_ListReturns_0(annotatedContext, inboundMarshaler, client, req, pathParams)
 		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_Returns_List_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_Returns_ListReturns_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -248,13 +248,13 @@ func RegisterReturnsHandlerClient(ctx context.Context, mux *runtime.ServeMux, cl
 }
 
 var (
-	pattern_Returns_Accept_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "returns", "accept"}, ""))
+	pattern_Returns_AcceptReturn_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "returns", "accept"}, ""))
 
-	pattern_Returns_List_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "returns", "list"}, ""))
+	pattern_Returns_ListReturns_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "returns", "list"}, ""))
 )
 
 var (
-	forward_Returns_Accept_0 = runtime.ForwardResponseMessage
+	forward_Returns_AcceptReturn_0 = runtime.ForwardResponseMessage
 
-	forward_Returns_List_0 = runtime.ForwardResponseMessage
+	forward_Returns_ListReturns_0 = runtime.ForwardResponseMessage
 )

@@ -11,8 +11,8 @@ import "protoc-gen-openapiv2/options/annotations.proto";
 import "validate/validate.proto";
 
 service Orders {
-  // Accept принимает заказ от курьера
-  rpc Accept(AcceptRequest) returns (AcceptResponse) {
+  // AcceptOrder принимает заказ от курьера
+  rpc AcceptOrder(AcceptRequest) returns (AcceptResponse) {
     option (google.api.http) = {
       post: "/v1/orders/accept"
     };
@@ -23,8 +23,8 @@ service Orders {
     };
   }
 
-  // Deliver выдаёт заказы клиенту
-  rpc Deliver(DeliverRequest) returns (DeliverResponse) {
+  // DeliverOrders выдаёт заказы клиенту
+  rpc DeliverOrders(DeliverRequest) returns (DeliverResponse) {
     option (google.api.http) = {
       post: "/v1/orders/deliver"
     };
@@ -34,8 +34,8 @@ service Orders {
     };
   }
 
-  // List получает список заказов
-  rpc List(ListRequest) returns (ListResponse) {
+  // ListOrders получает список заказов
+  rpc ListOrders(ListRequest) returns (ListResponse) {
     option (google.api.http) = {
       get: "/v1/orders/list"
     };
@@ -45,8 +45,8 @@ service Orders {
     };
   }
 
-  // Return возвращает заказ курьеру
-  rpc Return(ReturnRequest) returns (ReturnResponse) {
+  // ReturnOrder возвращает заказ курьеру
+  rpc ReturnOrder(ReturnRequest) returns (ReturnResponse) {
     option (google.api.http) = {
       post: "/v1/orders/return"
     };
@@ -70,13 +70,13 @@ message AcceptRequest {
     (google.api.field_behavior) = REQUIRED,
     (validate.rules).timestamp.gt = { seconds: 0 }
   ];
-  float cost = 4 [
+  double cost = 4 [
     (google.api.field_behavior) = REQUIRED,
-    (validate.rules).float.gt = 0
+    (validate.rules).double.gt = 0
   ];
-  float weight = 5 [
+  double weight = 5 [
     (google.api.field_behavior) = REQUIRED,
-    (validate.rules).float.gt = 0
+    (validate.rules).double.gt = 0
   ];
   string packaging = 6 [
     (google.api.field_behavior) = REQUIRED,
@@ -118,8 +118,8 @@ message ListResponse {
     string status = 5;
     string hash = 6;
     google.protobuf.Timestamp created_at = 7;
-    float cost = 8;
-    float weight = 9;
+    double cost = 8;
+    double weight = 9;
     string packaging = 10;
   }
 

@@ -19,18 +19,18 @@ import (
 const _ = grpc.SupportPackageIsVersion8
 
 const (
-	Returns_Accept_FullMethodName = "/orders.Returns/Accept"
-	Returns_List_FullMethodName   = "/orders.Returns/List"
+	Returns_AcceptReturn_FullMethodName = "/orders.Returns/AcceptReturn"
+	Returns_ListReturns_FullMethodName  = "/orders.Returns/ListReturns"
 )
 
 // ReturnsClient is the client API for Returns service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ReturnsClient interface {
-	// Accept принимает возврат от клиента
-	Accept(ctx context.Context, in *AcceptRequest, opts ...grpc.CallOption) (*AcceptResponse, error)
-	// List получает список возвратов
-	List(ctx context.Context, in *ListRequest, opts ...grpc.CallOption) (*ListResponse, error)
+	// AcceptReturn принимает возврат от клиента
+	AcceptReturn(ctx context.Context, in *AcceptRequest, opts ...grpc.CallOption) (*AcceptResponse, error)
+	// ListReturns получает список возвратов
+	ListReturns(ctx context.Context, in *ListRequest, opts ...grpc.CallOption) (*ListResponse, error)
 }
 
 type returnsClient struct {
@@ -41,20 +41,20 @@ func NewReturnsClient(cc grpc.ClientConnInterface) ReturnsClient {
 	return &returnsClient{cc}
 }
 
-func (c *returnsClient) Accept(ctx context.Context, in *AcceptRequest, opts ...grpc.CallOption) (*AcceptResponse, error) {
+func (c *returnsClient) AcceptReturn(ctx context.Context, in *AcceptRequest, opts ...grpc.CallOption) (*AcceptResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(AcceptResponse)
-	err := c.cc.Invoke(ctx, Returns_Accept_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, Returns_AcceptReturn_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *returnsClient) List(ctx context.Context, in *ListRequest, opts ...grpc.CallOption) (*ListResponse, error) {
+func (c *returnsClient) ListReturns(ctx context.Context, in *ListRequest, opts ...grpc.CallOption) (*ListResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ListResponse)
-	err := c.cc.Invoke(ctx, Returns_List_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, Returns_ListReturns_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -65,10 +65,10 @@ func (c *returnsClient) List(ctx context.Context, in *ListRequest, opts ...grpc.
 // All implementations must embed UnimplementedReturnsServer
 // for forward compatibility
 type ReturnsServer interface {
-	// Accept принимает возврат от клиента
-	Accept(context.Context, *AcceptRequest) (*AcceptResponse, error)
-	// List получает список возвратов
-	List(context.Context, *ListRequest) (*ListResponse, error)
+	// AcceptReturn принимает возврат от клиента
+	AcceptReturn(context.Context, *AcceptRequest) (*AcceptResponse, error)
+	// ListReturns получает список возвратов
+	ListReturns(context.Context, *ListRequest) (*ListResponse, error)
 	mustEmbedUnimplementedReturnsServer()
 }
 
@@ -76,11 +76,11 @@ type ReturnsServer interface {
 type UnimplementedReturnsServer struct {
 }
 
-func (UnimplementedReturnsServer) Accept(context.Context, *AcceptRequest) (*AcceptResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Accept not implemented")
+func (UnimplementedReturnsServer) AcceptReturn(context.Context, *AcceptRequest) (*AcceptResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AcceptReturn not implemented")
 }
-func (UnimplementedReturnsServer) List(context.Context, *ListRequest) (*ListResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method List not implemented")
+func (UnimplementedReturnsServer) ListReturns(context.Context, *ListRequest) (*ListResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListReturns not implemented")
 }
 func (UnimplementedReturnsServer) mustEmbedUnimplementedReturnsServer() {}
 
@@ -95,38 +95,38 @@ func RegisterReturnsServer(s grpc.ServiceRegistrar, srv ReturnsServer) {
 	s.RegisterService(&Returns_ServiceDesc, srv)
 }
 
-func _Returns_Accept_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Returns_AcceptReturn_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(AcceptRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ReturnsServer).Accept(ctx, in)
+		return srv.(ReturnsServer).AcceptReturn(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Returns_Accept_FullMethodName,
+		FullMethod: Returns_AcceptReturn_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ReturnsServer).Accept(ctx, req.(*AcceptRequest))
+		return srv.(ReturnsServer).AcceptReturn(ctx, req.(*AcceptRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Returns_List_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Returns_ListReturns_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ListRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ReturnsServer).List(ctx, in)
+		return srv.(ReturnsServer).ListReturns(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Returns_List_FullMethodName,
+		FullMethod: Returns_ListReturns_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ReturnsServer).List(ctx, req.(*ListRequest))
+		return srv.(ReturnsServer).ListReturns(ctx, req.(*ListRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -139,12 +139,12 @@ var Returns_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*ReturnsServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "Accept",
-			Handler:    _Returns_Accept_Handler,
+			MethodName: "AcceptReturn",
+			Handler:    _Returns_AcceptReturn_Handler,
 		},
 		{
-			MethodName: "List",
-			Handler:    _Returns_List_Handler,
+			MethodName: "ListReturns",
+			Handler:    _Returns_ListReturns_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

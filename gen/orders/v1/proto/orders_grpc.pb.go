@@ -19,24 +19,24 @@ import (
 const _ = grpc.SupportPackageIsVersion8
 
 const (
-	Orders_Accept_FullMethodName  = "/orders.Orders/Accept"
-	Orders_Deliver_FullMethodName = "/orders.Orders/Deliver"
-	Orders_List_FullMethodName    = "/orders.Orders/List"
-	Orders_Return_FullMethodName  = "/orders.Orders/Return"
+	Orders_AcceptOrder_FullMethodName   = "/orders.Orders/AcceptOrder"
+	Orders_DeliverOrders_FullMethodName = "/orders.Orders/DeliverOrders"
+	Orders_ListOrders_FullMethodName    = "/orders.Orders/ListOrders"
+	Orders_ReturnOrder_FullMethodName   = "/orders.Orders/ReturnOrder"
 )
 
 // OrdersClient is the client API for Orders service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type OrdersClient interface {
-	// Accept принимает заказ от курьера
-	Accept(ctx context.Context, in *AcceptRequest, opts ...grpc.CallOption) (*AcceptResponse, error)
-	// Deliver выдаёт заказы клиенту
-	Deliver(ctx context.Context, in *DeliverRequest, opts ...grpc.CallOption) (*DeliverResponse, error)
-	// List получает список заказов
-	List(ctx context.Context, in *ListRequest, opts ...grpc.CallOption) (*ListResponse, error)
-	// Return возвращает заказ курьеру
-	Return(ctx context.Context, in *ReturnRequest, opts ...grpc.CallOption) (*ReturnResponse, error)
+	// AcceptOrder принимает заказ от курьера
+	AcceptOrder(ctx context.Context, in *AcceptRequest, opts ...grpc.CallOption) (*AcceptResponse, error)
+	// DeliverOrders выдаёт заказы клиенту
+	DeliverOrders(ctx context.Context, in *DeliverRequest, opts ...grpc.CallOption) (*DeliverResponse, error)
+	// ListOrders получает список заказов
+	ListOrders(ctx context.Context, in *ListRequest, opts ...grpc.CallOption) (*ListResponse, error)
+	// ReturnOrder возвращает заказ курьеру
+	ReturnOrder(ctx context.Context, in *ReturnRequest, opts ...grpc.CallOption) (*ReturnResponse, error)
 }
 
 type ordersClient struct {
@@ -47,40 +47,40 @@ func NewOrdersClient(cc grpc.ClientConnInterface) OrdersClient {
 	return &ordersClient{cc}
 }
 
-func (c *ordersClient) Accept(ctx context.Context, in *AcceptRequest, opts ...grpc.CallOption) (*AcceptResponse, error) {
+func (c *ordersClient) AcceptOrder(ctx context.Context, in *AcceptRequest, opts ...grpc.CallOption) (*AcceptResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(AcceptResponse)
-	err := c.cc.Invoke(ctx, Orders_Accept_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, Orders_AcceptOrder_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *ordersClient) Deliver(ctx context.Context, in *DeliverRequest, opts ...grpc.CallOption) (*DeliverResponse, error) {
+func (c *ordersClient) DeliverOrders(ctx context.Context, in *DeliverRequest, opts ...grpc.CallOption) (*DeliverResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(DeliverResponse)
-	err := c.cc.Invoke(ctx, Orders_Deliver_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, Orders_DeliverOrders_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *ordersClient) List(ctx context.Context, in *ListRequest, opts ...grpc.CallOption) (*ListResponse, error) {
+func (c *ordersClient) ListOrders(ctx context.Context, in *ListRequest, opts ...grpc.CallOption) (*ListResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ListResponse)
-	err := c.cc.Invoke(ctx, Orders_List_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, Orders_ListOrders_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *ordersClient) Return(ctx context.Context, in *ReturnRequest, opts ...grpc.CallOption) (*ReturnResponse, error) {
+func (c *ordersClient) ReturnOrder(ctx context.Context, in *ReturnRequest, opts ...grpc.CallOption) (*ReturnResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ReturnResponse)
-	err := c.cc.Invoke(ctx, Orders_Return_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, Orders_ReturnOrder_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -91,14 +91,14 @@ func (c *ordersClient) Return(ctx context.Context, in *ReturnRequest, opts ...gr
 // All implementations must embed UnimplementedOrdersServer
 // for forward compatibility
 type OrdersServer interface {
-	// Accept принимает заказ от курьера
-	Accept(context.Context, *AcceptRequest) (*AcceptResponse, error)
-	// Deliver выдаёт заказы клиенту
-	Deliver(context.Context, *DeliverRequest) (*DeliverResponse, error)
-	// List получает список заказов
-	List(context.Context, *ListRequest) (*ListResponse, error)
-	// Return возвращает заказ курьеру
-	Return(context.Context, *ReturnRequest) (*ReturnResponse, error)
+	// AcceptOrder принимает заказ от курьера
+	AcceptOrder(context.Context, *AcceptRequest) (*AcceptResponse, error)
+	// DeliverOrders выдаёт заказы клиенту
+	DeliverOrders(context.Context, *DeliverRequest) (*DeliverResponse, error)
+	// ListOrders получает список заказов
+	ListOrders(context.Context, *ListRequest) (*ListResponse, error)
+	// ReturnOrder возвращает заказ курьеру
+	ReturnOrder(context.Context, *ReturnRequest) (*ReturnResponse, error)
 	mustEmbedUnimplementedOrdersServer()
 }
 
@@ -106,17 +106,17 @@ type OrdersServer interface {
 type UnimplementedOrdersServer struct {
 }
 
-func (UnimplementedOrdersServer) Accept(context.Context, *AcceptRequest) (*AcceptResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Accept not implemented")
+func (UnimplementedOrdersServer) AcceptOrder(context.Context, *AcceptRequest) (*AcceptResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AcceptOrder not implemented")
 }
-func (UnimplementedOrdersServer) Deliver(context.Context, *DeliverRequest) (*DeliverResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Deliver not implemented")
+func (UnimplementedOrdersServer) DeliverOrders(context.Context, *DeliverRequest) (*DeliverResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeliverOrders not implemented")
 }
-func (UnimplementedOrdersServer) List(context.Context, *ListRequest) (*ListResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method List not implemented")
+func (UnimplementedOrdersServer) ListOrders(context.Context, *ListRequest) (*ListResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListOrders not implemented")
 }
-func (UnimplementedOrdersServer) Return(context.Context, *ReturnRequest) (*ReturnResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Return not implemented")
+func (UnimplementedOrdersServer) ReturnOrder(context.Context, *ReturnRequest) (*ReturnResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ReturnOrder not implemented")
 }
 func (UnimplementedOrdersServer) mustEmbedUnimplementedOrdersServer() {}
 
@@ -131,74 +131,74 @@ func RegisterOrdersServer(s grpc.ServiceRegistrar, srv OrdersServer) {
 	s.RegisterService(&Orders_ServiceDesc, srv)
 }
 
-func _Orders_Accept_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Orders_AcceptOrder_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(AcceptRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(OrdersServer).Accept(ctx, in)
+		return srv.(OrdersServer).AcceptOrder(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Orders_Accept_FullMethodName,
+		FullMethod: Orders_AcceptOrder_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(OrdersServer).Accept(ctx, req.(*AcceptRequest))
+		return srv.(OrdersServer).AcceptOrder(ctx, req.(*AcceptRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Orders_Deliver_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Orders_DeliverOrders_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(DeliverRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(OrdersServer).Deliver(ctx, in)
+		return srv.(OrdersServer).DeliverOrders(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Orders_Deliver_FullMethodName,
+		FullMethod: Orders_DeliverOrders_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(OrdersServer).Deliver(ctx, req.(*DeliverRequest))
+		return srv.(OrdersServer).DeliverOrders(ctx, req.(*DeliverRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Orders_List_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Orders_ListOrders_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ListRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(OrdersServer).List(ctx, in)
+		return srv.(OrdersServer).ListOrders(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Orders_List_FullMethodName,
+		FullMethod: Orders_ListOrders_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(OrdersServer).List(ctx, req.(*ListRequest))
+		return srv.(OrdersServer).ListOrders(ctx, req.(*ListRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Orders_Return_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Orders_ReturnOrder_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ReturnRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(OrdersServer).Return(ctx, in)
+		return srv.(OrdersServer).ReturnOrder(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Orders_Return_FullMethodName,
+		FullMethod: Orders_ReturnOrder_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(OrdersServer).Return(ctx, req.(*ReturnRequest))
+		return srv.(OrdersServer).ReturnOrder(ctx, req.(*ReturnRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -211,20 +211,20 @@ var Orders_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*OrdersServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "Accept",
-			Handler:    _Orders_Accept_Handler,
+			MethodName: "AcceptOrder",
+			Handler:    _Orders_AcceptOrder_Handler,
 		},
 		{
-			MethodName: "Deliver",
-			Handler:    _Orders_Deliver_Handler,
+			MethodName: "DeliverOrders",
+			Handler:    _Orders_DeliverOrders_Handler,
 		},
 		{
-			MethodName: "List",
-			Handler:    _Orders_List_Handler,
+			MethodName: "ListOrders",
+			Handler:    _Orders_ListOrders_Handler,
 		},
 		{
-			MethodName: "Return",
-			Handler:    _Orders_Return_Handler,
+			MethodName: "ReturnOrder",
+			Handler:    _Orders_ReturnOrder_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

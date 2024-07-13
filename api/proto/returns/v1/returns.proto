@@ -11,8 +11,8 @@ import "protoc-gen-openapiv2/options/annotations.proto";
 import "validate/validate.proto";
 
 service Returns {
-  // Accept принимает возврат от клиента
-  rpc Accept(AcceptRequest) returns (AcceptResponse) {
+  // AcceptReturn принимает возврат от клиента
+  rpc AcceptReturn(AcceptRequest) returns (AcceptResponse) {
     option (google.api.http) = {
       post: "/v1/returns/accept"
     };
@@ -22,8 +22,8 @@ service Returns {
     };
   }
 
-  // List получает список возвратов
-  rpc List(ListRequest) returns (ListResponse) {
+  // ListReturns получает список возвратов
+  rpc ListReturns(ListRequest) returns (ListResponse) {
     option (google.api.http) = {
       get: "/v1/returns/list"
     };
@@ -65,8 +65,8 @@ message ListResponse {
     string status = 5;
     string hash = 6;
     google.protobuf.Timestamp created_at = 7;
-    float cost = 8;
-    float weight = 9;
+    double cost = 8;
+    double weight = 9;
     string packaging = 10;
   }
 
