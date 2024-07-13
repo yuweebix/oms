@@ -1,8 +1,8 @@
 with-expecter: true
 packages:
-  gitlab.ozon.dev/yuweebix/homework-1/internal/cli:
+  gitlab.ozon.dev/yuweebix/homework-1/internal/api:
     config:
-      dir: ./mocks/cli
+      dir: ./mocks/api
     interfaces:
       domain:
         config:
