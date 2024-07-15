@@ -36,9 +36,9 @@ func (s *APISuite) SetupSuite() {
 	}
 
 	// сначала нужно порт получить
-	s.port = os.Getenv("GRPC_PORT")
+	s.port = os.Getenv("GRPC_TEST_PORT")
 	if s.port == "" {
-		log.Fatalln("Error reading GRPC_PORT from .env file")
+		log.Fatalln("Error reading GRPC_TEST_PORT from .env file")
 	}
 
 	// domain + mock expectations
