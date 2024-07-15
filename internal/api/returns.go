@@ -82,7 +82,21 @@ func (api *API) ListReturns(ctx context.Context, req *returns.ListReturnsRequest
 	}
 
 	// переведём в вид респоса
-	listResp := make([]*returns.ListReturnsResponse_Order, 0, len(list))
+	listResp := fromModelsOrderForListReturns(list)
+
+	// отправляем сообщение в брокер
+	err = api.producer.Send(msg)
+	if err != nil {
+		return nil, status.Error((codes.Internal), err.Error())
+	}
+
+	return &returns.ListReturnsResponse{Orders: listResp}, nil
+}
+
+// хелпер-функции для преобразования
+
+func fromModelsOrderForListReturns(list []*models.Order) (listResp []*returns.ListReturnsResponse_Order) {
+	listResp = make([]*returns.ListReturnsResponse_Order, 0, len(list))
 	for _, m := range list {
 		listResp = append(listResp, &returns.ListReturnsResponse_Order{
 			OrderId:   m.ID,
@@ -98,11 +112,5 @@ func (api *API) ListReturns(ctx context.Context, req *returns.ListReturnsRequest
 		})
 	}
 
-	// отправляем сообщение в брокер
-	err = api.producer.Send(msg)
-	if err != nil {
-		return nil, status.Error((codes.Internal), err.Error())
-	}
-
-	return &returns.ListReturnsResponse{Orders: listResp}, nil
+	return listResp
 }

@@ -32,14 +32,7 @@ func (api *API) AcceptOrder(ctx context.Context, req *orders.AcceptOrderRequest)
 	}
 
 	// проход в БЛ
-	err = api.domain.AcceptOrder(ctx, &models.Order{
-		ID:        req.GetOrderId(),
-		User:      &models.User{ID: req.GetUserId()},
-		Expiry:    req.GetExpiry().AsTime(),
-		Cost:      utils.ConvertToMicrocurrency(req.GetCost()),
-		Weight:    req.GetWeight(),
-		Packaging: models.PackagingType(req.GetPackaging().String()),
-	})
+	err = api.domain.AcceptOrder(ctx, toModelsOrderForAcceptOrder(req))
 	if err != nil {
 		if err := api.producer.Send(models.MessageWithError{Message: msg, Error: err.Error()}); err != nil {
 			return nil, status.Error(codes.Internal, err.Error())
@@ -130,21 +123,7 @@ func (api *API) ListOrders(ctx context.Context, req *orders.ListOrdersRequest) (
 	}
 
 	// переведём в вид респонса
-	listResp := make([]*orders.ListOrdersResponse_Order, 0, len(list))
-	for _, m := range list {
-		listResp = append(listResp, &orders.ListOrdersResponse_Order{
-			OrderId:   m.ID,
-			UserId:    m.User.ID,
-			Expiry:    timestamppb.New(m.Expiry),
-			ReturnBy:  timestamppb.New(m.ReturnBy),
-			Status:    orders.Status(orders.Status_value[string(m.Status)]),
-			Hash:      m.Hash,
-			CreatedAt: timestamppb.New(m.CreatedAt),
-			Cost:      utils.ConvertFromMicrocurrency(m.Cost),
-			Weight:    m.Weight,
-			Packaging: orders.PackagingType(orders.PackagingType_value[string(m.Packaging)]),
-		})
-	}
+	listResp := fromModelsOrderForListOrders(list)
 
 	// отправляем сообщение в брокер
 	err = api.producer.Send(msg)
@@ -193,4 +172,37 @@ func (api *API) ReturnOrder(ctx context.Context, req *orders.ReturnOrderRequest)
 	}
 
 	return &orders.ReturnOrderResponse{}, nil
+}
+
+// хелпер-функции для преобразования
+
+func toModelsOrderForAcceptOrder(req *orders.AcceptOrderRequest) *models.Order {
+	return &models.Order{
+		ID:        req.GetOrderId(),
+		User:      &models.User{ID: req.GetUserId()},
+		Expiry:    req.GetExpiry().AsTime(),
+		Cost:      utils.ConvertToMicrocurrency(req.GetCost()),
+		Weight:    req.GetWeight(),
+		Packaging: models.PackagingType(req.GetPackaging().String()),
+	}
+}
+
+func fromModelsOrderForListOrders(list []*models.Order) (listResp []*orders.ListOrdersResponse_Order) {
+	listResp = make([]*orders.ListOrdersResponse_Order, 0, len(list))
+	for _, m := range list {
+		listResp = append(listResp, &orders.ListOrdersResponse_Order{
+			OrderId:   m.ID,
+			UserId:    m.User.ID,
+			Expiry:    timestamppb.New(m.Expiry),
+			ReturnBy:  timestamppb.New(m.ReturnBy),
+			Status:    orders.Status(orders.Status_value[string(m.Status)]),
+			Hash:      m.Hash,
+			CreatedAt: timestamppb.New(m.CreatedAt),
+			Cost:      utils.ConvertFromMicrocurrency(m.Cost),
+			Weight:    m.Weight,
+			Packaging: orders.PackagingType(orders.PackagingType_value[string(m.Packaging)]),
+		})
+	}
+
+	return listResp
 }
