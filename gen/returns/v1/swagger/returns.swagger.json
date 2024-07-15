@@ -186,23 +186,23 @@
     "returnsPackagingType": {
       "type": "string",
       "enum": [
-        "unknown_packaging",
-        "bag",
-        "wrap",
-        "box"
+        "PACKAGING_UNSPECIFIED",
+        "PACKAGING_BAG",
+        "PACKAGING_BOX",
+        "PACKAGING_WRAP"
       ],
-      "default": "unknown_packaging"
+      "default": "PACKAGING_UNSPECIFIED"
     },
     "returnsStatus": {
       "type": "string",
       "enum": [
-        "unknown_status",
-        "pending",
-        "accepted",
-        "delivered",
-        "returned"
+        "STATUS_UNSPECIFIED",
+        "STATUS_PENDING",
+        "STATUS_ACCEPTED",
+        "STATUS_DELIVERED",
+        "STATUS_RETURNED"
       ],
-      "default": "unknown_status"
+      "default": "STATUS_UNSPECIFIED"
     }
   }
 }

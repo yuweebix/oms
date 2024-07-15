@@ -77,12 +77,12 @@
             "required": true,
             "type": "string",
             "enum": [
-              "unknown_packaging",
-              "bag",
-              "wrap",
-              "box"
+              "PACKAGING_UNSPECIFIED",
+              "PACKAGING_BAG",
+              "PACKAGING_WRAP",
+              "PACKAGING_BOX"
             ],
-            "default": "unknown_packaging"
+            "default": "PACKAGING_UNSPECIFIED"
           }
         ],
         "tags": [
@@ -297,12 +297,12 @@
     "ordersPackagingType": {
       "type": "string",
       "enum": [
-        "unknown_packaging",
-        "bag",
-        "wrap",
-        "box"
+        "PACKAGING_UNSPECIFIED",
+        "PACKAGING_BAG",
+        "PACKAGING_WRAP",
+        "PACKAGING_BOX"
       ],
-      "default": "unknown_packaging"
+      "default": "PACKAGING_UNSPECIFIED"
     },
     "ordersReturnOrderResponse": {
       "type": "object"
@@ -310,13 +310,13 @@
     "ordersStatus": {
       "type": "string",
       "enum": [
-        "unknown_status",
-        "pending",
-        "accepted",
-        "delivered",
-        "returned"
+        "STATUS_UNSPECIFIED",
+        "STATUS_PENDING",
+        "STATUS_ACCEPTED",
+        "STATUS_DELIVERED",
+        "STATUS_RETURNED"
       ],
-      "default": "unknown_status"
+      "default": "STATUS_UNSPECIFIED"
     },
     "protobufAny": {
       "type": "object",

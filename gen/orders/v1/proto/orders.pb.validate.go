@@ -134,7 +134,7 @@ func (m *AcceptOrderRequest) validate(all bool) error {
 	if _, ok := _AcceptOrderRequest_Packaging_NotInLookup[m.GetPackaging()]; ok {
 		err := AcceptOrderRequestValidationError{
 			field:  "Packaging",
-			reason: "value must not be in list [unknown_packaging]",
+			reason: "value must not be in list [PACKAGING_UNSPECIFIED]",
 		}
 		if !all {
 			return err

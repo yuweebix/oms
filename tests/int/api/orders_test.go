@@ -26,7 +26,7 @@ func (s *APISuite) TestAcceptOrder_Validation() {
 				Expiry:    timestamppb.New(time.Date(10000, 0, 0, 0, 0, 0, 0, time.UTC)),
 				Cost:      1,
 				Weight:    1,
-				Packaging: orders.PackagingType_bag,
+				Packaging: orders.PackagingType_PACKAGING_BAG,
 			},
 		},
 		{
@@ -37,7 +37,7 @@ func (s *APISuite) TestAcceptOrder_Validation() {
 				Expiry:    timestamppb.New(time.Date(10000, 0, 0, 0, 0, 0, 0, time.UTC)),
 				Cost:      1,
 				Weight:    1,
-				Packaging: orders.PackagingType_bag,
+				Packaging: orders.PackagingType_PACKAGING_BAG,
 			},
 		},
 		{
@@ -48,7 +48,7 @@ func (s *APISuite) TestAcceptOrder_Validation() {
 				Expiry:    timestamppb.New(time.Date(10000, 0, 0, 0, 0, 0, 0, time.UTC)),
 				Cost:      0,
 				Weight:    1,
-				Packaging: orders.PackagingType_bag,
+				Packaging: orders.PackagingType_PACKAGING_BAG,
 			},
 		},
 		{
@@ -59,7 +59,7 @@ func (s *APISuite) TestAcceptOrder_Validation() {
 				Expiry:    timestamppb.New(time.Date(10000, 0, 0, 0, 0, 0, 0, time.UTC)),
 				Cost:      1,
 				Weight:    0,
-				Packaging: orders.PackagingType_bag,
+				Packaging: orders.PackagingType_PACKAGING_BAG,
 			},
 		},
 		{
@@ -70,7 +70,7 @@ func (s *APISuite) TestAcceptOrder_Validation() {
 				Expiry:    timestamppb.New(time.Date(10000, 0, 0, 0, 0, 0, 0, time.UTC)),
 				Cost:      1,
 				Weight:    1,
-				Packaging: orders.PackagingType_unknown_packaging,
+				Packaging: orders.PackagingType_PACKAGING_UNSPECIFIED,
 			},
 		},
 	}
@@ -182,7 +182,7 @@ func (s *APISuite) TestAcceptOrder_Success() {
 		Expiry:    timestamppb.New(time.Date(10000, 0, 0, 0, 0, 0, 0, time.UTC)),
 		Cost:      1,
 		Weight:    1,
-		Packaging: orders.PackagingType_bag,
+		Packaging: orders.PackagingType_PACKAGING_BAG,
 	}
 
 	conn := s.GetClientConn()
