@@ -16,7 +16,7 @@ func (api *API) AcceptOrder(ctx context.Context, req *orders.AcceptOrderRequest)
 	// составляем сообщения, что пойдет в брокер
 	msg, err := getMessage(ctx, req.ProtoReflect())
 	if err != nil {
-		if err := api.producer.Send(models.MessageWithError{Message: msg, Error: err.Error()}); err != nil {
+		if err := api.logger.Send(models.MessageWithError{Message: msg, Error: err.Error()}); err != nil {
 			return nil, status.Error(codes.Internal, err.Error())
 		}
 		return nil, status.Error(codes.Internal, err.Error())
@@ -25,23 +25,23 @@ func (api *API) AcceptOrder(ctx context.Context, req *orders.AcceptOrderRequest)
 	// валидация заданного в прото контракте
 	err = req.ValidateAll()
 	if err != nil {
-		if err := api.producer.Send(models.MessageWithError{Message: msg, Error: err.Error()}); err != nil {
+		if err := api.logger.Send(models.MessageWithError{Message: msg, Error: err.Error()}); err != nil {
 			return nil, status.Error(codes.Internal, err.Error())
 		}
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
 	// проход в БЛ
-	err = api.domain.AcceptOrder(ctx, toModelsOrderForAcceptOrder(req))
+	err = api.service.AcceptOrder(ctx, toModelsOrderForAcceptOrder(req))
 	if err != nil {
-		if err := api.producer.Send(models.MessageWithError{Message: msg, Error: err.Error()}); err != nil {
+		if err := api.logger.Send(models.MessageWithError{Message: msg, Error: err.Error()}); err != nil {
 			return nil, status.Error(codes.Internal, err.Error())
 		}
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
 	// отправляем сообщение в брокер
-	err = api.producer.Send(msg)
+	err = api.logger.Send(msg)
 	if err != nil {
 		return nil, status.Error((codes.Internal), err.Error())
 	}
@@ -54,7 +54,7 @@ func (api *API) DeliverOrders(ctx context.Context, req *orders.DeliverOrdersRequ
 	// составляем сообщения, что пойдет в брокер
 	msg, err := getMessage(ctx, req.ProtoReflect())
 	if err != nil {
-		if err := api.producer.Send(models.MessageWithError{Message: msg, Error: err.Error()}); err != nil {
+		if err := api.logger.Send(models.MessageWithError{Message: msg, Error: err.Error()}); err != nil {
 			return nil, status.Error(codes.Internal, err.Error())
 		}
 		return nil, status.Error(codes.Internal, err.Error())
@@ -63,23 +63,23 @@ func (api *API) DeliverOrders(ctx context.Context, req *orders.DeliverOrdersRequ
 	// валидация заданного в прото контракте
 	err = req.ValidateAll()
 	if err != nil {
-		if err := api.producer.Send(models.MessageWithError{Message: msg, Error: err.Error()}); err != nil {
+		if err := api.logger.Send(models.MessageWithError{Message: msg, Error: err.Error()}); err != nil {
 			return nil, status.Error(codes.Internal, err.Error())
 		}
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
 	// проход в БЛ
-	err = api.domain.DeliverOrders(ctx, req.GetOrderIds())
+	err = api.service.DeliverOrders(ctx, req.GetOrderIds())
 	if err != nil {
-		if err := api.producer.Send(models.MessageWithError{Message: msg, Error: err.Error()}); err != nil {
+		if err := api.logger.Send(models.MessageWithError{Message: msg, Error: err.Error()}); err != nil {
 			return nil, status.Error(codes.Internal, err.Error())
 		}
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
 	// отправляем сообщение в брокер
-	err = api.producer.Send(msg)
+	err = api.logger.Send(msg)
 	if err != nil {
 		return nil, status.Error((codes.Internal), err.Error())
 	}
@@ -92,7 +92,7 @@ func (api *API) ListOrders(ctx context.Context, req *orders.ListOrdersRequest) (
 	// составляем сообщения, что пойдет в брокер
 	msg, err := getMessage(ctx, req.ProtoReflect())
 	if err != nil {
-		if err := api.producer.Send(models.MessageWithError{Message: msg, Error: err.Error()}); err != nil {
+		if err := api.logger.Send(models.MessageWithError{Message: msg, Error: err.Error()}); err != nil {
 			return nil, status.Error(codes.Internal, err.Error())
 		}
 		return nil, status.Error(codes.Internal, err.Error())
@@ -101,14 +101,14 @@ func (api *API) ListOrders(ctx context.Context, req *orders.ListOrdersRequest) (
 	// валидация заданного в прото контракте
 	err = req.ValidateAll()
 	if err != nil {
-		if err := api.producer.Send(models.MessageWithError{Message: msg, Error: err.Error()}); err != nil {
+		if err := api.logger.Send(models.MessageWithError{Message: msg, Error: err.Error()}); err != nil {
 			return nil, status.Error(codes.Internal, err.Error())
 		}
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
 	// проход в БЛ
-	list, err := api.domain.ListOrders(
+	list, err := api.service.ListOrders(
 		ctx,
 		req.GetUserId(),
 		req.GetLimit(),
@@ -116,7 +116,7 @@ func (api *API) ListOrders(ctx context.Context, req *orders.ListOrdersRequest) (
 		req.GetIsStored(),
 	)
 	if err != nil {
-		if err := api.producer.Send(models.MessageWithError{Message: msg, Error: err.Error()}); err != nil {
+		if err := api.logger.Send(models.MessageWithError{Message: msg, Error: err.Error()}); err != nil {
 			return nil, status.Error(codes.Internal, err.Error())
 		}
 		return nil, status.Error(codes.Internal, err.Error())
@@ -126,7 +126,7 @@ func (api *API) ListOrders(ctx context.Context, req *orders.ListOrdersRequest) (
 	listResp := fromModelsOrderForListOrders(list)
 
 	// отправляем сообщение в брокер
-	err = api.producer.Send(msg)
+	err = api.logger.Send(msg)
 	if err != nil {
 		return nil, status.Error((codes.Internal), err.Error())
 	}
@@ -141,7 +141,7 @@ func (api *API) ReturnOrder(ctx context.Context, req *orders.ReturnOrderRequest)
 	// составляем сообщения, что пойдет в брокер
 	msg, err := getMessage(ctx, req.ProtoReflect())
 	if err != nil {
-		if err := api.producer.Send(models.MessageWithError{Message: msg, Error: err.Error()}); err != nil {
+		if err := api.logger.Send(models.MessageWithError{Message: msg, Error: err.Error()}); err != nil {
 			return nil, status.Error(codes.Internal, err.Error())
 		}
 		return nil, status.Error(codes.Internal, err.Error())
@@ -150,23 +150,23 @@ func (api *API) ReturnOrder(ctx context.Context, req *orders.ReturnOrderRequest)
 	// валидация заданного в прото контракте
 	err = req.ValidateAll()
 	if err != nil {
-		if err := api.producer.Send(models.MessageWithError{Message: msg, Error: err.Error()}); err != nil {
+		if err := api.logger.Send(models.MessageWithError{Message: msg, Error: err.Error()}); err != nil {
 			return nil, status.Error(codes.Internal, err.Error())
 		}
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
 	// проход в БЛ
-	err = api.domain.ReturnOrder(ctx, &models.Order{ID: req.GetOrderId()})
+	err = api.service.ReturnOrder(ctx, &models.Order{ID: req.GetOrderId()})
 	if err != nil {
-		if err := api.producer.Send(models.MessageWithError{Message: msg, Error: err.Error()}); err != nil {
+		if err := api.logger.Send(models.MessageWithError{Message: msg, Error: err.Error()}); err != nil {
 			return nil, status.Error(codes.Internal, err.Error())
 		}
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
 	// отправляем сообщение в брокер
-	err = api.producer.Send(msg)
+	err = api.logger.Send(msg)
 	if err != nil {
 		return nil, status.Error((codes.Internal), err.Error())
 	}

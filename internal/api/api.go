@@ -15,8 +15,8 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
-// domain интерфейс необходимых CLI функций для реализации сервисом
-type domain interface {
+// service интерфейс необходимых CLI функций для реализации сервисом
+type service interface {
 	// заказы
 	AcceptOrder(ctx context.Context, o *models.Order) error                                                             // логика принятия заказа от курьера
 	ReturnOrder(ctx context.Context, o *models.Order) error                                                             // логика возврата просроченного заказа курьеру
@@ -28,24 +28,24 @@ type domain interface {
 	ListReturns(ctx context.Context, limit uint64, offset uint64) ([]*models.Order, error) // логика вывода возвратов
 }
 
-// producer интерфейс для производства сообщений в брокер сообщений (кафку)
-type producer interface {
+// logger интерфейс для производства сообщений в брокер сообщений (кафку)
+type logger interface {
 	Send(message any) error
 }
 
 // API представляет слой API
 type API struct {
-	domain   domain
-	producer producer
+	service service
+	logger  logger
 	orders.UnimplementedOrdersServer
 	returns.UnimplementedReturnsServer
 }
 
 // NewAPI конструктор с добавлением зависимостей
-func NewAPI(d domain, p producer) (api *API) {
+func NewAPI(s service, l logger) (api *API) {
 	api = &API{
-		domain:   d,
-		producer: p,
+		service: s,
+		logger:  l,
 	}
 
 	return api
