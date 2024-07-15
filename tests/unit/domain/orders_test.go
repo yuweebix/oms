@@ -20,7 +20,7 @@ func (s *DomainSuite) TestAcceptOrder_Success() {
 		Expiry:    time.Now().Add(day),
 		Cost:      1,
 		Weight:    1,
-		Packaging: "box",
+		Packaging: "PACKAGING_BOX",
 	}
 
 	domain, storage := s.SetUpTest()
@@ -43,7 +43,7 @@ func (s *DomainSuite) TestAcceptOrder_Expired() {
 		Expiry:    time.Now().Add(-day), // срок хранения превышен
 		Cost:      1,
 		Weight:    1,
-		Packaging: "box",
+		Packaging: "PACKAGING_BOX",
 	}
 
 	domain, _ := s.SetUpTest()
@@ -81,7 +81,7 @@ func (s *DomainSuite) TestAcceptOrder_TooHeavy() {
 		Expiry:    time.Now().Add(day),
 		Cost:      1,
 		Weight:    1_000_000, // тяжело...
-		Packaging: "box",
+		Packaging: "PACKAGING_BOX",
 	}
 
 	domain, _ := s.SetUpTest()
