@@ -38,7 +38,7 @@ func (api *API) AcceptOrder(ctx context.Context, req *orders.AcceptOrderRequest)
 		Expiry:    req.GetExpiry().AsTime(),
 		Cost:      utils.ConvertToMicrocurrency(req.GetCost()),
 		Weight:    req.GetWeight(),
-		Packaging: models.PackagingType(req.GetPackaging()),
+		Packaging: models.PackagingType(req.GetPackaging().String()),
 	})
 	if err != nil {
 		if err := api.producer.Send(models.MessageWithError{Message: msg, Error: err.Error()}); err != nil {
@@ -129,7 +129,7 @@ func (api *API) ListOrders(ctx context.Context, req *orders.ListOrdersRequest) (
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	// переведём в вид респоса
+	// переведём в вид респонса
 	listResp := make([]*orders.ListOrdersResponse_Order, 0, len(list))
 	for _, m := range list {
 		listResp = append(listResp, &orders.ListOrdersResponse_Order{
@@ -137,12 +137,12 @@ func (api *API) ListOrders(ctx context.Context, req *orders.ListOrdersRequest) (
 			UserId:    m.User.ID,
 			Expiry:    timestamppb.New(m.Expiry),
 			ReturnBy:  timestamppb.New(m.ReturnBy),
-			Status:    string(m.Status),
+			Status:    orders.Status(orders.Status_value[string(m.Status)]),
 			Hash:      m.Hash,
 			CreatedAt: timestamppb.New(m.CreatedAt),
 			Cost:      utils.ConvertFromMicrocurrency(m.Cost),
 			Weight:    m.Weight,
-			Packaging: string(m.Packaging),
+			Packaging: orders.PackagingType(orders.PackagingType_value[string(m.Packaging)]),
 		})
 	}
 

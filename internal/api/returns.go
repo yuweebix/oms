@@ -89,12 +89,12 @@ func (api *API) ListReturns(ctx context.Context, req *returns.ListReturnsRequest
 			UserId:    m.User.ID,
 			Expiry:    timestamppb.New(m.Expiry),
 			ReturnBy:  timestamppb.New(m.ReturnBy),
-			Status:    string(m.Status),
+			Status:    returns.Status(returns.Status_value[string(m.Status)]),
 			Hash:      m.Hash,
 			CreatedAt: timestamppb.New(m.CreatedAt),
 			Cost:      utils.ConvertFromMicrocurrency(m.Cost),
 			Weight:    m.Weight,
-			Packaging: string(m.Packaging),
+			Packaging: returns.PackagingType(returns.PackagingType_value[string(m.Packaging)]),
 		})
 	}
 

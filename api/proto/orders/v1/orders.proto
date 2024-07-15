@@ -57,6 +57,23 @@ service Orders {
   }
 }
 
+enum PackagingType {
+  unknown_packaging = 0;
+  bag = 1;
+  wrap = 2;
+  box = 3;
+  reserved 4 to 100;
+}
+
+enum Status {
+  unknown_status = 0;
+  pending = 1;
+  accepted = 2;
+  delivered = 3;
+  returned = 4;
+  reserved 5 to 100;
+}
+
 message AcceptOrderRequest {
   uint64 order_id = 1 [
     (google.api.field_behavior) = REQUIRED,
@@ -78,9 +95,9 @@ message AcceptOrderRequest {
     (google.api.field_behavior) = REQUIRED,
     (validate.rules).double.gt = 0
   ];
-  string packaging = 6 [
+  PackagingType packaging = 6 [
     (google.api.field_behavior) = REQUIRED,
-    (validate.rules).string = {in: ["bag", "wrap", "box"]}
+    (validate.rules).enum = { defined_only: true, not_in: [0] }
   ];
 }
 
@@ -115,12 +132,12 @@ message ListOrdersResponse {
     uint64 user_id = 2;
     google.protobuf.Timestamp expiry = 3;
     google.protobuf.Timestamp return_by = 4;
-    string status = 5;
+    Status status = 5;
     string hash = 6;
     google.protobuf.Timestamp created_at = 7;
     double cost = 8;
     double weight = 9;
-    string packaging = 10;
+    PackagingType packaging = 10;
   }
 
   repeated Order orders = 1;

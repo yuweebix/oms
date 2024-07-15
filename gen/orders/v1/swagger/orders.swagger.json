@@ -31,7 +31,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/rpcStatus"
+              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -75,7 +75,14 @@
             "name": "packaging",
             "in": "query",
             "required": true,
-            "type": "string"
+            "type": "string",
+            "enum": [
+              "unknown_packaging",
+              "bag",
+              "wrap",
+              "box"
+            ],
+            "default": "unknown_packaging"
           }
         ],
         "tags": [
@@ -98,7 +105,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/rpcStatus"
+              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -135,7 +142,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/rpcStatus"
+              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -188,7 +195,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/rpcStatus"
+              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -228,7 +235,7 @@
           "format": "date-time"
         },
         "status": {
-          "type": "string"
+          "$ref": "#/definitions/ordersStatus"
         },
         "hash": {
           "type": "string"
@@ -246,7 +253,26 @@
           "format": "double"
         },
         "packaging": {
+          "$ref": "#/definitions/ordersPackagingType"
+        }
+      }
+    },
+    "googlerpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
           "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/protobufAny"
+          }
         }
       }
     },
@@ -268,8 +294,29 @@
         }
       }
     },
+    "ordersPackagingType": {
+      "type": "string",
+      "enum": [
+        "unknown_packaging",
+        "bag",
+        "wrap",
+        "box"
+      ],
+      "default": "unknown_packaging"
+    },
     "ordersReturnOrderResponse": {
       "type": "object"
+    },
+    "ordersStatus": {
+      "type": "string",
+      "enum": [
+        "unknown_status",
+        "pending",
+        "accepted",
+        "delivered",
+        "returned"
+      ],
+      "default": "unknown_status"
     },
     "protobufAny": {
       "type": "object",
@@ -279,25 +326,6 @@
         }
       },
       "additionalProperties": {}
-    },
-    "rpcStatus": {
-      "type": "object",
-      "properties": {
-        "code": {
-          "type": "integer",
-          "format": "int32"
-        },
-        "message": {
-          "type": "string"
-        },
-        "details": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "$ref": "#/definitions/protobufAny"
-          }
-        }
-      }
     }
   }
 }

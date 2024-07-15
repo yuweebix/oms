@@ -31,7 +31,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/rpcStatus"
+              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -71,7 +71,7 @@
           "default": {
             "description": "An unexpected error response.",
             "schema": {
-              "$ref": "#/definitions/rpcStatus"
+              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -118,7 +118,7 @@
           "format": "date-time"
         },
         "status": {
-          "type": "string"
+          "$ref": "#/definitions/returnsStatus"
         },
         "hash": {
           "type": "string"
@@ -136,7 +136,26 @@
           "format": "double"
         },
         "packaging": {
+          "$ref": "#/definitions/returnsPackagingType"
+        }
+      }
+    },
+    "googlerpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
           "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/protobufAny"
+          }
         }
       }
     },
@@ -164,24 +183,26 @@
         }
       }
     },
-    "rpcStatus": {
-      "type": "object",
-      "properties": {
-        "code": {
-          "type": "integer",
-          "format": "int32"
-        },
-        "message": {
-          "type": "string"
-        },
-        "details": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "$ref": "#/definitions/protobufAny"
-          }
-        }
-      }
+    "returnsPackagingType": {
+      "type": "string",
+      "enum": [
+        "unknown_packaging",
+        "bag",
+        "wrap",
+        "box"
+      ],
+      "default": "unknown_packaging"
+    },
+    "returnsStatus": {
+      "type": "string",
+      "enum": [
+        "unknown_status",
+        "pending",
+        "accepted",
+        "delivered",
+        "returned"
+      ],
+      "default": "unknown_status"
     }
   }
 }

@@ -131,10 +131,21 @@ func (m *AcceptOrderRequest) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	if _, ok := _AcceptOrderRequest_Packaging_InLookup[m.GetPackaging()]; !ok {
+	if _, ok := _AcceptOrderRequest_Packaging_NotInLookup[m.GetPackaging()]; ok {
 		err := AcceptOrderRequestValidationError{
 			field:  "Packaging",
-			reason: "value must be in list [bag wrap box]",
+			reason: "value must not be in list [unknown_packaging]",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if _, ok := PackagingType_name[int32(m.GetPackaging())]; !ok {
+		err := AcceptOrderRequestValidationError{
+			field:  "Packaging",
+			reason: "value must be one of the defined enum values",
 		}
 		if !all {
 			return err
@@ -222,10 +233,8 @@ var _ interface {
 	ErrorName() string
 } = AcceptOrderRequestValidationError{}
 
-var _AcceptOrderRequest_Packaging_InLookup = map[string]struct{}{
-	"bag":  {},
-	"wrap": {},
-	"box":  {},
+var _AcceptOrderRequest_Packaging_NotInLookup = map[PackagingType]struct{}{
+	0: {},
 }
 
 // Validate checks the field values on AcceptOrderResponse with the rules
