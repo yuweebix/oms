@@ -16,18 +16,22 @@ func (api *API) AcceptReturn(ctx context.Context, req *returns.AcceptReturnReque
 	// составляем сообщения, что пойдет в брокер
 	msg, err := getMessage(ctx, req.ProtoReflect())
 	if err != nil {
-		if err := api.logger.Send(models.MessageWithError{Message: msg, Error: err.Error()}); err != nil {
-			return nil, status.Error(codes.Internal, err.Error())
+		errSend := api.logger.Send(models.MessageWithError{msg, err.Error()})
+		if errSend != nil {
+			return nil, status.Error(codes.Internal, errSend.Error())
 		}
+
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
 	// валидация заданного в прото контракте
 	err = req.ValidateAll()
 	if err != nil {
-		if err := api.logger.Send(models.MessageWithError{Message: msg, Error: err.Error()}); err != nil {
-			return nil, status.Error(codes.Internal, err.Error())
+		errSend := api.logger.Send(models.MessageWithError{msg, err.Error()})
+		if errSend != nil {
+			return nil, status.Error(codes.Internal, errSend.Error())
 		}
+
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
@@ -37,9 +41,11 @@ func (api *API) AcceptReturn(ctx context.Context, req *returns.AcceptReturnReque
 		User: &models.User{ID: req.GetUserId()},
 	})
 	if err != nil {
-		if err := api.logger.Send(models.MessageWithError{Message: msg, Error: err.Error()}); err != nil {
-			return nil, status.Error(codes.Internal, err.Error())
+		errSend := api.logger.Send(models.MessageWithError{msg, err.Error()})
+		if errSend != nil {
+			return nil, status.Error(codes.Internal, errSend.Error())
 		}
+
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
@@ -57,27 +63,33 @@ func (api *API) ListReturns(ctx context.Context, req *returns.ListReturnsRequest
 	// составляем сообщения, что пойдет в брокер
 	msg, err := getMessage(ctx, req.ProtoReflect())
 	if err != nil {
-		if err := api.logger.Send(models.MessageWithError{Message: msg, Error: err.Error()}); err != nil {
-			return nil, status.Error(codes.Internal, err.Error())
+		errSend := api.logger.Send(models.MessageWithError{msg, err.Error()})
+		if errSend != nil {
+			return nil, status.Error(codes.Internal, errSend.Error())
 		}
+
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
 	// валидация заданного в прото контракте
 	err = req.ValidateAll()
 	if err != nil {
-		if err := api.logger.Send(models.MessageWithError{Message: msg, Error: err.Error()}); err != nil {
-			return nil, status.Error(codes.Internal, err.Error())
+		errSend := api.logger.Send(models.MessageWithError{msg, err.Error()})
+		if errSend != nil {
+			return nil, status.Error(codes.Internal, errSend.Error())
 		}
+
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
 	// проход в БЛ
 	list, err := api.service.ListReturns(ctx, req.GetLimit(), req.GetOffset())
 	if err != nil {
-		if err := api.logger.Send(models.MessageWithError{Message: msg, Error: err.Error()}); err != nil {
-			return nil, status.Error(codes.Internal, err.Error())
+		errSend := api.logger.Send(models.MessageWithError{msg, err.Error()})
+		if errSend != nil {
+			return nil, status.Error(codes.Internal, errSend.Error())
 		}
+
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
