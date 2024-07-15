@@ -15,34 +15,23 @@ import (
 func (api *API) AcceptOrder(ctx context.Context, req *orders.AcceptOrderRequest) (resp *orders.AcceptOrderResponse, err error) {
 	// составляем сообщения, что пойдет в брокер
 	msg, err := getMessage(ctx, req.ProtoReflect())
-	if err != nil {
-		errSend := api.logger.Send(models.MessageWithError{msg, err.Error()})
-		if errSend != nil {
-			return nil, status.Error(codes.Internal, errSend.Error())
-		}
+	defer func() {
+		api.sendIfErr(msg, err) // err передается не как аргумент, а захватывается самим замыканием => будет использовано актуальное значение
+	}()
 
+	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
 	// валидация заданного в прото контракте
 	err = req.ValidateAll()
 	if err != nil {
-		errSend := api.logger.Send(models.MessageWithError{msg, err.Error()})
-		if errSend != nil {
-			return nil, status.Error(codes.Internal, errSend.Error())
-		}
-
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
 	// проход в БЛ
 	err = api.service.AcceptOrder(ctx, toModelsOrderForAcceptOrder(req))
 	if err != nil {
-		errSend := api.logger.Send(models.MessageWithError{msg, err.Error()})
-		if errSend != nil {
-			return nil, status.Error(codes.Internal, errSend.Error())
-		}
-
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
@@ -59,34 +48,23 @@ func (api *API) AcceptOrder(ctx context.Context, req *orders.AcceptOrderRequest)
 func (api *API) DeliverOrders(ctx context.Context, req *orders.DeliverOrdersRequest) (resp *orders.DeliverOrdersResponse, err error) {
 	// составляем сообщения, что пойдет в брокер
 	msg, err := getMessage(ctx, req.ProtoReflect())
-	if err != nil {
-		errSend := api.logger.Send(models.MessageWithError{msg, err.Error()})
-		if errSend != nil {
-			return nil, status.Error(codes.Internal, errSend.Error())
-		}
+	defer func() {
+		api.sendIfErr(msg, err)
+	}()
 
+	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
 	// валидация заданного в прото контракте
 	err = req.ValidateAll()
 	if err != nil {
-		errSend := api.logger.Send(models.MessageWithError{msg, err.Error()})
-		if errSend != nil {
-			return nil, status.Error(codes.Internal, errSend.Error())
-		}
-
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
 	// проход в БЛ
 	err = api.service.DeliverOrders(ctx, req.GetOrderIds())
 	if err != nil {
-		errSend := api.logger.Send(models.MessageWithError{msg, err.Error()})
-		if errSend != nil {
-			return nil, status.Error(codes.Internal, errSend.Error())
-		}
-
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
@@ -103,40 +81,23 @@ func (api *API) DeliverOrders(ctx context.Context, req *orders.DeliverOrdersRequ
 func (api *API) ListOrders(ctx context.Context, req *orders.ListOrdersRequest) (resp *orders.ListOrdersResponse, err error) {
 	// составляем сообщения, что пойдет в брокер
 	msg, err := getMessage(ctx, req.ProtoReflect())
-	if err != nil {
-		errSend := api.logger.Send(models.MessageWithError{msg, err.Error()})
-		if errSend != nil {
-			return nil, status.Error(codes.Internal, errSend.Error())
-		}
+	defer func() {
+		api.sendIfErr(msg, err)
+	}()
 
+	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
 	// валидация заданного в прото контракте
 	err = req.ValidateAll()
 	if err != nil {
-		errSend := api.logger.Send(models.MessageWithError{msg, err.Error()})
-		if errSend != nil {
-			return nil, status.Error(codes.Internal, errSend.Error())
-		}
-
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
 	// проход в БЛ
-	list, err := api.service.ListOrders(
-		ctx,
-		req.GetUserId(),
-		req.GetLimit(),
-		req.GetOffset(),
-		req.GetIsStored(),
-	)
+	list, err := api.service.ListOrders(ctx, req.GetUserId(), req.GetLimit(), req.GetOffset(), req.GetIsStored())
 	if err != nil {
-		errSend := api.logger.Send(models.MessageWithError{msg, err.Error()})
-		if errSend != nil {
-			return nil, status.Error(codes.Internal, errSend.Error())
-		}
-
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
@@ -158,34 +119,23 @@ func (api *API) ListOrders(ctx context.Context, req *orders.ListOrdersRequest) (
 func (api *API) ReturnOrder(ctx context.Context, req *orders.ReturnOrderRequest) (resp *orders.ReturnOrderResponse, err error) {
 	// составляем сообщения, что пойдет в брокер
 	msg, err := getMessage(ctx, req.ProtoReflect())
-	if err != nil {
-		errSend := api.logger.Send(models.MessageWithError{msg, err.Error()})
-		if errSend != nil {
-			return nil, status.Error(codes.Internal, errSend.Error())
-		}
+	defer func() {
+		api.sendIfErr(msg, err)
+	}()
 
+	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
 	// валидация заданного в прото контракте
 	err = req.ValidateAll()
 	if err != nil {
-		errSend := api.logger.Send(models.MessageWithError{msg, err.Error()})
-		if errSend != nil {
-			return nil, status.Error(codes.Internal, errSend.Error())
-		}
-
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
 	// проход в БЛ
 	err = api.service.ReturnOrder(ctx, &models.Order{ID: req.GetOrderId()})
 	if err != nil {
-		errSend := api.logger.Send(models.MessageWithError{msg, err.Error()})
-		if errSend != nil {
-			return nil, status.Error(codes.Internal, errSend.Error())
-		}
-
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 

@@ -2,6 +2,8 @@ package api
 
 import (
 	"context"
+	"fmt"
+	"os"
 	"time"
 
 	orders "gitlab.ozon.dev/yuweebix/homework-1/gen/orders/v1/proto"
@@ -72,4 +74,21 @@ func getMessage(ctx context.Context, message protoreflect.Message) (msg *models.
 	}
 
 	return msg, nil
+}
+
+// sendIfErr функция-обертка, что залоггирует сообщение только, если ошибка не nil
+func (api *API) sendIfErr(msg *models.Message, err error) {
+	if err == nil {
+		return
+	}
+
+	msgWithErr := models.MessageWithError{
+		Message: msg,
+		Error:   err.Error(),
+	}
+
+	err = api.logger.Send(msgWithErr)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+	}
 }
