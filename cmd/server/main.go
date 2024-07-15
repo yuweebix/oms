@@ -21,6 +21,7 @@ import (
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/domain"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/kafka/pub"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/kafka/sub/group"
+	"gitlab.ozon.dev/yuweebix/homework-1/internal/middleware"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/repository"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -63,6 +64,11 @@ func main() {
 		log.Fatalln("Error reading HTTP_PORT from .env file")
 	}
 
+	outputMode := os.Getenv("OUTPUT_MODE")
+	if outputMode == "" {
+		log.Fatalln("Error reading OUTPUT_MODE from .env file")
+	}
+
 	// вг - для горутин + контекст
 	wg := sync.WaitGroup{}
 	ctx, cancel := context.WithCancel(context.Background())
@@ -88,29 +94,42 @@ func main() {
 		log.Fatalln(err)
 	}
 
-	// kafka группа консьюмеров
+	// канал для уведомлений
 	notificationChan := make(chan string, 100)
+
+	// kafka группа консьюмеров
 	group, err := group.NewConsumerGroup(brokers, []string{topic}, groupID, notificationChan)
-	if err != nil {
-		log.Fatalln(err)
-	}
-	if err := group.Start(ctx, []string{topic}); err != nil {
-		log.Fatalln(err)
+	if outputMode == "kafka" {
+
+		// начинаем работу
+		if err != nil {
+			log.Fatalln(err)
+		}
+		if err := group.Start(ctx, []string{topic}); err != nil {
+			log.Fatalln(err)
+		}
+
+		// горутина для обработки уведомлений
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for notification := range notificationChan {
+				fmt.Println(notification)
+			}
+		}()
 	}
 
-	// горутина для обработки уведомлений
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		for notification := range notificationChan {
-			fmt.Println(notification)
-		}
-	}()
+	opts := make([]grpc.ServerOption, 0)
+
+	// логгинг в консоль
+	if outputMode == "console" {
+		opts = append(opts, grpc.ChainUnaryInterceptor(middleware.Logging))
+	}
 
 	// в api имплеменитораны методы и orders контракта, и returns контракта, поэтому можно использовать её одну
 	// всё идёт на один сервер
 	api := api.NewAPI(domain, producer)
-	grpcServer := grpc.NewServer()
+	grpcServer := grpc.NewServer(opts...)
 	orders.RegisterOrdersServer(grpcServer, api)
 	returns.RegisterReturnsServer(grpcServer, api)
 
@@ -161,13 +180,17 @@ func main() {
 		select {
 		case <-ctx.Done():
 			grpcServer.GracefulStop()
+
 			if err := producer.Close(); err != nil {
 				log.Println(err)
 			}
-			if err := group.Stop(); err != nil {
-				log.Println(err)
+			if outputMode == "kafka" {
+				if err := group.Stop(); err != nil {
+					log.Println(err)
+				}
 			}
 			close(notificationChan)
+
 			wg.Wait()
 			return
 		case <-sigs:
