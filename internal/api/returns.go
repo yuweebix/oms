@@ -15,13 +15,11 @@ import (
 func (api *API) AcceptReturn(ctx context.Context, req *returns.AcceptReturnRequest) (resp *returns.AcceptReturnResponse, err error) {
 	// составляем сообщения, что пойдет в брокер
 	msg, err := getMessage(ctx, req.ProtoReflect())
-	defer func() {
-		api.sendIfErr(msg, err)
-	}()
-
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
+	// отправляем после
+	defer func() { api.send(msg, err) }()
 
 	// валидация заданного в прото контракте
 	err = req.ValidateAll()
@@ -38,12 +36,6 @@ func (api *API) AcceptReturn(ctx context.Context, req *returns.AcceptReturnReque
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	// отправляем сообщение в брокер
-	err = api.logger.Send(msg)
-	if err != nil {
-		return nil, status.Error((codes.Internal), err.Error())
-	}
-
 	return &returns.AcceptReturnResponse{}, nil
 }
 
@@ -51,13 +43,11 @@ func (api *API) AcceptReturn(ctx context.Context, req *returns.AcceptReturnReque
 func (api *API) ListReturns(ctx context.Context, req *returns.ListReturnsRequest) (resp *returns.ListReturnsResponse, err error) {
 	// составляем сообщения, что пойдет в брокер
 	msg, err := getMessage(ctx, req.ProtoReflect())
-	defer func() {
-		api.sendIfErr(msg, err)
-	}()
-
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
+	// отправляем после
+	defer func() { api.send(msg, err) }()
 
 	// валидация заданного в прото контракте
 	err = req.ValidateAll()
@@ -73,13 +63,6 @@ func (api *API) ListReturns(ctx context.Context, req *returns.ListReturnsRequest
 
 	// переведём в вид респоса
 	listResp := fromModelsOrderForListReturns(list)
-
-	// отправляем сообщение в брокер
-	err = api.logger.Send(msg)
-	if err != nil {
-		return nil, status.Error((codes.Internal), err.Error())
-	}
-
 	return &returns.ListReturnsResponse{Orders: listResp}, nil
 }
 

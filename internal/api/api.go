@@ -76,12 +76,23 @@ func getMessage(ctx context.Context, message protoreflect.Message) (msg *models.
 	return msg, nil
 }
 
-// sendIfErr функция-обертка, что залоггирует сообщение только, если ошибка не nil
-func (api *API) sendIfErr(msg *models.Message, err error) {
-	if err == nil {
+// send функция-обертка, что залоггирует сообщение в брокер сообшений (кафку)
+func (api *API) send(msg *models.Message, err error) {
+	// с ошибкой
+	if err != nil {
+		api.sendWithError(msg, err)
 		return
 	}
 
+	// без ошибки
+	err = api.logger.Send(msg)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+	}
+}
+
+// sendWithError функция-обертка, что залоггирует сообщение с ошибкой
+func (api *API) sendWithError(msg *models.Message, err error) {
 	msgWithErr := models.MessageWithError{
 		Message: msg,
 		Error:   err.Error(),
