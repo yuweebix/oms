@@ -98,14 +98,15 @@ func main() {
 	notificationChan := make(chan string, 100)
 
 	// kafka группа консьюмеров
-	group, err := group.NewConsumerGroup(brokers, []string{topic}, groupID, notificationChan)
+	cg := &group.Group{}
 	if outputMode == "kafka" {
+		cg, err = group.NewConsumerGroup(brokers, []string{topic}, groupID, notificationChan)
 
 		// начинаем работу
 		if err != nil {
 			log.Fatalln(err)
 		}
-		if err := group.Start(ctx, []string{topic}); err != nil {
+		if err := cg.Start(ctx, []string{topic}); err != nil {
 			log.Fatalln(err)
 		}
 
@@ -185,7 +186,7 @@ func main() {
 				log.Println(err)
 			}
 			if outputMode == "kafka" {
-				if err := group.Stop(); err != nil {
+				if err := cg.Stop(); err != nil {
 					log.Println(err)
 				}
 			}
