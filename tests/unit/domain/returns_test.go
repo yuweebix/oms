@@ -16,7 +16,7 @@ func (s *DomainSuite) TestAcceptReturn_Success() {
 	order := &models.Order{ID: 1, User: &models.User{ID: 1}}
 	returnOrder := &models.Order{ID: 1, Status: models.StatusDelivered, User: &models.User{ID: 1}, ReturnBy: time.Now().Add(returnByAllowedTime)}
 
-	domain, storage := s.SetUpTest()
+	domain, storage := s.SetupTest()
 
 	storage.EXPECT().RunTx(mock.Anything, mock.Anything, mock.Anything).RunAndReturn(func(ctx context.Context, opts models.TxOptions, fn func(context.Context) error) error {
 		return fn(ctx)
@@ -37,7 +37,7 @@ func (s *DomainSuite) TestAcceptReturn_StatusInvalid() {
 	order := &models.Order{ID: 1, User: &models.User{ID: 1}}
 	returnOrder := &models.Order{ID: 1, Status: models.StatusAccepted, User: &models.User{ID: 1}, ReturnBy: time.Now().Add(24 * time.Hour)} // не доставили...
 
-	domain, storage := s.SetUpTest()
+	domain, storage := s.SetupTest()
 
 	storage.EXPECT().RunTx(mock.Anything, mock.Anything, mock.Anything).RunAndReturn(func(ctx context.Context, opts models.TxOptions, fn func(context.Context) error) error {
 		return fn(ctx)
@@ -55,7 +55,7 @@ func (s *DomainSuite) TestAcceptReturn_OrderExpired() {
 	order := &models.Order{ID: 1, User: &models.User{ID: 1}}
 	returnOrder := &models.Order{ID: 1, Status: models.StatusDelivered, User: &models.User{ID: 1}, ReturnBy: time.Now().Add(-returnByAllowedTime)} // долго думал юзер, не вернул во время
 
-	domain, storage := s.SetUpTest()
+	domain, storage := s.SetupTest()
 
 	storage.EXPECT().RunTx(mock.Anything, mock.Anything, mock.Anything).RunAndReturn(func(ctx context.Context, opts models.TxOptions, fn func(context.Context) error) error {
 		return fn(ctx)
@@ -72,7 +72,7 @@ func (s *DomainSuite) TestAcceptReturn_UserInvalid() {
 
 	order := &models.Order{ID: 1, User: &models.User{ID: 1}} // пытаемся принять возврат от первого юзера, а заказ то был от второго
 	returnOrder := &models.Order{ID: 1, Status: models.StatusDelivered, User: &models.User{ID: 2}, ReturnBy: time.Now().Add(returnByAllowedTime)}
-	domain, storage := s.SetUpTest()
+	domain, storage := s.SetupTest()
 
 	storage.EXPECT().RunTx(mock.Anything, mock.Anything, mock.Anything).RunAndReturn(func(ctx context.Context, opts models.TxOptions, fn func(context.Context) error) error {
 		return fn(ctx)

@@ -23,7 +23,7 @@ func TestDomainSuite(t *testing.T) {
 	suite.Run(t, new(DomainSuite))
 }
 
-func (s *DomainSuite) SetUpTest() (_domain *domain.Domain, _storage *mocks.MockStorage) {
+func (s *DomainSuite) SetupTest() (_domain *domain.Domain, _storage *mocks.MockStorage) {
 	_storage = mocks.NewMockStorage(s.T())
 	_domain = domain.NewDomain(_storage)
 	return
