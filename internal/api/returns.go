@@ -13,14 +13,6 @@ import (
 
 // AcceptReturn реализует метод /v1/returns/accept
 func (api *API) AcceptReturn(ctx context.Context, req *returns.AcceptReturnRequest) (resp *returns.AcceptReturnResponse, err error) {
-	// составляем сообщения, что пойдет в брокер
-	msg, err := getMessage(ctx, req.ProtoReflect())
-	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
-	}
-	// отправляем после
-	defer func() { api.send(msg, err) }()
-
 	// валидация заданного в прото контракте
 	err = req.ValidateAll()
 	if err != nil {
@@ -41,14 +33,6 @@ func (api *API) AcceptReturn(ctx context.Context, req *returns.AcceptReturnReque
 
 // ListReturn реализует метод /v1/returns/accept
 func (api *API) ListReturns(ctx context.Context, req *returns.ListReturnsRequest) (resp *returns.ListReturnsResponse, err error) {
-	// составляем сообщения, что пойдет в брокер
-	msg, err := getMessage(ctx, req.ProtoReflect())
-	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
-	}
-	// отправляем после
-	defer func() { api.send(msg, err) }()
-
 	// валидация заданного в прото контракте
 	err = req.ValidateAll()
 	if err != nil {

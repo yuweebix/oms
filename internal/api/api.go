@@ -2,19 +2,10 @@ package api
 
 import (
 	"context"
-	"fmt"
-	"os"
-	"time"
 
 	orders "gitlab.ozon.dev/yuweebix/homework-1/gen/orders/v1/proto"
 	returns "gitlab.ozon.dev/yuweebix/homework-1/gen/returns/v1/proto"
-	e "gitlab.ozon.dev/yuweebix/homework-1/internal/api/errors"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/models"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/encoding/protojson"
-	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
 // service интерфейс необходимых CLI функций для реализации сервисом
@@ -51,55 +42,4 @@ func NewAPI(s service, l logger) (api *API) {
 	}
 
 	return api
-}
-
-// getMessage вспомогательная функция для получения сообщения для брокера
-func getMessage(ctx context.Context, message protoreflect.Message) (msg *models.Message, err error) {
-	// получаем сырой запрос
-	raw, err := protojson.Marshal(message.Interface())
-	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
-	}
-
-	// получаем название метода
-	method, ok := grpc.Method(ctx)
-	if !ok {
-		return nil, status.Error(codes.Internal, e.ErrMethodNotFound.Error())
-	}
-
-	msg = &models.Message{
-		CreatedAt:  time.Now().UTC(),
-		MethodName: method,
-		RawRequest: string(raw),
-	}
-
-	return msg, nil
-}
-
-// send функция-обертка, что залоггирует сообщение в брокер сообшений (кафку)
-func (api *API) send(msg *models.Message, err error) {
-	// с ошибкой
-	if err != nil {
-		api.sendWithError(msg, err)
-		return
-	}
-
-	// без ошибки
-	err = api.logger.Send(msg)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-	}
-}
-
-// sendWithError функция-обертка, что залоггирует сообщение с ошибкой
-func (api *API) sendWithError(msg *models.Message, err error) {
-	msgWithErr := models.MessageWithError{
-		Message: msg,
-		Error:   err.Error(),
-	}
-
-	err = api.logger.Send(msgWithErr)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-	}
 }

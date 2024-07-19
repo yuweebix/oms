@@ -18,9 +18,8 @@ func Logging(ctx context.Context, req any, info *grpc.UnaryServerInfo, handler g
 		fmt.Fprintln(os.Stderr, err)
 	}
 
-	log.Println(info.FullMethod, string(raw))
-
 	resp, err = handler(ctx, req)
+	log.Println(info.FullMethod, string(raw))
 	if err != nil {
 		log.Println("error:", err)
 		return nil, err

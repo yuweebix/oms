@@ -88,18 +88,21 @@ func main() {
 	// сервис
 	domain := domain.NewDomain(repository)
 
-	// kafka продьюсер
-	producer, err := pub.NewProducer(brokers, topic)
-	if err != nil {
-		log.Fatalln(err)
-	}
+	// опции для интерцептора
+	opts := make([]grpc.ServerOption, 0)
 
-	// канал для уведомлений
+	// логгинг в кафку
 	notificationChan := make(chan string, 100)
-
-	// kafka группа консьюмеров
+	producer := &pub.Producer{}
 	cg := &group.Group{}
 	if outputMode == "kafka" {
+		// kafka продьюсер
+		producer, err = pub.NewProducer(brokers, topic)
+		if err != nil {
+			log.Fatalln(err)
+		}
+
+		// kafka группа консьюмеров
 		cg, err = group.NewConsumerGroup(brokers, []string{topic}, groupID, notificationChan)
 
 		// начинаем работу
@@ -118,9 +121,10 @@ func main() {
 				fmt.Println(notification)
 			}
 		}()
-	}
 
-	opts := make([]grpc.ServerOption, 0)
+		// сначала засеттим, а потом добавим миддлик
+		opts = append(opts, grpc.ChainUnaryInterceptor(middleware.SetProducerContext(producer), middleware.Producing))
+	}
 
 	// логгинг в консоль
 	if outputMode == "console" {
@@ -181,11 +185,10 @@ func main() {
 		select {
 		case <-ctx.Done():
 			grpcServer.GracefulStop()
-
-			if err := producer.Close(); err != nil {
-				log.Println(err)
-			}
 			if outputMode == "kafka" {
+				if err := producer.Close(); err != nil {
+					log.Println(err)
+				}
 				if err := cg.Stop(); err != nil {
 					log.Println(err)
 				}
