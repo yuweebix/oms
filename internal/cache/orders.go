@@ -57,20 +57,32 @@ func (c *Cache) SetOrder(ctx context.Context, o *models.Order) (err error) {
 func (c *Cache) GetOrder(ctx context.Context, o *models.Order) (result *models.Order, err error) {
 	orderKey := fmt.Sprintf("order:%d", o.ID)
 
-	err = c.client.HGetAll(ctx, orderKey).Scan(&result)
+	cmd := c.client.HGetAll(ctx, orderKey)
+	res, err := cmd.Result()
+	if err != nil {
+		return nil, err
+	}
+	// если ничего не получили возвращаем nil
+	if len(res) == 0 {
+		return nil, nil
+	}
+
+	order := &schemas.Order{}
+	err = cmd.Scan(order)
 	if err != nil {
 		return nil, err
 	}
 
-	return result, nil
+	return schemas.ToModelsOrder(order), nil
 }
 
+// DeleteOrder удаляет из кеша заказ и связанные с ним элементы множеств
 func (c *Cache) DeleteOrder(ctx context.Context, o *models.Order) (err error) {
 	orderKey := fmt.Sprintf("order:%d", o.ID)
 
 	// сначала надо получить
 	order := &schemas.Order{}
-	err = c.client.HGetAll(ctx, orderKey).Scan(&order)
+	err = c.client.HGetAll(ctx, orderKey).Scan(order)
 	if err != nil {
 		return err
 	}
@@ -130,6 +142,28 @@ func (c *Cache) GetOrders(ctx context.Context, userID uint64, limit uint64, offs
 				order.Status != models.StatusReturned {
 				continue
 			}
+		}
+
+		list = append(list, order)
+	}
+
+	if len(list) == 0 {
+		return nil, nil
+	}
+
+	return list, nil
+}
+
+// GetOrders
+func (c *Cache) GetOrdersForDelivery(ctx context.Context, orderIDs []uint64) (list []*models.Order, err error) {
+	for _, orderID := range orderIDs {
+		order, err := c.GetOrder(ctx, &models.Order{ID: orderID})
+		if err != nil {
+			return nil, err
+		}
+
+		if order == nil {
+			continue
 		}
 
 		list = append(list, order)

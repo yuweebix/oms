@@ -21,7 +21,7 @@ var (
 	now = time.Now().UTC().Truncate(time.Second)
 )
 
-// TestRepositorySuite запускает все orders int-тесты
+// TestRepositorySuite запускает все repository int-тесты
 func TestRepositorySuite(t *testing.T) {
 	suite.Run(t, new(RepositorySuite))
 }

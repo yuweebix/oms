@@ -33,3 +33,18 @@ func FromModelsOrder(o *models.Order) *Order {
 		Packaging: string(o.Packaging),
 	}
 }
+
+func ToModelsOrder(so *Order) *models.Order {
+	return &models.Order{
+		ID:        so.ID,
+		User:      &models.User{ID: so.UserID},
+		Expiry:    so.Expiry,
+		ReturnBy:  so.ReturnBy,
+		Status:    models.Status(so.Status),
+		Hash:      so.Hash,
+		CreatedAt: so.CreatedAt,
+		Cost:      so.Cost,
+		Weight:    so.Weight,
+		Packaging: models.PackagingType(so.Packaging),
+	}
+}

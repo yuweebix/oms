@@ -38,3 +38,7 @@ func extractOrderID(orderKey string) (orderID uint64) {
 	fmt.Sscanf(orderKey, "order:%d", &orderID)
 	return orderID
 }
+
+func (c *Cache) FlushAll(ctx context.Context) error {
+	return c.client.FlushAll(ctx).Err()
+}

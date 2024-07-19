@@ -33,6 +33,10 @@ func (c *Cache) GetReturns(ctx context.Context, limit uint64, offset uint64) (li
 			return nil, err
 		}
 
+		if order == nil {
+			continue
+		}
+
 		list = append(list, order)
 	}
 
