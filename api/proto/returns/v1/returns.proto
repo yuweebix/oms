@@ -39,7 +39,6 @@ enum PackagingType {
   PACKAGING_BAG = 1;
   PACKAGING_BOX = 2;
   PACKAGING_WRAP = 3;
-  reserved 4 to 100;
 }
 
 enum Status {
@@ -48,7 +47,6 @@ enum Status {
   STATUS_ACCEPTED = 2;
   STATUS_DELIVERED = 3;
   STATUS_RETURNED = 4;
-  reserved 5 to 100;
 }
 
 message AcceptReturnRequest {
