@@ -18,6 +18,7 @@ import (
 	orders "gitlab.ozon.dev/yuweebix/homework-1/gen/orders/v1/proto"
 	returns "gitlab.ozon.dev/yuweebix/homework-1/gen/returns/v1/proto"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/api"
+	"gitlab.ozon.dev/yuweebix/homework-1/internal/cache"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/domain"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/kafka/pub"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/kafka/sub/group"
@@ -55,6 +56,11 @@ func main() {
 	}
 	brokers := strings.Split(brokersStr, ",")
 
+	redisAddr := os.Getenv("REDIS_ADDR")
+	if brokersStr == "" {
+		log.Fatalln("Error reading REDIS_ADDR from .env file")
+	}
+
 	grpcPort := os.Getenv("GRPC_PORT")
 	if grpcPort == "" {
 		log.Fatalln("Error reading GRPC_PORT from .env file")
@@ -85,8 +91,14 @@ func main() {
 	}
 	defer repository.Close()
 
+	// кэш
+	cache, err := cache.NewCache(redisAddr, "", 0)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
 	// сервис
-	domain := domain.NewDomain(repository)
+	domain := domain.NewDomain(repository, cache)
 
 	// опции для интерцептора
 	opts := make([]grpc.ServerOption, 0)
@@ -133,7 +145,7 @@ func main() {
 
 	// в api имплеменитораны методы и orders контракта, и returns контракта, поэтому можно использовать её одну
 	// всё идёт на один сервер
-	api := api.NewAPI(domain, producer)
+	api := api.NewAPI(domain)
 	grpcServer := grpc.NewServer(opts...)
 	orders.RegisterOrdersServer(grpcServer, api)
 	returns.RegisterReturnsServer(grpcServer, api)

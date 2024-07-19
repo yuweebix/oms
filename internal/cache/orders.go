@@ -2,6 +2,7 @@ package cache
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/redis/go-redis/v9"
@@ -13,18 +14,10 @@ import (
 func (c *Cache) SetOrder(ctx context.Context, o *models.Order) (err error) {
 	orderKey := fmt.Sprintf("order:%d", o.ID)
 
-	// будет храниться в форме хеша
-	err = c.client.HSet(ctx, orderKey, schemas.FromModelsOrder(o)).Err()
-	if err != nil {
-		return err
-	}
-
-	// для фильтрации по статусу (см. GetReturns)
-
 	// старый статус нужно удалить (если он имеется)
-	// если его нету, то ошибки не будет
+	// если его нету, то это не должно быть проблемой
 	oldStatus, err := c.client.HGet(ctx, orderKey, "status").Result()
-	if err != nil {
+	if err != nil && !errors.Is(err, redis.Nil) {
 		return err
 	}
 	err = c.client.ZRem(ctx, fmt.Sprintf("orders:by_status:%s", oldStatus), orderKey).Err()
@@ -32,6 +25,13 @@ func (c *Cache) SetOrder(ctx context.Context, o *models.Order) (err error) {
 		return err
 	}
 
+	// будет храниться в форме хеша
+	err = c.client.HSet(ctx, orderKey, schemas.FromModelsOrder(o)).Err()
+	if err != nil {
+		return err
+	}
+
+	// для фильтрации по статусу (см. GetReturns)
 	err = c.client.ZAdd(ctx, fmt.Sprintf("orders:by_status:%s", o.Status), redis.Z{
 		Score:  float64(o.CreatedAt.Unix()),
 		Member: orderKey,
@@ -41,7 +41,6 @@ func (c *Cache) SetOrder(ctx context.Context, o *models.Order) (err error) {
 	}
 
 	// для фильтрации по id пользователя (см. GetOrders)
-
 	err = c.client.ZAdd(ctx, fmt.Sprintf("user:%d:orders", o.User.ID), redis.Z{
 		Score:  float64(o.CreatedAt.Unix()),
 		Member: orderKey,
