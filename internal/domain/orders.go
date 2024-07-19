@@ -2,6 +2,8 @@ package domain
 
 import (
 	"context"
+	"fmt"
+	"os"
 	"time"
 
 	e "gitlab.ozon.dev/yuweebix/homework-1/internal/domain/errors"
@@ -15,7 +17,7 @@ const (
 )
 
 // AcceptOrder принимает заказ от курьера
-func (d *Domain) AcceptOrder(ctx context.Context, o *models.Order) (_ error) {
+func (d *Domain) AcceptOrder(ctx context.Context, o *models.Order) (err error) {
 	// срок хранения превышен
 	if o.Expiry.Before(time.Now()) {
 		return e.ErrOrderExpired
@@ -37,7 +39,12 @@ func (d *Domain) AcceptOrder(ctx context.Context, o *models.Order) (_ error) {
 	o.Hash = hash.GenerateHash() // HASH
 
 	// можно обойтись и без эксплицитной транзакции, потому что постгресс за нас создаст транзакцию и перечитывать данные при создании нету смысла
-	return d.storage.CreateOrder(ctx, o)
+	err = d.storage.CreateOrder(ctx, o)
+	if err != nil {
+		return err
+	}
+
+	return d.cache.SetOrder(ctx, o)
 }
 
 // ReturnOrder возвращает заказ курьеру
@@ -53,11 +60,23 @@ func (d *Domain) ReturnOrder(ctx context.Context, o *models.Order) (err error) {
 		AccessMode: models.ReadWrite,
 	}
 
+	// сначала проверим в кеши ли заказ
+	cachedOrder, err := d.cache.GetOrder(ctx, o)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+	}
+	if cachedOrder != nil {
+		o = cachedOrder
+	}
+
 	// начинаем транзакцию
-	return d.storage.RunTx(ctx, opts, func(ctxTX context.Context) error {
-		o, err = d.storage.GetOrder(ctxTX, o)
-		if err != nil {
-			return err
+	err = d.storage.RunTx(ctx, opts, func(ctxTX context.Context) error {
+		// если нет, то пытаемся достать из бд
+		if cachedOrder == nil {
+			o, err = d.storage.GetOrder(ctxTX, o)
+			if err != nil {
+				return err
+			}
 		}
 
 		// если заказ вернули в пвз, то не имеет значение прошёл ли срок хранения
@@ -69,15 +88,30 @@ func (d *Domain) ReturnOrder(ctx context.Context, o *models.Order) (err error) {
 
 		return d.storage.DeleteOrder(ctxTX, o)
 	})
+	if err != nil {
+		return err
+	}
+
+	// не забываем удалить из кеша
+	return d.cache.DeleteOrder(ctx, o)
 }
 
 // ListOrders выводит список заказов с пагинацией, сортировкой и фильтрацией
 func (d *Domain) ListOrders(ctx context.Context, userID uint64, limit uint64, offset uint64, isStored bool) (list []*models.Order, err error) {
-	// можно обойтись и без эксплицитной транзакции, ведь мы просто читаем данные, не проверяем их и не изменяем
-	list, err = d.storage.GetOrders(ctx, userID, limit, offset, isStored)
-
+	cachedList, err := d.cache.GetOrders(ctx, userID, limit, offset, isStored)
 	if err != nil {
-		return nil, err
+		fmt.Fprintln(os.Stderr, err)
+	}
+	if len(cachedList) != 0 {
+		list = cachedList
+	}
+
+	// можно обойтись и без эксплицитной транзакции, ведь мы просто читаем данные, не проверяем их и не изменяем
+	if len(cachedList) == 0 {
+		list, err = d.storage.GetOrders(ctx, userID, limit, offset, isStored)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return list, nil
@@ -103,13 +137,27 @@ func (d *Domain) DeliverOrders(ctx context.Context, orderIDs []uint64) (err erro
 		AccessMode: models.ReadWrite,
 	}
 
+	list := make([]*models.Order, 0, len(orderIDs))
+
+	// сначала проверим в кеше ли заказы, но нужно, чтобы совпали lenы
+	cachedList, err := d.cache.GetOrdersForDelivery(ctx, orderIDs)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+	}
+	if len(cachedList) == len(orderIDs) {
+		list = cachedList
+	}
+
 	// начинаем транзакцию
 	err = d.storage.RunTx(ctx, opts, func(ctxTX context.Context) error {
-		list, err := d.storage.GetOrdersForDelivery(ctxTX, orderIDs)
-		if err != nil {
-			return err
+		if len(list) != len(orderIDs) {
+			list, err = d.storage.GetOrdersForDelivery(ctxTX, orderIDs)
+			if err != nil {
+				return err
+			}
 		}
 
+		// если всё ещё не равно, то что-то не так с введенными данными
 		// когда передаются ID заказов, которых нет в базе данных
 		if len(list) != len(orderIDs) {
 			return e.ErrOrderNotFound
@@ -140,6 +188,7 @@ func (d *Domain) DeliverOrders(ctx context.Context, orderIDs []uint64) (err erro
 			if err != nil {
 				return err
 			}
+			err = d.cache.SetOrder(ctx, list[i])
 		}
 
 		return nil

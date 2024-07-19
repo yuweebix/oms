@@ -2,6 +2,8 @@ package domain
 
 import (
 	"context"
+	"fmt"
+	"os"
 	"time"
 
 	e "gitlab.ozon.dev/yuweebix/homework-1/internal/domain/errors"
@@ -22,11 +24,24 @@ func (d *Domain) AcceptReturn(ctx context.Context, o *models.Order) (err error) 
 		AccessMode: models.ReadWrite,
 	}
 
+	ro := &models.Order{} // ro - return order
+
+	// сначала проверим в кеши ли заказ
+	cachedOrder, err := d.cache.GetOrder(ctx, o)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+	}
+	if cachedOrder != nil {
+		ro = cachedOrder
+	}
+
 	// начинаем транзакцию
 	err = d.storage.RunTx(ctx, opts, func(ctxTX context.Context) error {
-		ro, err := d.storage.GetOrder(ctxTX, o) // ro - return order
-		if err != nil {
-			return err
+		if cachedOrder == nil {
+			ro, err = d.storage.GetOrder(ctxTX, o)
+			if err != nil {
+				return err
+			}
 		}
 
 		// должен быть доставлен
@@ -49,27 +64,31 @@ func (d *Domain) AcceptReturn(ctx context.Context, o *models.Order) (err error) 
 		ro.Hash = hash
 
 		// обновляем заказ в хранилище
-		err = d.storage.UpdateOrder(ctxTX, ro)
-		if err != nil {
-			return err
-		}
-
-		return nil
+		return d.storage.UpdateOrder(ctxTX, ro)
 	})
 	if err != nil {
 		return err
 	}
 
-	return nil
+	return d.cache.SetOrder(ctx, ro)
 }
 
 // ListReturns выводит список возвратов с пагинацией
 func (d *Domain) ListReturns(ctx context.Context, limit uint64, offset uint64) (list []*models.Order, err error) {
-	// можно обойтись и без эксплицитной транзакции, ведь мы просто читаем данные, не проверяем их и не изменяем
-	list, err = d.storage.GetReturns(ctx, limit, offset)
-
+	cachedList, err := d.cache.GetReturns(ctx, limit, offset)
 	if err != nil {
-		return nil, err
+		fmt.Fprintln(os.Stderr, err)
+	}
+	if len(cachedList) != 0 {
+		list = cachedList
+	}
+
+	// можно обойтись и без эксплицитной транзакции, ведь мы просто читаем данные, не проверяем их и не изменяем
+	if len(cachedList) == 0 {
+		list, err = d.storage.GetReturns(ctx, limit, offset)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return list, err
