@@ -1,0 +1,208 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "returns.proto",
+    "version": "version not set"
+  },
+  "tags": [
+    {
+      "name": "Returns"
+    }
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/v1/returns/accept": {
+      "post": {
+        "summary": "Принять возврат от клиента",
+        "description": "Используется для принятия возврата заказа от клиента. Возврат может быть принят в течение двух дней с момента выдачи заказа. Заказ должен быть выдан из этого ПВЗ.",
+        "operationId": "Returns_AcceptReturn",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/returnsAcceptReturnResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "orderId",
+            "in": "query",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "userId",
+            "in": "query",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "Returns"
+        ]
+      }
+    },
+    "/v1/returns/list": {
+      "get": {
+        "summary": "Получить список возвратов",
+        "description": "Используется для получения списка возвратов. Команда возвращает список возвратов с возможностью пагинации.",
+        "operationId": "Returns_ListReturns",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/returnsListReturnsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "Returns"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "ListReturnsResponseOrder": {
+      "type": "object",
+      "properties": {
+        "orderId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "userId": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "expiry": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "returnBy": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "status": {
+          "$ref": "#/definitions/returnsStatus"
+        },
+        "hash": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "cost": {
+          "type": "number",
+          "format": "double"
+        },
+        "weight": {
+          "type": "number",
+          "format": "double"
+        },
+        "packaging": {
+          "$ref": "#/definitions/returnsPackagingType"
+        }
+      }
+    },
+    "googlerpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    },
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {}
+    },
+    "returnsAcceptReturnResponse": {
+      "type": "object"
+    },
+    "returnsListReturnsResponse": {
+      "type": "object",
+      "properties": {
+        "orders": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/ListReturnsResponseOrder"
+          }
+        }
+      }
+    },
+    "returnsPackagingType": {
+      "type": "string",
+      "enum": [
+        "PACKAGING_UNSPECIFIED",
+        "PACKAGING_BAG",
+        "PACKAGING_BOX",
+        "PACKAGING_WRAP"
+      ],
+      "default": "PACKAGING_UNSPECIFIED"
+    },
+    "returnsStatus": {
+      "type": "string",
+      "enum": [
+        "STATUS_UNSPECIFIED",
+        "STATUS_PENDING",
+        "STATUS_ACCEPTED",
+        "STATUS_DELIVERED",
+        "STATUS_RETURNED"
+      ],
+      "default": "STATUS_UNSPECIFIED"
+    }
+  }
+}

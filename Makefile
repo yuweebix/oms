@@ -1,8 +1,13 @@
 include .bin-deps.mk
+include .vendor-proto.mk
 include .env
 
+# ЗАВИСИМОСТИ
+deps: .bin-deps .bin-protoc-deps
+
 # СБОРКА
-build: .bin-deps # если уже существет network, то проигнорим ошибку
+build:
+# если уже существет network, то проигнорим ошибку
 	-docker network create app-network 2>/dev/null || true 
 	docker-compose build
 
@@ -44,16 +49,13 @@ down-broker-test:
 	docker-compose --env-file .env down broker_test
 
 # ПРОЦЕССЫ
-cli: up-app # утилита
+server: up-app # сервер
 	docker exec -it app sh -c './main'
 
 sql: up-db # sql-клиент
 	docker exec -it db sh -c 'psql -U $(POSTGRES_USER) -d $(POSTGRES_DB)'
 sql-test: up-db-test # sql-клиент для тестов
 	docker exec -it db_test sh -c 'psql -U $(POSTGRES_USER) -d $(POSTGRES_DB)_test'
-
-log: up-app # логгер
-	-docker exec -it app tail -f ./log.txt
 
 # SHELL
 shell-app: up-app
@@ -76,6 +78,32 @@ tests: up-db-test up-broker-test
 	go test ./tests/... -v
 tests-unit:
 	go test ./tests/unit/... -v
-	rm ./tests/unit/cli/log_text.txt
 tests-int: up-db-test up-broker-test
 	go test ./tests/int/... -v 
+
+# gRPC
+generate: .vendor-proto generate-no-deps
+
+generate-no-deps:
+	mkdir -p gen/orders/v1/proto
+	mkdir -p gen/orders/v1/swagger
+	mkdir -p gen/returns/v1/proto
+	mkdir -p gen/returns/v1/swagger
+	$(PROTOC) -I api/proto/orders/v1 \
+		-I vendor.proto \
+		api/proto/orders/v1/orders.proto \
+		--plugin=protoc-gen-go=$(PROTOC_GEN_GO) --go_out=./gen/orders/v1/proto --go_opt=paths=source_relative \
+		--plugin=protoc-gen-go-grpc=$(PROTOC_GEN_GO_GRPC) --go-grpc_out=./gen/orders/v1/proto --go-grpc_opt=paths=source_relative \
+		--plugin=protoc-gen-grpc-gateway=$(PROTOC_GEN_GRPC_GATEWAY) --grpc-gateway_out=./gen/orders/v1/proto --grpc-gateway_opt=paths=source_relative --grpc-gateway_opt=generate_unbound_methods=true \
+		--plugin=protoc-gen-openapiv2=$(PROTOC_GEN_OPENAPI) --openapiv2_out=./gen/orders/v1/swagger \
+		--plugin=protoc-gen-validate=$(PROTOC_GEN_VALIDATE) --validate_out=lang=go,paths=source_relative:./gen/orders/v1/proto \
+		--experimental_allow_proto3_optional=true
+	$(PROTOC) -I api/proto/returns/v1 \
+		-I vendor.proto \
+		api/proto/returns/v1/returns.proto \
+		--plugin=protoc-gen-go=$(PROTOC_GEN_GO) --go_out=./gen/returns/v1/proto --go_opt=paths=source_relative \
+		--plugin=protoc-gen-go-grpc=$(PROTOC_GEN_GO_GRPC) --go-grpc_out=./gen/returns/v1/proto --go-grpc_opt=paths=source_relative \
+		--plugin=protoc-gen-grpc-gateway=$(PROTOC_GEN_GRPC_GATEWAY) --grpc-gateway_out=./gen/returns/v1/proto --grpc-gateway_opt=paths=source_relative --grpc-gateway_opt=generate_unbound_methods=true \
+		--plugin=protoc-gen-openapiv2=$(PROTOC_GEN_OPENAPI) --openapiv2_out=./gen/returns/v1/swagger \
+		--plugin=protoc-gen-validate=$(PROTOC_GEN_VALIDATE) --validate_out=lang=go,paths=source_relative:./gen/returns/v1/proto \
+		--experimental_allow_proto3_optional=true

@@ -1,0 +1,151 @@
+syntax = "proto3";
+
+package orders;
+
+option go_package = "gitlab.ozon.dev/yuweebix/homework-1/pkg/grpc/orders;orders";
+
+import "google/protobuf/timestamp.proto";
+import "google/api/annotations.proto";
+import "google/api/field_behavior.proto";
+import "protoc-gen-openapiv2/options/annotations.proto";
+import "validate/validate.proto";
+
+service Orders {
+  // AcceptOrder принимает заказ от курьера
+  rpc AcceptOrder(AcceptOrderRequest) returns (AcceptOrderResponse) {
+    option (google.api.http) = {
+      post: "/v1/orders/accept"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Принять заказ от курьера"
+      description: "Используется для принятия заказа от курьера. Заказ не может быть принят дважды. Срок хранения не может быть в прошлом."
+      operation_id: "AcceptOrder"
+    };
+  }
+
+  // DeliverOrders выдаёт заказы клиенту
+  rpc DeliverOrders(DeliverOrdersRequest) returns (DeliverOrdersResponse) {
+    option (google.api.http) = {
+      post: "/v1/orders/deliver"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Выдать заказы клиенту"
+      description: "Используется для выдачи заказов клиенту. Все заказы должны принадлежать одному клиенту и быть приняты от курьера. Срок хранения заказов должен быть больше текущей даты."
+    };
+  }
+
+  // ListOrders получает список заказов
+  rpc ListOrders(ListOrdersRequest) returns (ListOrdersResponse) {
+    option (google.api.http) = {
+      get: "/v1/orders/list"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Получить список заказов"
+      description: "Используется для получения списка заказов. Команда возвращает заказы клиента, которые находятся в ПВЗ, с возможностью ограничить количество возвращаемых заказов и задать смещение."
+    };
+  }
+
+  // ReturnOrder возвращает заказ курьеру
+  rpc ReturnOrder(ReturnOrderRequest) returns (ReturnOrderResponse) {
+    option (google.api.http) = {
+      delete: "/v1/orders/return"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Вернуть заказ курьеру"
+      description: "Используется для возврата заказа курьеру. Заказ может быть возвращен только если истек срок хранения и он не был выдан клиенту."
+    };
+  }
+}
+
+enum PackagingType {
+  PACKAGING_UNSPECIFIED = 0;
+  PACKAGING_BAG = 1;
+  PACKAGING_WRAP = 2;
+  PACKAGING_BOX = 3;
+}
+
+enum Status {
+  STATUS_UNSPECIFIED = 0;
+  STATUS_PENDING = 1;
+  STATUS_ACCEPTED = 2;
+  STATUS_DELIVERED = 3;
+  STATUS_RETURNED = 4;
+}
+
+message AcceptOrderRequest {
+  uint64 order_id = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (validate.rules).uint64.gt = 0
+  ];
+  uint64 user_id = 2 [
+    (google.api.field_behavior) = REQUIRED,  
+    (validate.rules).uint64.gt = 0
+  ];
+  google.protobuf.Timestamp expiry = 3 [
+    (google.api.field_behavior) = REQUIRED,
+    (validate.rules).timestamp.gt = { seconds: 0 }
+  ];
+  double cost = 4 [
+    (google.api.field_behavior) = REQUIRED,
+    (validate.rules).double.gt = 0
+  ];
+  double weight = 5 [
+    (google.api.field_behavior) = REQUIRED,
+    (validate.rules).double.gt = 0
+  ];
+  PackagingType packaging = 6 [
+    (google.api.field_behavior) = REQUIRED,
+    (validate.rules).enum = { defined_only: true, not_in: [0] }
+  ];
+}
+
+message AcceptOrderResponse {}
+
+message DeliverOrdersRequest {
+  repeated uint64 order_ids = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (validate.rules).repeated.min_items = 1
+  ];
+}
+
+message DeliverOrdersResponse {}
+
+message ListOrdersRequest {
+  uint64 user_id = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (validate.rules).uint64.gt = 0
+  ];
+  uint64 limit = 2 [
+    (validate.rules).uint64.gte = 0
+  ];
+  uint64 offset = 3 [
+    (validate.rules).uint64.gte = 0
+  ];
+  bool is_stored = 4;
+}
+
+message ListOrdersResponse {
+  message Order {
+    uint64 order_id = 1;
+    uint64 user_id = 2;
+    google.protobuf.Timestamp expiry = 3;
+    google.protobuf.Timestamp return_by = 4;
+    Status status = 5;
+    string hash = 6;
+    google.protobuf.Timestamp created_at = 7;
+    double cost = 8;
+    double weight = 9;
+    PackagingType packaging = 10;
+  }
+
+  repeated Order orders = 1;
+}
+
+message ReturnOrderRequest {
+  uint64 order_id = 1 [
+    (google.api.field_behavior) = REQUIRED,  
+    (validate.rules).uint64.gt = 0
+  ];
+}
+
+message ReturnOrderResponse {}

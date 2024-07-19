@@ -9,6 +9,6 @@ type Message struct {
 }
 
 type MessageWithError struct {
-	Message
+	*Message
 	Error string `json:"error"`
 }

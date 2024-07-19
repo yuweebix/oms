@@ -1,0 +1,89 @@
+syntax = "proto3";
+
+package returns;
+
+option go_package = "gitlab.ozon.dev/yuweebix/homework-1/pkg/grpc/returns;returns";
+
+import "google/protobuf/timestamp.proto";
+import "google/api/annotations.proto";
+import "google/api/field_behavior.proto";
+import "protoc-gen-openapiv2/options/annotations.proto";
+import "validate/validate.proto";
+
+service Returns {
+  // AcceptReturn принимает возврат от клиента
+  rpc AcceptReturn(AcceptReturnRequest) returns (AcceptReturnResponse) {
+    option (google.api.http) = {
+      post: "/v1/returns/accept"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Принять возврат от клиента"
+      description: "Используется для принятия возврата заказа от клиента. Возврат может быть принят в течение двух дней с момента выдачи заказа. Заказ должен быть выдан из этого ПВЗ."
+    };
+  }
+
+  // ListReturns получает список возвратов
+  rpc ListReturns(ListReturnsRequest) returns (ListReturnsResponse) {
+    option (google.api.http) = {
+      get: "/v1/returns/list"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Получить список возвратов"
+      description: "Используется для получения списка возвратов. Команда возвращает список возвратов с возможностью пагинации."
+    };
+  }
+}
+
+enum PackagingType {
+  PACKAGING_UNSPECIFIED = 0;
+  PACKAGING_BAG = 1;
+  PACKAGING_BOX = 2;
+  PACKAGING_WRAP = 3;
+}
+
+enum Status {
+  STATUS_UNSPECIFIED = 0;
+  STATUS_PENDING = 1;
+  STATUS_ACCEPTED = 2;
+  STATUS_DELIVERED = 3;
+  STATUS_RETURNED = 4;
+}
+
+message AcceptReturnRequest {
+  uint64 order_id = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (validate.rules).uint64.gt = 0
+  ];
+  uint64 user_id = 2 [
+    (google.api.field_behavior) = REQUIRED,  
+    (validate.rules).uint64.gt = 0
+  ];
+}
+
+message AcceptReturnResponse {}
+
+message ListReturnsRequest {
+  uint64 limit = 1 [
+    (validate.rules).uint64.gte = 0
+  ];
+  uint64 offset = 2 [
+    (validate.rules).uint64.gte = 0
+  ];
+}
+
+message ListReturnsResponse {
+  message Order {
+    uint64 order_id = 1;
+    uint64 user_id = 2;
+    google.protobuf.Timestamp expiry = 3;
+    google.protobuf.Timestamp return_by = 4;
+    Status status = 5;
+    string hash = 6;
+    google.protobuf.Timestamp created_at = 7;
+    double cost = 8;
+    double weight = 9;
+    PackagingType packaging = 10;
+  }
+
+  repeated Order orders = 1;
+}
