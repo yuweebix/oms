@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/mock"
+	orders "gitlab.ozon.dev/yuweebix/homework-1/gen/orders/v1/proto"
 	e "gitlab.ozon.dev/yuweebix/homework-1/internal/domain/errors"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/models"
 )
@@ -20,7 +21,7 @@ func (s *DomainSuite) TestAcceptOrder_Success() {
 		Expiry:    time.Now().Add(day),
 		Cost:      1,
 		Weight:    1,
-		Packaging: "PACKAGING_BOX",
+		Packaging: models.PackagingType(orders.PackagingType_PACKAGING_BOX.String()),
 	}
 
 	domain, storage := s.SetupTest()
@@ -43,7 +44,7 @@ func (s *DomainSuite) TestAcceptOrder_Expired() {
 		Expiry:    time.Now().Add(-day), // срок хранения превышен
 		Cost:      1,
 		Weight:    1,
-		Packaging: "PACKAGING_BOX",
+		Packaging: models.PackagingType(orders.PackagingType_PACKAGING_BOX.String()),
 	}
 
 	domain, _ := s.SetupTest()
@@ -62,7 +63,7 @@ func (s *DomainSuite) TestAcceptOrder_InvalidPackaging() {
 		Expiry:    time.Now().Add(day),
 		Cost:      1,
 		Weight:    1,
-		Packaging: "bucket", // https://www.youtube.com/watch?v=L8FmQoSFys0
+		Packaging: models.PackagingType(orders.PackagingType_PACKAGING_UNSPECIFIED.String()),
 	}
 
 	domain, _ := s.SetupTest()
@@ -81,7 +82,7 @@ func (s *DomainSuite) TestAcceptOrder_TooHeavy() {
 		Expiry:    time.Now().Add(day),
 		Cost:      1,
 		Weight:    1_000_000, // тяжело...
-		Packaging: "PACKAGING_BOX",
+		Packaging: models.PackagingType(orders.PackagingType_PACKAGING_BOX.String()),
 	}
 
 	domain, _ := s.SetupTest()
