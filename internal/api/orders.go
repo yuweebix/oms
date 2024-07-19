@@ -13,14 +13,6 @@ import (
 
 // AcceptOrder реализует метод /v1/orders/accept
 func (api *API) AcceptOrder(ctx context.Context, req *orders.AcceptOrderRequest) (resp *orders.AcceptOrderResponse, err error) {
-	// составляем сообщения, что пойдет в брокер
-	msg, err := getMessage(ctx, req.ProtoReflect())
-	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
-	}
-	// отправляем после
-	defer func() { api.send(msg, err) }()
-
 	// валидация заданного в прото контракте
 	err = req.ValidateAll()
 	if err != nil {
@@ -38,14 +30,6 @@ func (api *API) AcceptOrder(ctx context.Context, req *orders.AcceptOrderRequest)
 
 // DeliverOrders реализует метод /v1/orders/deliver
 func (api *API) DeliverOrders(ctx context.Context, req *orders.DeliverOrdersRequest) (resp *orders.DeliverOrdersResponse, err error) {
-	// составляем сообщения, что пойдет в брокер
-	msg, err := getMessage(ctx, req.ProtoReflect())
-	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
-	}
-	// отправляем после
-	defer func() { api.send(msg, err) }()
-
 	// валидация заданного в прото контракте
 	err = req.ValidateAll()
 	if err != nil {
@@ -63,14 +47,6 @@ func (api *API) DeliverOrders(ctx context.Context, req *orders.DeliverOrdersRequ
 
 // ListOrders реализует метод /v1/orders/list
 func (api *API) ListOrders(ctx context.Context, req *orders.ListOrdersRequest) (resp *orders.ListOrdersResponse, err error) {
-	// составляем сообщения, что пойдет в брокер
-	msg, err := getMessage(ctx, req.ProtoReflect())
-	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
-	}
-	// отправляем после
-	defer func() { api.send(msg, err) }()
-
 	// валидация заданного в прото контракте
 	err = req.ValidateAll()
 	if err != nil {
@@ -92,14 +68,6 @@ func (api *API) ListOrders(ctx context.Context, req *orders.ListOrdersRequest) (
 
 // ReturnOrder реализует метод /v1/orders/return
 func (api *API) ReturnOrder(ctx context.Context, req *orders.ReturnOrderRequest) (resp *orders.ReturnOrderResponse, err error) {
-	// составляем сообщения, что пойдет в брокер
-	msg, err := getMessage(ctx, req.ProtoReflect())
-	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
-	}
-	// отправляем после
-	defer func() { api.send(msg, err) }()
-
 	// валидация заданного в прото контракте
 	err = req.ValidateAll()
 	if err != nil {
