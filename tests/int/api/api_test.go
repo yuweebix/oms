@@ -42,7 +42,7 @@ func (s *APISuite) SetupSuite() {
 	}
 
 	// domain + mock expectations
-	domain := mocks.NewMockDomain(s.T())
+	domain := mocks.NewMockService(s.T())
 	domain.EXPECT().AcceptOrder(mock.Anything, mock.Anything).Return(nil).Maybe()
 	domain.EXPECT().DeliverOrders(mock.Anything, mock.Anything).Return(nil).Maybe()
 	domain.EXPECT().ListOrders(mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, nil).Maybe()
@@ -50,12 +50,8 @@ func (s *APISuite) SetupSuite() {
 	domain.EXPECT().AcceptReturn(mock.Anything, mock.Anything).Return(nil).Maybe()
 	domain.EXPECT().ListReturns(mock.Anything, mock.Anything, mock.Anything).Return(nil, nil).Maybe()
 
-	// producer + mock expectations
-	producer := mocks.NewMockProducer(s.T())
-	producer.EXPECT().Send(mock.Anything).Return(nil).Maybe()
-
 	// api
-	api := api.NewAPI(domain, producer)
+	api := api.NewAPI(domain)
 
 	// server
 	s.server = grpc.NewServer()
