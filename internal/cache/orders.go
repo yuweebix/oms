@@ -3,6 +3,7 @@ package cache
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/redis/go-redis/v9"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/cache/schemas"
@@ -13,18 +14,8 @@ import (
 func (c *Cache) SetOrder(ctx context.Context, o *models.Order) (err error) {
 	orderKey := fmt.Sprintf("order:%d", o.ID)
 
-	// старый статус нужно удалить (если он имеется)
-	oldStatus, err := c.client.HGet(ctx, orderKey, "status").Result()
-	switch err {
-	case redis.Nil: // ничего не вернули -> нечего удалять
-	case nil: // статус вернулся -> надо удалить
-		err = c.client.ZRem(ctx, fmt.Sprintf("orders:by_status:%s", oldStatus), orderKey).Err()
-		if err != nil {
-			return err
-		}
-	default: // какая-то другая внутрення ошибка
-		return err
-	}
+	// юзер никогда не меняется у заказа, поэтому менять его не нужно
+	c.zRemOrdersByStatus(ctx, orderKey)
 
 	// будет храниться в форме хеша
 	err = c.client.HSet(ctx, orderKey, schemas.FromModelsOrder(o)).Err()
@@ -42,9 +33,23 @@ func (c *Cache) SetOrder(ctx context.Context, o *models.Order) (err error) {
 	}
 
 	// для фильтрации по id пользователя (см. GetOrders)
-	err = c.client.ZAdd(ctx, fmt.Sprintf("user:%d:orders", o.User.ID), z).Err()
+	err = c.client.ZAddNX(ctx, fmt.Sprintf("user:%d:orders", o.User.ID), z).Err()
 	if err != nil {
 		return err
+	}
+
+	// TTL
+	switch o.ReturnBy {
+	case time.Time{}: // ReturnBy не был задан
+		err = c.client.ExpireAt(ctx, orderKey, o.Expiry).Err()
+		if err != nil {
+			return err
+		}
+	default: // ReturnBy задан, используем его
+		err = c.client.ExpireAt(ctx, orderKey, o.ReturnBy).Err()
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -62,11 +67,17 @@ func (c *Cache) GetOrder(ctx context.Context, o *models.Order) (result *models.O
 
 	// если ничего не получили возвращаем nil
 	empty := &schemas.Order{}
-	if *order == *empty {
-		return nil, nil
+	if *order != *empty {
+		return schemas.ToModelsOrder(order), nil
 	}
 
-	return schemas.ToModelsOrder(order), nil
+	// очистим множества
+	err = c.zRemOrdersByStatus(ctx, orderKey)
+	if err != nil {
+		return nil, err
+	}
+	err = c.zRemUserOrders(ctx, orderKey)
+	return nil, err
 }
 
 // DeleteOrder удаляет из кеша заказ и связанные с ним элементы множеств
@@ -159,7 +170,7 @@ func (c *Cache) GetOrders(ctx context.Context, userID uint64, limit uint64, offs
 	return list, nil
 }
 
-// GetOrders
+// GetOrdersForDelivery возващает заказы из кеша по их IDs
 func (c *Cache) GetOrdersForDelivery(ctx context.Context, orderIDs []uint64) (list []*models.Order, err error) {
 	for _, orderID := range orderIDs {
 		order, err := c.GetOrder(ctx, &models.Order{ID: orderID})
