@@ -1,4 +1,36 @@
 services:
+
+# --------------------------------------------METRICS-------------------------------------------- #
+
+  prometheus:
+    image: prom/prometheus:latest
+    hostname: prometheus
+    container_name: prometheus
+    volumes:
+      - prometheus-data:/prometheus
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    networks:
+      - app-network
+    depends_on:
+      - kafka-exporter
+      - postgres-exporter
+      - redis-exporter
+
+  grafana:
+    image: grafana/grafana:latest
+    hostname: grafana
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    networks:
+      - app-network
+    depends_on:
+      - prometheus
+
+# --------------------------------------------SERVICES-------------------------------------------- #
+
   broker:
     image: apache/kafka:3.7.1
     hostname: broker
@@ -87,6 +119,8 @@ services:
       - "32269:32269" # grpc
       - "42069:42069" # http
 
+# --------------------------------------------TESTS-------------------------------------------- #
+
   broker_test:
     image: apache/kafka:3.7.1
     hostname: broker_test
@@ -121,7 +155,7 @@ services:
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}_test
+      POSTGRES_DB: ${POSTGRES_DB}`
     volumes:
       - db-test-data:/var/lib/postgresql/data
     ports:
@@ -146,11 +180,56 @@ services:
       timeout: 5s
       retries: 5
 
+# --------------------------------------------EXPORTERS-------------------------------------------- #
+
+  kafka-exporter:
+    image: danielqsj/kafka-exporter:latest
+    hostname: kafka-exporter
+    container_name: kafka-exporter
+    ports:
+      - "9308:9308"
+    command: ["--kafka.server=broker:19092"]
+    networks:
+      - app-network
+    depends_on:
+      broker:
+        condition: service_healthy
+
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter:latest
+    hostname: postgres-exporter
+    container_name: postgres-exporter
+    environment:
+      DATA_SOURCE_NAME: ${DATABASE_URL}
+    ports:
+      - "9187:9187"
+    networks:
+      - app-network
+    depends_on:
+      db:
+        condition: service_healthy
+      
+  redis-exporter:
+    image: oliver006/redis_exporter:latest
+    hostname: redis-exporter
+    container_name: redis-exporter
+    command: ["-redis.addr=redis:6379"]
+    ports:
+      - "9121:9121"
+    networks:
+      - app-network
+    depends_on:
+      redis:
+        condition: service_healthy
+
+# --------------------------------------------CONFIGS-------------------------------------------- #
+
 volumes:
   db-data:
   db-test-data:
   redis-data:
   redis-test-data:
+  prometheus-data:
 
 networks:
   app-network:
