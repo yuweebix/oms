@@ -4,6 +4,7 @@ import (
 	"context"
 
 	orders "gitlab.ozon.dev/yuweebix/homework-1/gen/orders/v1/proto"
+	"gitlab.ozon.dev/yuweebix/homework-1/internal/metrics"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/models"
 	"gitlab.ozon.dev/yuweebix/homework-1/pkg/utils"
 	"google.golang.org/grpc/codes"
@@ -42,6 +43,7 @@ func (api *API) DeliverOrders(ctx context.Context, req *orders.DeliverOrdersRequ
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
+	metrics.IncDeliveriesTotal()
 	return &orders.DeliverOrdersResponse{}, nil
 }
 

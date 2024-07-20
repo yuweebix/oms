@@ -38,7 +38,7 @@ up-redis:
 up-redis-test:
 	docker-compose --env-file .env up -d redis_test
 up-metrics:
-	docker-compose --env-file .env up grafana
+	docker-compose --env-file .env up -d grafana
 
 # ОСТАНОВКА
 down:

@@ -4,6 +4,7 @@ import (
 	"context"
 
 	returns "gitlab.ozon.dev/yuweebix/homework-1/gen/returns/v1/proto"
+	"gitlab.ozon.dev/yuweebix/homework-1/internal/metrics"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/models"
 	"gitlab.ozon.dev/yuweebix/homework-1/pkg/utils"
 	"google.golang.org/grpc/codes"
@@ -28,6 +29,7 @@ func (api *API) AcceptReturn(ctx context.Context, req *returns.AcceptReturnReque
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
+	metrics.DecDeliveriesTotal()
 	return &returns.AcceptReturnResponse{}, nil
 }
 
