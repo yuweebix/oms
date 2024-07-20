@@ -27,21 +27,21 @@ func (d *Domain) AcceptReturn(ctx context.Context, o *models.Order) (err error) 
 	ro := &models.Order{} // ro - return order
 
 	// сначала проверим в кеши ли заказ
-	cachedOrder, err := d.cache.GetOrder(ctx, o)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-	}
-	if cachedOrder != nil {
-		ro = cachedOrder
+	cachedOrder, cacheErr := d.cache.GetOrder(ctx, o)
+	if cacheErr != nil {
+		fmt.Fprintln(os.Stderr, cacheErr)
 	}
 
 	// начинаем транзакцию
 	err = d.storage.RunTx(ctx, opts, func(ctxTX context.Context) error {
-		if cachedOrder == nil {
+		switch cachedOrder {
+		case nil:
 			ro, err = d.storage.GetOrder(ctxTX, o)
 			if err != nil {
 				return err
 			}
+		default:
+			ro = cachedOrder
 		}
 
 		// должен быть доставлен
@@ -70,25 +70,31 @@ func (d *Domain) AcceptReturn(ctx context.Context, o *models.Order) (err error) 
 		return err
 	}
 
-	return d.cache.SetOrder(ctx, ro)
+	cacheErr = d.cache.SetOrder(ctx, ro)
+	if cacheErr != nil {
+		fmt.Fprintln(os.Stderr, cacheErr)
+	}
+
+	return nil
 }
 
 // ListReturns выводит список возвратов с пагинацией
 func (d *Domain) ListReturns(ctx context.Context, limit uint64, offset uint64) (list []*models.Order, err error) {
-	cachedList, err := d.cache.GetReturns(ctx, limit, offset)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-	}
-	if len(cachedList) != 0 {
-		list = cachedList
+	cachedList, cacheErr := d.cache.GetReturns(ctx, limit, offset)
+	if cacheErr != nil {
+		fmt.Fprintln(os.Stderr, cacheErr)
 	}
 
-	// можно обойтись и без эксплицитной транзакции, ведь мы просто читаем данные, не проверяем их и не изменяем
-	if len(cachedList) == 0 {
+	switch cachedList {
+	case nil:
+		// можно обойтись и без эксплицитной транзакции, ведь мы просто читаем данные, не проверяем их и не изменяем
 		list, err = d.storage.GetReturns(ctx, limit, offset)
 		if err != nil {
 			return nil, err
 		}
+	default:
+		list = cachedList
+
 	}
 
 	return list, err

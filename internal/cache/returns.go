@@ -33,11 +33,19 @@ func (c *Cache) GetReturns(ctx context.Context, limit uint64, offset uint64) (li
 			return nil, err
 		}
 
+		// проверить, не пустой ли
 		if order == nil {
 			continue
 		}
 
 		list = append(list, order)
+	}
+
+	// вроде бы, если ничего не зааппендили в лист
+	// `len(list) == 0 && cap(list) == 0`
+	// то и так будет `list == nil` работать, но на всякий оставил
+	if len(list) == 0 {
+		return nil, nil
 	}
 
 	return list, nil
