@@ -20,7 +20,7 @@ import (
 	orders "gitlab.ozon.dev/yuweebix/homework-1/gen/orders/v1/proto"
 	returns "gitlab.ozon.dev/yuweebix/homework-1/gen/returns/v1/proto"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/api"
-	"gitlab.ozon.dev/yuweebix/homework-1/internal/cache"
+	"gitlab.ozon.dev/yuweebix/homework-1/internal/cache/redis/cache"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/domain"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/kafka/pub"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/kafka/sub/group"

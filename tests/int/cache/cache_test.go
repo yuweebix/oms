@@ -8,7 +8,7 @@ import (
 
 	"github.com/joho/godotenv"
 	"github.com/stretchr/testify/suite"
-	"gitlab.ozon.dev/yuweebix/homework-1/internal/cache"
+	cache "gitlab.ozon.dev/yuweebix/homework-1/internal/cache/redis/cache"
 )
 
 type CacheSuite struct {

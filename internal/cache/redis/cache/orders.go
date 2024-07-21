@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/redis/go-redis/v9"
-	"gitlab.ozon.dev/yuweebix/homework-1/internal/cache/schemas"
+	"gitlab.ozon.dev/yuweebix/homework-1/internal/cache/redis/schemas"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/models"
 )
 
