@@ -23,22 +23,43 @@ func (_m *MockCache) EXPECT() *MockCache_Expecter {
 	return &MockCache_Expecter{mock: &_m.Mock}
 }
 
+// CreateOrder provides a mock function with given fields: ctx, o
+func (_m *MockCache) CreateOrder(ctx context.Context, o *models.Order) {
+	_m.Called(ctx, o)
+}
+
+// MockCache_CreateOrder_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreateOrder'
+type MockCache_CreateOrder_Call struct {
+	*mock.Call
+}
+
+// CreateOrder is a helper method to define mock.On call
+//   - ctx context.Context
+//   - o *models.Order
+func (_e *MockCache_Expecter) CreateOrder(ctx interface{}, o interface{}) *MockCache_CreateOrder_Call {
+	return &MockCache_CreateOrder_Call{Call: _e.mock.On("CreateOrder", ctx, o)}
+}
+
+func (_c *MockCache_CreateOrder_Call) Run(run func(ctx context.Context, o *models.Order)) *MockCache_CreateOrder_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(*models.Order))
+	})
+	return _c
+}
+
+func (_c *MockCache_CreateOrder_Call) Return() *MockCache_CreateOrder_Call {
+	_c.Call.Return()
+	return _c
+}
+
+func (_c *MockCache_CreateOrder_Call) RunAndReturn(run func(context.Context, *models.Order)) *MockCache_CreateOrder_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // DeleteOrder provides a mock function with given fields: ctx, o
-func (_m *MockCache) DeleteOrder(ctx context.Context, o *models.Order) error {
-	ret := _m.Called(ctx, o)
-
-	if len(ret) == 0 {
-		panic("no return value specified for DeleteOrder")
-	}
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, *models.Order) error); ok {
-		r0 = rf(ctx, o)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
+func (_m *MockCache) DeleteOrder(ctx context.Context, o *models.Order) {
+	_m.Called(ctx, o)
 }
 
 // MockCache_DeleteOrder_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteOrder'
@@ -60,18 +81,18 @@ func (_c *MockCache_DeleteOrder_Call) Run(run func(ctx context.Context, o *model
 	return _c
 }
 
-func (_c *MockCache_DeleteOrder_Call) Return(_a0 error) *MockCache_DeleteOrder_Call {
-	_c.Call.Return(_a0)
+func (_c *MockCache_DeleteOrder_Call) Return() *MockCache_DeleteOrder_Call {
+	_c.Call.Return()
 	return _c
 }
 
-func (_c *MockCache_DeleteOrder_Call) RunAndReturn(run func(context.Context, *models.Order) error) *MockCache_DeleteOrder_Call {
+func (_c *MockCache_DeleteOrder_Call) RunAndReturn(run func(context.Context, *models.Order)) *MockCache_DeleteOrder_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetOrder provides a mock function with given fields: ctx, o
-func (_m *MockCache) GetOrder(ctx context.Context, o *models.Order) (*models.Order, error) {
+func (_m *MockCache) GetOrder(ctx context.Context, o *models.Order) *models.Order {
 	ret := _m.Called(ctx, o)
 
 	if len(ret) == 0 {
@@ -79,10 +100,6 @@ func (_m *MockCache) GetOrder(ctx context.Context, o *models.Order) (*models.Ord
 	}
 
 	var r0 *models.Order
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *models.Order) (*models.Order, error)); ok {
-		return rf(ctx, o)
-	}
 	if rf, ok := ret.Get(0).(func(context.Context, *models.Order) *models.Order); ok {
 		r0 = rf(ctx, o)
 	} else {
@@ -91,13 +108,7 @@ func (_m *MockCache) GetOrder(ctx context.Context, o *models.Order) (*models.Ord
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, *models.Order) error); ok {
-		r1 = rf(ctx, o)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
+	return r0
 }
 
 // MockCache_GetOrder_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetOrder'
@@ -119,18 +130,18 @@ func (_c *MockCache_GetOrder_Call) Run(run func(ctx context.Context, o *models.O
 	return _c
 }
 
-func (_c *MockCache_GetOrder_Call) Return(_a0 *models.Order, _a1 error) *MockCache_GetOrder_Call {
-	_c.Call.Return(_a0, _a1)
+func (_c *MockCache_GetOrder_Call) Return(_a0 *models.Order) *MockCache_GetOrder_Call {
+	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *MockCache_GetOrder_Call) RunAndReturn(run func(context.Context, *models.Order) (*models.Order, error)) *MockCache_GetOrder_Call {
+func (_c *MockCache_GetOrder_Call) RunAndReturn(run func(context.Context, *models.Order) *models.Order) *MockCache_GetOrder_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetOrders provides a mock function with given fields: ctx, userID, limit, offset, isStored
-func (_m *MockCache) GetOrders(ctx context.Context, userID uint64, limit uint64, offset uint64, isStored bool) ([]*models.Order, error) {
+func (_m *MockCache) GetOrders(ctx context.Context, userID uint64, limit uint64, offset uint64, isStored bool) []*models.Order {
 	ret := _m.Called(ctx, userID, limit, offset, isStored)
 
 	if len(ret) == 0 {
@@ -138,10 +149,6 @@ func (_m *MockCache) GetOrders(ctx context.Context, userID uint64, limit uint64,
 	}
 
 	var r0 []*models.Order
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, uint64, uint64, uint64, bool) ([]*models.Order, error)); ok {
-		return rf(ctx, userID, limit, offset, isStored)
-	}
 	if rf, ok := ret.Get(0).(func(context.Context, uint64, uint64, uint64, bool) []*models.Order); ok {
 		r0 = rf(ctx, userID, limit, offset, isStored)
 	} else {
@@ -150,13 +157,7 @@ func (_m *MockCache) GetOrders(ctx context.Context, userID uint64, limit uint64,
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, uint64, uint64, uint64, bool) error); ok {
-		r1 = rf(ctx, userID, limit, offset, isStored)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
+	return r0
 }
 
 // MockCache_GetOrders_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetOrders'
@@ -181,18 +182,18 @@ func (_c *MockCache_GetOrders_Call) Run(run func(ctx context.Context, userID uin
 	return _c
 }
 
-func (_c *MockCache_GetOrders_Call) Return(_a0 []*models.Order, _a1 error) *MockCache_GetOrders_Call {
-	_c.Call.Return(_a0, _a1)
+func (_c *MockCache_GetOrders_Call) Return(_a0 []*models.Order) *MockCache_GetOrders_Call {
+	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *MockCache_GetOrders_Call) RunAndReturn(run func(context.Context, uint64, uint64, uint64, bool) ([]*models.Order, error)) *MockCache_GetOrders_Call {
+func (_c *MockCache_GetOrders_Call) RunAndReturn(run func(context.Context, uint64, uint64, uint64, bool) []*models.Order) *MockCache_GetOrders_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetOrdersForDelivery provides a mock function with given fields: ctx, orderIDs
-func (_m *MockCache) GetOrdersForDelivery(ctx context.Context, orderIDs []uint64) ([]*models.Order, error) {
+func (_m *MockCache) GetOrdersForDelivery(ctx context.Context, orderIDs []uint64) []*models.Order {
 	ret := _m.Called(ctx, orderIDs)
 
 	if len(ret) == 0 {
@@ -200,10 +201,6 @@ func (_m *MockCache) GetOrdersForDelivery(ctx context.Context, orderIDs []uint64
 	}
 
 	var r0 []*models.Order
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, []uint64) ([]*models.Order, error)); ok {
-		return rf(ctx, orderIDs)
-	}
 	if rf, ok := ret.Get(0).(func(context.Context, []uint64) []*models.Order); ok {
 		r0 = rf(ctx, orderIDs)
 	} else {
@@ -212,13 +209,7 @@ func (_m *MockCache) GetOrdersForDelivery(ctx context.Context, orderIDs []uint64
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, []uint64) error); ok {
-		r1 = rf(ctx, orderIDs)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
+	return r0
 }
 
 // MockCache_GetOrdersForDelivery_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetOrdersForDelivery'
@@ -240,18 +231,18 @@ func (_c *MockCache_GetOrdersForDelivery_Call) Run(run func(ctx context.Context,
 	return _c
 }
 
-func (_c *MockCache_GetOrdersForDelivery_Call) Return(_a0 []*models.Order, _a1 error) *MockCache_GetOrdersForDelivery_Call {
-	_c.Call.Return(_a0, _a1)
+func (_c *MockCache_GetOrdersForDelivery_Call) Return(_a0 []*models.Order) *MockCache_GetOrdersForDelivery_Call {
+	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *MockCache_GetOrdersForDelivery_Call) RunAndReturn(run func(context.Context, []uint64) ([]*models.Order, error)) *MockCache_GetOrdersForDelivery_Call {
+func (_c *MockCache_GetOrdersForDelivery_Call) RunAndReturn(run func(context.Context, []uint64) []*models.Order) *MockCache_GetOrdersForDelivery_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetReturns provides a mock function with given fields: ctx, limit, offset
-func (_m *MockCache) GetReturns(ctx context.Context, limit uint64, offset uint64) ([]*models.Order, error) {
+func (_m *MockCache) GetReturns(ctx context.Context, limit uint64, offset uint64) []*models.Order {
 	ret := _m.Called(ctx, limit, offset)
 
 	if len(ret) == 0 {
@@ -259,10 +250,6 @@ func (_m *MockCache) GetReturns(ctx context.Context, limit uint64, offset uint64
 	}
 
 	var r0 []*models.Order
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, uint64, uint64) ([]*models.Order, error)); ok {
-		return rf(ctx, limit, offset)
-	}
 	if rf, ok := ret.Get(0).(func(context.Context, uint64, uint64) []*models.Order); ok {
 		r0 = rf(ctx, limit, offset)
 	} else {
@@ -271,13 +258,7 @@ func (_m *MockCache) GetReturns(ctx context.Context, limit uint64, offset uint64
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, uint64, uint64) error); ok {
-		r1 = rf(ctx, limit, offset)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
+	return r0
 }
 
 // MockCache_GetReturns_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetReturns'
@@ -300,59 +281,46 @@ func (_c *MockCache_GetReturns_Call) Run(run func(ctx context.Context, limit uin
 	return _c
 }
 
-func (_c *MockCache_GetReturns_Call) Return(_a0 []*models.Order, _a1 error) *MockCache_GetReturns_Call {
-	_c.Call.Return(_a0, _a1)
+func (_c *MockCache_GetReturns_Call) Return(_a0 []*models.Order) *MockCache_GetReturns_Call {
+	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *MockCache_GetReturns_Call) RunAndReturn(run func(context.Context, uint64, uint64) ([]*models.Order, error)) *MockCache_GetReturns_Call {
+func (_c *MockCache_GetReturns_Call) RunAndReturn(run func(context.Context, uint64, uint64) []*models.Order) *MockCache_GetReturns_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// SetOrder provides a mock function with given fields: ctx, o
-func (_m *MockCache) SetOrder(ctx context.Context, o *models.Order) error {
-	ret := _m.Called(ctx, o)
-
-	if len(ret) == 0 {
-		panic("no return value specified for SetOrder")
-	}
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, *models.Order) error); ok {
-		r0 = rf(ctx, o)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
+// UpdateOrder provides a mock function with given fields: ctx, o
+func (_m *MockCache) UpdateOrder(ctx context.Context, o *models.Order) {
+	_m.Called(ctx, o)
 }
 
-// MockCache_SetOrder_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SetOrder'
-type MockCache_SetOrder_Call struct {
+// MockCache_UpdateOrder_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateOrder'
+type MockCache_UpdateOrder_Call struct {
 	*mock.Call
 }
 
-// SetOrder is a helper method to define mock.On call
+// UpdateOrder is a helper method to define mock.On call
 //   - ctx context.Context
 //   - o *models.Order
-func (_e *MockCache_Expecter) SetOrder(ctx interface{}, o interface{}) *MockCache_SetOrder_Call {
-	return &MockCache_SetOrder_Call{Call: _e.mock.On("SetOrder", ctx, o)}
+func (_e *MockCache_Expecter) UpdateOrder(ctx interface{}, o interface{}) *MockCache_UpdateOrder_Call {
+	return &MockCache_UpdateOrder_Call{Call: _e.mock.On("UpdateOrder", ctx, o)}
 }
 
-func (_c *MockCache_SetOrder_Call) Run(run func(ctx context.Context, o *models.Order)) *MockCache_SetOrder_Call {
+func (_c *MockCache_UpdateOrder_Call) Run(run func(ctx context.Context, o *models.Order)) *MockCache_UpdateOrder_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run(args[0].(context.Context), args[1].(*models.Order))
 	})
 	return _c
 }
 
-func (_c *MockCache_SetOrder_Call) Return(_a0 error) *MockCache_SetOrder_Call {
-	_c.Call.Return(_a0)
+func (_c *MockCache_UpdateOrder_Call) Return() *MockCache_UpdateOrder_Call {
+	_c.Call.Return()
 	return _c
 }
 
-func (_c *MockCache_SetOrder_Call) RunAndReturn(run func(context.Context, *models.Order) error) *MockCache_SetOrder_Call {
+func (_c *MockCache_UpdateOrder_Call) RunAndReturn(run func(context.Context, *models.Order)) *MockCache_UpdateOrder_Call {
 	_c.Call.Return(run)
 	return _c
 }

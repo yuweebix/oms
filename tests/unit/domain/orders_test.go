@@ -27,7 +27,7 @@ func (s *DomainSuite) TestAcceptOrder_Success() {
 	domain, storage, cache := s.SetupTest()
 
 	storage.EXPECT().CreateOrder(mock.Anything, mock.Anything).Return(nil)
-	cache.EXPECT().SetOrder(mock.Anything, mock.Anything).Return(nil)
+	cache.EXPECT().CreateOrder(mock.Anything, mock.Anything)
 
 	err := domain.AcceptOrder(context.Background(), order)
 
@@ -111,8 +111,8 @@ func (s *DomainSuite) TestReturnOrder_Success_StatusReturned() {
 	})
 	storage.EXPECT().DeleteOrder(mock.Anything, mock.Anything).Return(nil)
 
-	cache.EXPECT().GetOrder(mock.Anything, mock.Anything).Return(nil, nil)
-	cache.EXPECT().DeleteOrder(mock.Anything, mock.Anything).Return(nil)
+	cache.EXPECT().GetOrder(mock.Anything, mock.Anything).Return(nil)
+	cache.EXPECT().DeleteOrder(mock.Anything, mock.Anything)
 
 	err := domain.ReturnOrder(context.Background(), order)
 
@@ -135,8 +135,8 @@ func (s *DomainSuite) TestReturnOrder_Expired() {
 	})
 	storage.EXPECT().DeleteOrder(mock.Anything, mock.Anything).Return(nil)
 
-	cache.EXPECT().GetOrder(mock.Anything, mock.Anything).Return(nil, nil)
-	cache.EXPECT().DeleteOrder(mock.Anything, mock.Anything).Return(nil)
+	cache.EXPECT().GetOrder(mock.Anything, mock.Anything).Return(nil)
+	cache.EXPECT().DeleteOrder(mock.Anything, mock.Anything)
 
 	err := domain.ReturnOrder(context.Background(), order)
 
@@ -157,7 +157,7 @@ func (s *DomainSuite) TestReturnOrder_NotExpired() {
 		return o, nil
 	})
 
-	cache.EXPECT().GetOrder(mock.Anything, mock.Anything).Return(nil, nil)
+	cache.EXPECT().GetOrder(mock.Anything, mock.Anything).Return(nil)
 
 	err := domain.ReturnOrder(context.Background(), order)
 
@@ -189,8 +189,8 @@ func (s *DomainSuite) TestDeliverOrders_Success() {
 	storage.EXPECT().GetOrdersForDelivery(mock.Anything, orderIDs).Return(orders, nil)
 	storage.EXPECT().UpdateOrder(mock.Anything, mock.Anything).Return(nil).Times(len(orderIDs))
 
-	cache.EXPECT().GetOrdersForDelivery(mock.Anything, mock.Anything).Return([]*models.Order{}, nil)
-	cache.EXPECT().SetOrder(mock.Anything, mock.Anything).Return(nil)
+	cache.EXPECT().GetOrdersForDelivery(mock.Anything, mock.Anything).Return(nil)
+	cache.EXPECT().UpdateOrder(mock.Anything, mock.Anything)
 
 	err := domain.DeliverOrders(context.Background(), orderIDs)
 
@@ -225,7 +225,7 @@ func (s *DomainSuite) TestDeliverOrders_OrderNotFound() {
 	})
 	storage.EXPECT().GetOrdersForDelivery(mock.Anything, orderIDs).Return([]*models.Order{}, nil) // опять пусто... только теперь ничего не вернули
 
-	cache.EXPECT().GetOrdersForDelivery(mock.Anything, mock.Anything).Return([]*models.Order{}, nil)
+	cache.EXPECT().GetOrdersForDelivery(mock.Anything, mock.Anything).Return(nil)
 
 	err := domain.DeliverOrders(context.Background(), orderIDs)
 
@@ -247,7 +247,7 @@ func (s *DomainSuite) TestDeliverOrders_StatusInvalid() {
 	})
 	storage.EXPECT().GetOrdersForDelivery(mock.Anything, orderIDs).Return(orders, nil)
 
-	cache.EXPECT().GetOrdersForDelivery(mock.Anything, mock.Anything).Return([]*models.Order{}, nil)
+	cache.EXPECT().GetOrdersForDelivery(mock.Anything, mock.Anything).Return(nil)
 
 	err := domain.DeliverOrders(context.Background(), orderIDs)
 
@@ -270,7 +270,7 @@ func (s *DomainSuite) TestDeliverOrders_UserInvalid() {
 	})
 	storage.EXPECT().GetOrdersForDelivery(mock.Anything, orderIDs).Return(orders, nil)
 
-	cache.EXPECT().GetOrdersForDelivery(mock.Anything, mock.Anything).Return([]*models.Order{}, nil)
+	cache.EXPECT().GetOrdersForDelivery(mock.Anything, mock.Anything).Return(nil)
 
 	err := domain.DeliverOrders(context.Background(), orderIDs)
 
@@ -292,7 +292,7 @@ func (s *DomainSuite) TestDeliverOrders_OrderExpired() {
 	})
 	storage.EXPECT().GetOrdersForDelivery(mock.Anything, orderIDs).Return(orders, nil)
 
-	cache.EXPECT().GetOrdersForDelivery(mock.Anything, mock.Anything).Return([]*models.Order{}, nil)
+	cache.EXPECT().GetOrdersForDelivery(mock.Anything, mock.Anything).Return(nil)
 
 	err := domain.DeliverOrders(context.Background(), orderIDs)
 

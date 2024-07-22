@@ -24,8 +24,8 @@ func (s *DomainSuite) TestAcceptReturn_Success() {
 	storage.EXPECT().GetOrder(mock.Anything, order).Return(returnOrder, nil)
 	storage.EXPECT().UpdateOrder(mock.Anything, mock.Anything).Return(nil)
 
-	cache.EXPECT().GetOrder(mock.Anything, mock.Anything).Return(nil, nil)
-	cache.EXPECT().SetOrder(mock.Anything, mock.Anything).Return(nil)
+	cache.EXPECT().GetOrder(mock.Anything, mock.Anything).Return(nil)
+	cache.EXPECT().UpdateOrder(mock.Anything, mock.Anything)
 
 	err := domain.AcceptReturn(context.Background(), order)
 
@@ -47,7 +47,7 @@ func (s *DomainSuite) TestAcceptReturn_StatusInvalid() {
 	})
 	storage.EXPECT().GetOrder(mock.Anything, order).Return(returnOrder, nil)
 
-	cache.EXPECT().GetOrder(mock.Anything, mock.Anything).Return(nil, nil)
+	cache.EXPECT().GetOrder(mock.Anything, mock.Anything).Return(nil)
 
 	err := domain.AcceptReturn(context.Background(), order)
 
@@ -67,7 +67,7 @@ func (s *DomainSuite) TestAcceptReturn_OrderExpired() {
 	})
 	storage.EXPECT().GetOrder(mock.Anything, order).Return(returnOrder, nil)
 
-	cache.EXPECT().GetOrder(mock.Anything, mock.Anything).Return(nil, nil)
+	cache.EXPECT().GetOrder(mock.Anything, mock.Anything).Return(nil)
 
 	err := domain.AcceptReturn(context.Background(), order)
 
@@ -86,7 +86,7 @@ func (s *DomainSuite) TestAcceptReturn_UserInvalid() {
 	})
 	storage.EXPECT().GetOrder(mock.Anything, order).Return(returnOrder, nil)
 
-	cache.EXPECT().GetOrder(mock.Anything, mock.Anything).Return(nil, nil)
+	cache.EXPECT().GetOrder(mock.Anything, mock.Anything).Return(nil)
 
 	err := domain.AcceptReturn(context.Background(), order)
 
