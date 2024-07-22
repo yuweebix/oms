@@ -2,8 +2,6 @@ package domain
 
 import (
 	"context"
-	"fmt"
-	"os"
 	"time"
 
 	e "gitlab.ozon.dev/yuweebix/homework-1/internal/domain/errors"
@@ -27,10 +25,7 @@ func (d *Domain) AcceptReturn(ctx context.Context, o *models.Order) (err error) 
 	ro := &models.Order{} // ro - return order
 
 	// сначала проверим в кеши ли заказ
-	cachedOrder, cacheErr := d.cache.GetOrder(ctx, o)
-	if cacheErr != nil {
-		fmt.Fprintln(os.Stderr, cacheErr)
-	}
+	cachedOrder := d.cache.GetOrder(ctx, o)
 
 	// начинаем транзакцию
 	err = d.storage.RunTx(ctx, opts, func(ctxTX context.Context) error {
@@ -70,23 +65,18 @@ func (d *Domain) AcceptReturn(ctx context.Context, o *models.Order) (err error) 
 		return err
 	}
 
-	cacheErr = d.cache.SetOrder(ctx, ro)
-	if cacheErr != nil {
-		fmt.Fprintln(os.Stderr, cacheErr)
-	}
+	// обновим кеш
+	d.cache.UpdateOrder(ctx, ro)
 
 	return nil
 }
 
 // ListReturns выводит список возвратов с пагинацией
 func (d *Domain) ListReturns(ctx context.Context, limit uint64, offset uint64) (list []*models.Order, err error) {
-	cachedList, cacheErr := d.cache.GetReturns(ctx, limit, offset)
-	if cacheErr != nil {
-		fmt.Fprintln(os.Stderr, cacheErr)
-	}
+	cachedList := d.cache.GetReturns(ctx, limit, offset)
 
 	switch cachedList {
-	case nil:
+	case nil: // лист невалидный, либо просто пустой; следует удалить просроченные заказы из кеша
 		// можно обойтись и без эксплицитной транзакции, ведь мы просто читаем данные, не проверяем их и не изменяем
 		list, err = d.storage.GetReturns(ctx, limit, offset)
 		if err != nil {

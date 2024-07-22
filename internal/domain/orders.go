@@ -2,8 +2,6 @@ package domain
 
 import (
 	"context"
-	"fmt"
-	"os"
 	"time"
 
 	e "gitlab.ozon.dev/yuweebix/homework-1/internal/domain/errors"
@@ -44,10 +42,8 @@ func (d *Domain) AcceptOrder(ctx context.Context, o *models.Order) (err error) {
 		return err
 	}
 
-	cacheErr := d.cache.SetOrder(ctx, o)
-	if cacheErr != nil {
-		fmt.Fprintln(os.Stderr, cacheErr)
-	}
+	// добавим в кеш
+	d.cache.CreateOrder(ctx, o)
 
 	return nil
 }
@@ -66,10 +62,7 @@ func (d *Domain) ReturnOrder(ctx context.Context, o *models.Order) (err error) {
 	}
 
 	// сначала проверим в кеши ли заказ
-	cachedOrder, cacheErr := d.cache.GetOrder(ctx, o)
-	if cacheErr != nil {
-		fmt.Fprintln(os.Stderr, cacheErr)
-	}
+	cachedOrder := d.cache.GetOrder(ctx, o)
 
 	// начинаем транзакцию
 	err = d.storage.RunTx(ctx, opts, func(ctxTX context.Context) error {
@@ -97,24 +90,18 @@ func (d *Domain) ReturnOrder(ctx context.Context, o *models.Order) (err error) {
 		return err
 	}
 
-	// не забываем удалить из кеша
-	cacheErr = d.cache.DeleteOrder(ctx, o)
-	if cacheErr != nil {
-		fmt.Fprintln(os.Stderr, cacheErr)
-	}
+	// удаляем из кеша (важно удалить просроченные заказы)
+	d.cache.DeleteOrder(ctx, o)
 
 	return nil
 }
 
 // ListOrders выводит список заказов с пагинацией, сортировкой и фильтрацией
 func (d *Domain) ListOrders(ctx context.Context, userID uint64, limit uint64, offset uint64, isStored bool) (list []*models.Order, err error) {
-	cachedList, cacheErr := d.cache.GetOrders(ctx, userID, limit, offset, isStored)
-	if cacheErr != nil {
-		fmt.Fprintln(os.Stderr, cacheErr)
-	}
+	cachedList := d.cache.GetOrders(ctx, userID, limit, offset, isStored)
 
 	switch cachedList {
-	case nil:
+	case nil: // лист невалидный, либо просто пустой; следует удалить просроченные заказы из кеша
 		// можно обойтись и без эксплицитной транзакции, ведь мы просто читаем данные, не проверяем их и не изменяем
 		list, err = d.storage.GetOrders(ctx, userID, limit, offset, isStored)
 		if err != nil {
@@ -150,10 +137,7 @@ func (d *Domain) DeliverOrders(ctx context.Context, orderIDs []uint64) (err erro
 	list := make([]*models.Order, 0, len(orderIDs))
 
 	// сначала проверим в кеше ли заказы, но нужно, чтобы совпали lenы
-	cachedList, cacheErr := d.cache.GetOrdersForDelivery(ctx, orderIDs)
-	if cacheErr != nil {
-		fmt.Fprintln(os.Stderr, cacheErr)
-	}
+	cachedList := d.cache.GetOrdersForDelivery(ctx, orderIDs)
 
 	// начинаем транзакцию
 	err = d.storage.RunTx(ctx, opts, func(ctxTX context.Context) error {
@@ -197,10 +181,7 @@ func (d *Domain) DeliverOrders(ctx context.Context, orderIDs []uint64) (err erro
 			if err != nil {
 				return err
 			}
-			cacheErr = d.cache.SetOrder(ctx, list[i])
-			if cacheErr != nil {
-				fmt.Fprintln(os.Stderr, cacheErr)
-			}
+			d.cache.UpdateOrder(ctx, list[i])
 		}
 
 		return nil
