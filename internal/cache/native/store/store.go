@@ -44,7 +44,7 @@ func (s *Store) Get(key string) (value any, ok bool) {
 	if !exists {
 		return nil, false
 	}
-	if time.Since(e.createdAt) > *e.duration {
+	if e.duration != nil && time.Since(e.createdAt) > *e.duration {
 		s.Del(key)
 		return nil, false
 	}

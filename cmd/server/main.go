@@ -12,6 +12,7 @@ import (
 	"strings"
 	"sync"
 	"syscall"
+	"time"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/joho/godotenv"
@@ -20,7 +21,7 @@ import (
 	orders "gitlab.ozon.dev/yuweebix/homework-1/gen/orders/v1/proto"
 	returns "gitlab.ozon.dev/yuweebix/homework-1/gen/returns/v1/proto"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/api"
-	"gitlab.ozon.dev/yuweebix/homework-1/internal/cache/redis/cache"
+	"gitlab.ozon.dev/yuweebix/homework-1/internal/cache/native/cache"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/domain"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/kafka/pub"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/kafka/sub/group"
@@ -38,7 +39,8 @@ const (
 )
 
 var (
-	grpcServerEndpoint = flag.String("grpc-server-endpoint", "localhost:32269", "gRPC server endpoint")
+	grpcServerEndpoint                 = flag.String("grpc-server-endpoint", "localhost:32269", "gRPC server endpoint")
+	cacheCleanupTickrate time.Duration = time.Second * 15
 )
 
 func main() {
@@ -58,11 +60,6 @@ func main() {
 		log.Fatalln("Error reading BROKERS from .env file")
 	}
 	brokers := strings.Split(brokersStr, ",")
-
-	redisAddr := os.Getenv("REDIS_ADDR")
-	if brokersStr == "" {
-		log.Fatalln("Error reading REDIS_ADDR from .env file")
-	}
 
 	grpcPort := os.Getenv("GRPC_PORT")
 	if grpcPort == "" {
@@ -95,10 +92,8 @@ func main() {
 	defer repository.Close()
 
 	// кэш
-	cache, err := cache.NewCache(redisAddr, "", 0)
-	if err != nil {
-		log.Fatalln(err)
-	}
+	cache := cache.NewCache(cacheCleanupTickrate)
+	defer cache.Close()
 
 	// сервис
 	domain := domain.NewDomain(repository, cache)

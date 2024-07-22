@@ -16,7 +16,7 @@ services:
     depends_on:
       - kafka-exporter
       - postgres-exporter
-      - redis-exporter
+      # - redis-exporter
 
   grafana:
     image: grafana/grafana:latest
@@ -111,8 +111,8 @@ services:
         condition: service_healthy
       db:
         condition: service_healthy
-      redis:
-        condition: service_healthy
+      # redis:
+      #   condition: service_healthy
     networks:
       - app-network
     ports:
