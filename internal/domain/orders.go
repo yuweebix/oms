@@ -15,7 +15,7 @@ const (
 )
 
 // AcceptOrder принимает заказ от курьера
-func (d *Domain) AcceptOrder(ctx context.Context, o *models.Order) (_ error) {
+func (d *Domain) AcceptOrder(ctx context.Context, o *models.Order) (err error) {
 	// срок хранения превышен
 	if o.Expiry.Before(time.Now()) {
 		return e.ErrOrderExpired
@@ -37,7 +37,15 @@ func (d *Domain) AcceptOrder(ctx context.Context, o *models.Order) (_ error) {
 	o.Hash = hash.GenerateHash() // HASH
 
 	// можно обойтись и без эксплицитной транзакции, потому что постгресс за нас создаст транзакцию и перечитывать данные при создании нету смысла
-	return d.storage.CreateOrder(ctx, o)
+	err = d.storage.CreateOrder(ctx, o)
+	if err != nil {
+		return err
+	}
+
+	// добавим в кеш
+	d.cache.CreateOrder(ctx, o)
+
+	return nil
 }
 
 // ReturnOrder возвращает заказ курьеру
@@ -53,11 +61,20 @@ func (d *Domain) ReturnOrder(ctx context.Context, o *models.Order) (err error) {
 		AccessMode: models.ReadWrite,
 	}
 
+	// сначала проверим в кеши ли заказ
+	cachedOrder := d.cache.GetOrder(ctx, o)
+
 	// начинаем транзакцию
-	return d.storage.RunTx(ctx, opts, func(ctxTX context.Context) error {
-		o, err = d.storage.GetOrder(ctxTX, o)
-		if err != nil {
-			return err
+	err = d.storage.RunTx(ctx, opts, func(ctxTX context.Context) error {
+		// если нет, то пытаемся достать из бд
+		switch cachedOrder {
+		case nil: // не закеширован
+			o, err = d.storage.GetOrder(ctxTX, o)
+			if err != nil {
+				return err
+			}
+		default: // закеширован
+			o = cachedOrder
 		}
 
 		// если заказ вернули в пвз, то не имеет значение прошёл ли срок хранения
@@ -69,15 +86,29 @@ func (d *Domain) ReturnOrder(ctx context.Context, o *models.Order) (err error) {
 
 		return d.storage.DeleteOrder(ctxTX, o)
 	})
+	if err != nil {
+		return err
+	}
+
+	// удаляем из кеша (важно удалить просроченные заказы)
+	d.cache.DeleteOrder(ctx, o)
+
+	return nil
 }
 
 // ListOrders выводит список заказов с пагинацией, сортировкой и фильтрацией
 func (d *Domain) ListOrders(ctx context.Context, userID uint64, limit uint64, offset uint64, isStored bool) (list []*models.Order, err error) {
-	// можно обойтись и без эксплицитной транзакции, ведь мы просто читаем данные, не проверяем их и не изменяем
-	list, err = d.storage.GetOrders(ctx, userID, limit, offset, isStored)
+	cachedList := d.cache.GetOrders(ctx, userID, limit, offset, isStored)
 
-	if err != nil {
-		return nil, err
+	switch cachedList {
+	case nil: // лист невалидный, либо просто пустой; следует удалить просроченные заказы из кеша
+		// можно обойтись и без эксплицитной транзакции, ведь мы просто читаем данные, не проверяем их и не изменяем
+		list, err = d.storage.GetOrders(ctx, userID, limit, offset, isStored)
+		if err != nil {
+			return nil, err
+		}
+	default:
+		list = cachedList
 	}
 
 	return list, nil
@@ -103,14 +134,24 @@ func (d *Domain) DeliverOrders(ctx context.Context, orderIDs []uint64) (err erro
 		AccessMode: models.ReadWrite,
 	}
 
+	list := make([]*models.Order, 0, len(orderIDs))
+
+	// сначала проверим в кеше ли заказы, но нужно, чтобы совпали lenы
+	cachedList := d.cache.GetOrdersForDelivery(ctx, orderIDs)
+
 	// начинаем транзакцию
 	err = d.storage.RunTx(ctx, opts, func(ctxTX context.Context) error {
-		list, err := d.storage.GetOrdersForDelivery(ctxTX, orderIDs)
-		if err != nil {
-			return err
+		switch {
+		case len(cachedList) == len(orderIDs): // из кеша вернулось нужное количество заказов
+			list = cachedList
+		default:
+			list, err = d.storage.GetOrdersForDelivery(ctxTX, orderIDs)
+			if err != nil {
+				return err
+			}
 		}
 
-		// когда передаются ID заказов, которых нет в базе данных
+		// если длины всё ещё не равны, значит что-то не так с введёнными данными
 		if len(list) != len(orderIDs) {
 			return e.ErrOrderNotFound
 		}
@@ -140,6 +181,7 @@ func (d *Domain) DeliverOrders(ctx context.Context, orderIDs []uint64) (err erro
 			if err != nil {
 				return err
 			}
+			d.cache.UpdateOrder(ctx, list[i])
 		}
 
 		return nil

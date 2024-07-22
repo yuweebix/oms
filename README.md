@@ -49,7 +49,7 @@
 
 Установка зависимостей:
 ```sh
-  make deps
+make deps
 ```
 
 Для сборки Docker-контейнеров выполните команду:
@@ -79,10 +79,15 @@ make up-broker
   ```sh
   make up-broker
   ```
+- Запуск Redis:
+  ```sh
+  make up-redis
+  ```
 - Запуск контейнеров для тестов:
   ```sh
   make up-db-test
   make up-broker-test
+  make up-redis-test
   ```
 
 #### Остановка контейнеров
@@ -105,10 +110,15 @@ make down
   ```sh
   make down-broker
   ```
+- Остановка Redis:
+  ```sh
+  make down-redis
+  ```
 - Остановка контейнеров для тестов:
   ```sh
   make down-db-test
   make down-broker-test
+  make down-redis-test
   ```
 
 #### Миграция базы данных
@@ -147,6 +157,14 @@ make demigrate-test
   ```sh
   make sql-test
   ```
+- Запуск redis-cli:
+  ```sh
+  make redis-cli
+  ```
+- Запуск redis-cli для тестов:
+  ```sh
+  make redis-cli-test
+  ```
 
 #### Открытие shell внутри контейнеров
 
@@ -170,6 +188,14 @@ make demigrate-test
   ```sh
   make shell-broker-test
   ```
+- Открытие shell внутри контейнера Redis:
+  ```sh
+  make shell-redis
+  ```
+- Открытие shell внутри контейнера тестового Redis:
+  ```sh
+  make shell-redis-test
+  ```
 
 #### Работа с моками
 
@@ -180,7 +206,7 @@ make mocks
 
 #### Тестирование
 
-Перед запуском тестов, не забудьте сгенирировать моки через `make mocks`, если вы ещё их не сгенирировали.
+Перед запуском тестов, не забудьте сгенерировать моки через `make mocks`, если вы ещё их не сгенерировали.
 
 Для запуска всех тестов выполните команду:
 ```sh
@@ -197,12 +223,14 @@ make tests
   make tests-int
   ```
 
-Генерация необходимых для работы с gRPC go-файлов:
+#### Генерация gRPC файлов
+
+Для генерации необходимых для работы с gRPC go-файлов выполните команду:
 ```sh
-  make generate
+make generate
 ```
 
-`make generate` также отвечает за генерацию зависимостей. И чтобы заново не генерировать зависимости можно вызвать:
+Если вам нужно сгенерировать только gRPC файлы без зависимостей, выполните команду:
 ```sh
-  make generate-no-deps
+make generate-no-deps
 ```

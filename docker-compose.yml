@@ -1,4 +1,36 @@
 services:
+
+# --------------------------------------------METRICS-------------------------------------------- #
+
+  prometheus:
+    image: prom/prometheus:latest
+    hostname: prometheus
+    container_name: prometheus
+    volumes:
+      - prometheus-data:/prometheus
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    networks:
+      - app-network
+    depends_on:
+      - kafka-exporter
+      - postgres-exporter
+      # - redis-exporter
+
+  grafana:
+    image: grafana/grafana:latest
+    hostname: grafana
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    networks:
+      - app-network
+    depends_on:
+      - prometheus
+
+# --------------------------------------------SERVICES-------------------------------------------- #
+
   broker:
     image: apache/kafka:3.7.1
     hostname: broker
@@ -22,6 +54,11 @@ services:
       KAFKA_LOG_DIRS: '/tmp/kraft-combined-logs'
     networks:
       - app-network
+    healthcheck:
+      test: ["CMD", "/opt/kafka/bin/kafka-broker-api-versions.sh", "--bootstrap-server", "localhost:9092"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
   db:
     image: postgres:16
@@ -37,6 +74,27 @@ services:
       - app-network
     ports:
       - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7.2
+    hostname: redis
+    container_name: redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   app:
     build:
@@ -49,13 +107,19 @@ services:
       - DATABASE_URL=${DATABASE_URL}
       - ENVIRONMENT=docker
     depends_on:
-      - broker
-      - db
+      broker:
+        condition: service_healthy
+      db:
+        condition: service_healthy
+      # redis:
+      #   condition: service_healthy
     networks:
       - app-network
     ports:
       - "32269:32269" # grpc
       - "42069:42069" # http
+
+# --------------------------------------------TESTS-------------------------------------------- #
 
   broker_test:
     image: apache/kafka:3.7.1
@@ -78,6 +142,11 @@ services:
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
       KAFKA_LOG_DIRS: '/tmp/kraft-combined-logs'
+    healthcheck:
+      test: ["CMD", "/opt/kafka/bin/kafka-broker-api-versions.sh", "--bootstrap-server", "localhost:9093"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
   db_test:
     image: postgres:16
@@ -86,15 +155,81 @@ services:
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}_test
+      POSTGRES_DB: ${POSTGRES_DB}`
     volumes:
       - db-test-data:/var/lib/postgresql/data
     ports:
       - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis_test:
+    image: redis:7.2
+    hostname: redis_test
+    container_name: redis_test
+    ports:
+      - "6380:6379"
+    volumes:
+      - redis-test-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+# --------------------------------------------EXPORTERS-------------------------------------------- #
+
+  kafka-exporter:
+    image: danielqsj/kafka-exporter:latest
+    hostname: kafka-exporter
+    container_name: kafka-exporter
+    ports:
+      - "9308:9308"
+    command: ["--kafka.server=broker:19092"]
+    networks:
+      - app-network
+    depends_on:
+      broker:
+        condition: service_healthy
+
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter:latest
+    hostname: postgres-exporter
+    container_name: postgres-exporter
+    environment:
+      DATA_SOURCE_NAME: ${DATABASE_URL}
+    ports:
+      - "9187:9187"
+    networks:
+      - app-network
+    depends_on:
+      db:
+        condition: service_healthy
+      
+  redis-exporter:
+    image: oliver006/redis_exporter:latest
+    hostname: redis-exporter
+    container_name: redis-exporter
+    command: ["-redis.addr=redis:6379"]
+    ports:
+      - "9121:9121"
+    networks:
+      - app-network
+    depends_on:
+      redis:
+        condition: service_healthy
+
+# --------------------------------------------CONFIGS-------------------------------------------- #
 
 volumes:
   db-data:
   db-test-data:
+  redis-data:
+  redis-test-data:
+  prometheus-data:
 
 networks:
   app-network:

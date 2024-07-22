@@ -16,13 +16,16 @@ func (s *DomainSuite) TestAcceptReturn_Success() {
 	order := &models.Order{ID: 1, User: &models.User{ID: 1}}
 	returnOrder := &models.Order{ID: 1, Status: models.StatusDelivered, User: &models.User{ID: 1}, ReturnBy: time.Now().Add(returnByAllowedTime)}
 
-	domain, storage := s.SetupTest()
+	domain, storage, cache := s.SetupTest()
 
 	storage.EXPECT().RunTx(mock.Anything, mock.Anything, mock.Anything).RunAndReturn(func(ctx context.Context, opts models.TxOptions, fn func(context.Context) error) error {
 		return fn(ctx)
 	})
 	storage.EXPECT().GetOrder(mock.Anything, order).Return(returnOrder, nil)
 	storage.EXPECT().UpdateOrder(mock.Anything, mock.Anything).Return(nil)
+
+	cache.EXPECT().GetOrder(mock.Anything, mock.Anything).Return(nil)
+	cache.EXPECT().UpdateOrder(mock.Anything, mock.Anything)
 
 	err := domain.AcceptReturn(context.Background(), order)
 
@@ -37,12 +40,14 @@ func (s *DomainSuite) TestAcceptReturn_StatusInvalid() {
 	order := &models.Order{ID: 1, User: &models.User{ID: 1}}
 	returnOrder := &models.Order{ID: 1, Status: models.StatusAccepted, User: &models.User{ID: 1}, ReturnBy: time.Now().Add(24 * time.Hour)} // не доставили...
 
-	domain, storage := s.SetupTest()
+	domain, storage, cache := s.SetupTest()
 
 	storage.EXPECT().RunTx(mock.Anything, mock.Anything, mock.Anything).RunAndReturn(func(ctx context.Context, opts models.TxOptions, fn func(context.Context) error) error {
 		return fn(ctx)
 	})
 	storage.EXPECT().GetOrder(mock.Anything, order).Return(returnOrder, nil)
+
+	cache.EXPECT().GetOrder(mock.Anything, mock.Anything).Return(nil)
 
 	err := domain.AcceptReturn(context.Background(), order)
 
@@ -55,12 +60,14 @@ func (s *DomainSuite) TestAcceptReturn_OrderExpired() {
 	order := &models.Order{ID: 1, User: &models.User{ID: 1}}
 	returnOrder := &models.Order{ID: 1, Status: models.StatusDelivered, User: &models.User{ID: 1}, ReturnBy: time.Now().Add(-returnByAllowedTime)} // долго думал юзер, не вернул во время
 
-	domain, storage := s.SetupTest()
+	domain, storage, cache := s.SetupTest()
 
 	storage.EXPECT().RunTx(mock.Anything, mock.Anything, mock.Anything).RunAndReturn(func(ctx context.Context, opts models.TxOptions, fn func(context.Context) error) error {
 		return fn(ctx)
 	})
 	storage.EXPECT().GetOrder(mock.Anything, order).Return(returnOrder, nil)
+
+	cache.EXPECT().GetOrder(mock.Anything, mock.Anything).Return(nil)
 
 	err := domain.AcceptReturn(context.Background(), order)
 
@@ -72,12 +79,14 @@ func (s *DomainSuite) TestAcceptReturn_UserInvalid() {
 
 	order := &models.Order{ID: 1, User: &models.User{ID: 1}} // пытаемся принять возврат от первого юзера, а заказ то был от второго
 	returnOrder := &models.Order{ID: 1, Status: models.StatusDelivered, User: &models.User{ID: 2}, ReturnBy: time.Now().Add(returnByAllowedTime)}
-	domain, storage := s.SetupTest()
+	domain, storage, cache := s.SetupTest()
 
 	storage.EXPECT().RunTx(mock.Anything, mock.Anything, mock.Anything).RunAndReturn(func(ctx context.Context, opts models.TxOptions, fn func(context.Context) error) error {
 		return fn(ctx)
 	})
 	storage.EXPECT().GetOrder(mock.Anything, order).Return(returnOrder, nil)
+
+	cache.EXPECT().GetOrder(mock.Anything, mock.Anything).Return(nil)
 
 	err := domain.AcceptReturn(context.Background(), order)
 

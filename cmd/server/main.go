@@ -12,15 +12,20 @@ import (
 	"strings"
 	"sync"
 	"syscall"
+	"time"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/joho/godotenv"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	orders "gitlab.ozon.dev/yuweebix/homework-1/gen/orders/v1/proto"
 	returns "gitlab.ozon.dev/yuweebix/homework-1/gen/returns/v1/proto"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/api"
+	"gitlab.ozon.dev/yuweebix/homework-1/internal/cache/native/cache"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/domain"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/kafka/pub"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/kafka/sub/group"
+	"gitlab.ozon.dev/yuweebix/homework-1/internal/metrics"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/middleware"
 	"gitlab.ozon.dev/yuweebix/homework-1/internal/repository"
 	"google.golang.org/grpc"
@@ -34,7 +39,8 @@ const (
 )
 
 var (
-	grpcServerEndpoint = flag.String("grpc-server-endpoint", "localhost:32269", "gRPC server endpoint")
+	grpcServerEndpoint                 = flag.String("grpc-server-endpoint", "localhost:32269", "gRPC server endpoint")
+	cacheCleanupTickrate time.Duration = time.Second * 15
 )
 
 func main() {
@@ -85,8 +91,12 @@ func main() {
 	}
 	defer repository.Close()
 
+	// кэш
+	cache := cache.NewCache(cacheCleanupTickrate)
+	defer cache.Close()
+
 	// сервис
-	domain := domain.NewDomain(repository)
+	domain := domain.NewDomain(repository, cache)
 
 	// опции для интерцептора
 	opts := make([]grpc.ServerOption, 0)
@@ -133,7 +143,7 @@ func main() {
 
 	// в api имплеменитораны методы и orders контракта, и returns контракта, поэтому можно использовать её одну
 	// всё идёт на один сервер
-	api := api.NewAPI(domain, producer)
+	api := api.NewAPI(domain)
 	grpcServer := grpc.NewServer(opts...)
 	orders.RegisterOrdersServer(grpcServer, api)
 	returns.RegisterReturnsServer(grpcServer, api)
@@ -173,9 +183,15 @@ func main() {
 			log.Fatalln(err)
 		}
 
+		http.Handle("/", mux)
+
+		// хендлим метрики
+		prometheus.MustRegister(metrics.MetricCollectors...)
+		http.Handle("/metrics", promhttp.Handler())
+
 		// слушаем и сёрвим
 		log.Println("http gateway listening on", httpPort)
-		if err := http.ListenAndServe(httpPort, mux); err != nil {
+		if err := http.ListenAndServe(httpPort, nil); err != nil {
 			log.Fatalln(err)
 		}
 	}()
