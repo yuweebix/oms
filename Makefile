@@ -33,6 +33,12 @@ up-broker:
 	docker-compose --env-file .env up -d broker
 up-broker-test:
 	docker-compose --env-file .env up -d broker_test
+up-redis:
+	docker-compose --env-file .env up -d redis
+up-redis-test:
+	docker-compose --env-file .env up -d redis_test
+up-metrics:
+	docker-compose --env-file .env up -d grafana
 
 # ОСТАНОВКА
 down:
@@ -47,6 +53,10 @@ down-broker:
 	docker-compose --env-file .env down broker
 down-broker-test:
 	docker-compose --env-file .env down broker_test
+down-redis:
+	docker-compose --env-file .env down redis
+down-redis-test:
+	docker-compose --env-file .env down redis_test
 
 # ПРОЦЕССЫ
 server: up-app # сервер
@@ -56,6 +66,11 @@ sql: up-db # sql-клиент
 	docker exec -it db sh -c 'psql -U $(POSTGRES_USER) -d $(POSTGRES_DB)'
 sql-test: up-db-test # sql-клиент для тестов
 	docker exec -it db_test sh -c 'psql -U $(POSTGRES_USER) -d $(POSTGRES_DB)_test'
+
+redis-cli: up-redis
+	docker exec -it redis redis-cli
+redis-cli-test: up-redis-test
+	docker exec -it redis_test redis-cli
 
 # SHELL
 shell-app: up-app
@@ -68,17 +83,21 @@ shell-broker: up-broker
 	docker exec -it broker sh
 shell-broker-test: up-broker-test
 	docker exec -it broker_test sh
+shell-redis: up-redis
+	docker exec -it redis sh
+shell-redis-test: up-redis-test
+	docker exec -it redis_test sh
 
 # МОКИ
 mocks:
 	$(MOCKERY) --config .mockery.yml
 
 # ТЕСТЫ
-tests: up-db-test up-broker-test
+tests: up-db-test up-broker-test up-redis-test
 	go test ./tests/... -v
 tests-unit:
 	go test ./tests/unit/... -v
-tests-int: up-db-test up-broker-test
+tests-int: up-db-test up-broker-test up-redis-test
 	go test ./tests/int/... -v 
 
 # gRPC

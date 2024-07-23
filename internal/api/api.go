@@ -21,24 +21,17 @@ type service interface {
 	ListReturns(ctx context.Context, limit uint64, offset uint64) ([]*models.Order, error) // логика вывода возвратов
 }
 
-// logger интерфейс для производства сообщений в брокер сообщений (кафку)
-type logger interface {
-	Send(message any) error
-}
-
 // API представляет слой API
 type API struct {
 	service service
-	logger  logger
 	orders.UnimplementedOrdersServer
 	returns.UnimplementedReturnsServer
 }
 
 // NewAPI конструктор с добавлением зависимостей
-func NewAPI(s service, l logger) (api *API) {
+func NewAPI(s service) (api *API) {
 	api = &API{
 		service: s,
-		logger:  l,
 	}
 
 	return api

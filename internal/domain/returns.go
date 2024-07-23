@@ -22,11 +22,21 @@ func (d *Domain) AcceptReturn(ctx context.Context, o *models.Order) (err error) 
 		AccessMode: models.ReadWrite,
 	}
 
+	ro := &models.Order{} // ro - return order
+
+	// сначала проверим в кеши ли заказ
+	cachedOrder := d.cache.GetOrder(ctx, o)
+
 	// начинаем транзакцию
 	err = d.storage.RunTx(ctx, opts, func(ctxTX context.Context) error {
-		ro, err := d.storage.GetOrder(ctxTX, o) // ro - return order
-		if err != nil {
-			return err
+		switch cachedOrder {
+		case nil:
+			ro, err = d.storage.GetOrder(ctxTX, o)
+			if err != nil {
+				return err
+			}
+		default:
+			ro = cachedOrder
 		}
 
 		// должен быть доставлен
@@ -49,27 +59,32 @@ func (d *Domain) AcceptReturn(ctx context.Context, o *models.Order) (err error) 
 		ro.Hash = hash
 
 		// обновляем заказ в хранилище
-		err = d.storage.UpdateOrder(ctxTX, ro)
-		if err != nil {
-			return err
-		}
-
-		return nil
+		return d.storage.UpdateOrder(ctxTX, ro)
 	})
 	if err != nil {
 		return err
 	}
+
+	// обновим кеш
+	d.cache.UpdateOrder(ctx, ro)
 
 	return nil
 }
 
 // ListReturns выводит список возвратов с пагинацией
 func (d *Domain) ListReturns(ctx context.Context, limit uint64, offset uint64) (list []*models.Order, err error) {
-	// можно обойтись и без эксплицитной транзакции, ведь мы просто читаем данные, не проверяем их и не изменяем
-	list, err = d.storage.GetReturns(ctx, limit, offset)
+	cachedList := d.cache.GetReturns(ctx, limit, offset)
 
-	if err != nil {
-		return nil, err
+	switch cachedList {
+	case nil: // лист невалидный, либо просто пустой; следует удалить просроченные заказы из кеша
+		// можно обойтись и без эксплицитной транзакции, ведь мы просто читаем данные, не проверяем их и не изменяем
+		list, err = d.storage.GetReturns(ctx, limit, offset)
+		if err != nil {
+			return nil, err
+		}
+	default:
+		list = cachedList
+
 	}
 
 	return list, err

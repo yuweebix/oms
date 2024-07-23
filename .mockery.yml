@@ -4,16 +4,11 @@ packages:
     config:
       dir: ./mocks/api
     interfaces:
-      domain:
+      service:
         config:
           outpkg: mocks
-          filename: domain_mock.go
-          mockname: MockDomain
-      producer:
-        config:
-          outpkg: mocks
-          filename: producer_mock.go
-          mockname: MockProducer
+          filename: service_mock.go
+          mockname: MockService
   gitlab.ozon.dev/yuweebix/homework-1/internal/domain:
     config:
       dir: ./mocks/domain
@@ -23,8 +18,8 @@ packages:
           outpkg: mocks
           filename: storage_mock.go
           mockname: MockStorage
-      threading:
+      cache:
         config:
           outpkg: mocks
-          filename: threading_mock.go
-          mockname: MockThreading
+          filename: cache_mock.go
+          mockname: MockCache
