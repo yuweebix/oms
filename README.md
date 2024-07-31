@@ -1,4 +1,4 @@
-# Route 256 Orders Management Service
+# Orders Management Service
 ## gRPC сервис упавления пунктом выдачи заказов на языке Go.
 ### В имплементации также используются PostgreSQL, Apache Kafka, Redis, Prometheus и Grafana.
 
