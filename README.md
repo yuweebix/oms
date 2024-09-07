@@ -1,5 +1,5 @@
 # Orders Management Service
-## gRPC сервис упавления пунктом выдачи заказов на языке Go.
+## gRPC сервис управления пунктом выдачи заказов на языке Go.
 ### В имплементации также используются PostgreSQL, Apache Kafka, Redis, Prometheus и Grafana.
 
 ### Список команд
